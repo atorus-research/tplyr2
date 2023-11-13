@@ -25,3 +25,4 @@ Below is an idea list of significant changes from Tplyr's current architecture:
 - Error handling generally has to be improved. All traces of {assertthat} need to be ripped out, and messages can get distorted through the `tryCatch()` that happens during build.
 - Try to design a framework for an open ended analyze function
   - Great concept that's been requested, but some of the rigidity in Tplyr makes this hard to implement.
+- Unify string formatting into 1 application function (i.e. `Tplyr::apply_formats()`)
