@@ -26,3 +26,4 @@ Below is an idea list of significant changes from Tplyr's current architecture:
 - Try to design a framework for an open ended analyze function
   - Great concept that's been requested, but some of the rigidity in Tplyr makes this hard to implement.
 - Unify string formatting into 1 application function (i.e. `Tplyr::apply_formats()`)
+- By not building on environments, avoid weird side effects of namespace issues like [this issue](https://github.com/atorus-research/Tplyr/issues/154)
