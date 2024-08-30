@@ -13,6 +13,7 @@ Below is an idea list of significant changes from Tplyr's current architecture:
 - Remove the concept of treat_var and take only use the cols parameter
 - Recursive implementation of nested count layers
   - Allow more than inner and outer layer, and there's an opportunity for efficiency increases here as well
+- Allow for either separate `where` statements for target variables on nested count layers, or allow nesting of layers
 - Better support for analysis results data
   - Pull from concepts of ardis, but try to build in better support for the actual CDISC standard
   - Allow for output of ARD, and then build from intake of ARD and a table spec
