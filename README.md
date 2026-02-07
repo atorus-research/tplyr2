@@ -28,3 +28,4 @@ Below is an idea list of significant changes from Tplyr's current architecture:
   - Great concept that's been requested, but some of the rigidity in Tplyr makes this hard to implement.
 - Unify string formatting into 1 application function (i.e. `Tplyr::apply_formats()`)
 - By not building on environments, avoid weird side effects of namespace issues like [this issue](https://github.com/atorus-research/Tplyr/issues/154)
+- As an addiditonal features, you should be able to build a tplyr_spec object from a JSON or YAML file directly, so the tplyr_spec() and layer interfaces need to be both convertable and interpretable from JSON or YAML files

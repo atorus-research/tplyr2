@@ -1,11 +1,24 @@
 Package: tplyr2
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
-Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+Title: A Grammar of Clinical Summary Tables
+Version: 0.1.0.9000
+Authors@R:
+    person("Mike", "Stackhouse", , "mike.stackhouse@atorusresearch.com", role = c("aut", "cre"))
+Description: Implements a grammar of summary data for clinical reports. Clinical
+    summary tables are decomposed into modular layers, each representing an
+    independent summary block. Supports count, descriptive statistics, and shift
+    layer types with a declarative spec-based API built on data.table for performance.
+License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+Depends:
+    R (>= 4.1.0)
+Imports:
+    data.table,
+    jsonlite,
+    rlang
+Suggests:
+    testthat (>= 3.0.0),
+    yaml
+Config/testthat/edition: 3
+LazyData: true
