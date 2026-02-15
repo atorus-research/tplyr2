@@ -86,7 +86,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (length(all_custom) > 0) {
     custom_stats <- dt[, {
       .var <- get(tv)
-      result <- lapply(all_custom, function(expr) {
+      result <- map(all_custom, function(expr) {
         tryCatch(eval(expr), error = function(e) NA_real_)
       })
       result
@@ -131,11 +131,11 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   format_strings <- get_desc_formats(settings)
 
   # --- Auto-precision ---
-  needs_precision <- any(vapply(format_strings, function(fmt) {
-    any(vapply(fmt$parsed$groups, function(g) {
+  needs_precision <- any(map_lgl(format_strings, function(fmt) {
+    any(map_lgl(fmt$parsed$groups, function(g) {
       g$int$auto || (g$has_decimal && g$dec$auto)
-    }, logical(1)))
-  }, logical(1)))
+    }))
+  }))
 
   precision_table <- NULL
   if (needs_precision) {
@@ -154,16 +154,16 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     fmt <- format_strings[[i]]
     var_names <- fmt$vars
 
-    has_auto <- any(vapply(fmt$parsed$groups, function(g) {
+    has_auto <- any(map_lgl(fmt$parsed$groups, function(g) {
       g$int$auto || (g$has_decimal && g$dec$auto)
-    }, logical(1)))
+    }))
 
     if (has_auto && !is.null(precision_table)) {
       formatted <- format_with_precision(
         fmt, var_names, stats, group_vars, precision_table, settings$precision_by
       )
     } else {
-      fmt_args <- lapply(var_names, function(v) stats[[v]])
+      fmt_args <- map(var_names, function(v) stats[[v]])
       formatted <- do.call(apply_formats, c(list(fmt), fmt_args))
     }
 
@@ -182,14 +182,14 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   col_idx <- 1L
 
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     long[, (col_name) := lbl]
     label_cols <- c(label_cols, col_name)
     col_idx <- col_idx + 1L
   }
 
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     long[, (col_name) := as.character(get(bv))]
     label_cols <- c(label_cols, col_name)
     col_idx <- col_idx + 1L
@@ -197,14 +197,14 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # Add variable label for multi-target mode
   if (!is.null(var_label)) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     long[, (col_name) := var_label]
     label_cols <- c(label_cols, col_name)
     col_idx <- col_idx + 1L
   }
 
   # Add stat label as row label
-  stat_label_col <- paste0("rowlabel", col_idx)
+  stat_label_col <- str_c("rowlabel", col_idx)
   long[, (stat_label_col) := row_label]
   label_cols <- c(label_cols, stat_label_col)
 
@@ -235,7 +235,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
     val_cols <- setdiff(names(wide), c(all_label_cols, "stat_order"))
     col_labels <- build_col_labels(val_cols, col_n)
-    new_names <- paste0("res", seq_along(val_cols))
+    new_names <- str_c("res", seq_along(val_cols))
     data.table::setnames(wide, val_cols, new_names)
 
     if (".col_combo" %in% names(long)) {
@@ -255,7 +255,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # Attach label attributes to result columns
   if (!is.null(col_labels)) {
-    res_cols <- paste0("res", seq_along(col_labels))
+    res_cols <- str_c("res", seq_along(col_labels))
     for (i in seq_along(res_cols)) {
       data.table::setattr(wide[[res_cols[i]]], "label", col_labels[i])
     }
@@ -283,20 +283,20 @@ build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
   }
 
   # Collect numeric data from sub-results
-  multi_numeric <- lapply(seq_along(var_results), function(vi) {
+  multi_numeric <- map(seq_along(var_results), function(vi) {
     nd <- attr(var_results[[vi]], "numeric_data")
     if (!is.null(nd)) {
       nd$.target_var <- target_vars[vi]
     }
     nd
   })
-  multi_numeric <- do.call(rbind, multi_numeric[!vapply(multi_numeric, is.null, logical(1))])
+  multi_numeric <- do.call(rbind, discard(multi_numeric, is.null))
 
   # Row-bind all variable blocks, preserving label attributes
   result <- harmonize_and_bind(var_results)
 
   # Re-sort by ordering columns
-  all_ord <- grep("^ord", names(result), value = TRUE)
+  all_ord <- str_subset(names(result), "^ord")
   other_ord <- sort(setdiff(all_ord, "ordindx"))
   data.table::setorderv(result, c("ordindx", other_ord))
 
@@ -317,17 +317,17 @@ build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
 #' @return Transposed data.table
 #' @keywords internal
 transpose_stats_to_columns <- function(wide) {
-  res_cols <- grep("^res\\d+$", names(wide), value = TRUE)
+  res_cols <- str_subset(names(wide), "^res\\d+$")
   if (length(res_cols) == 0) return(wide)
 
   # Get treatment group labels
-  trt_labels <- vapply(res_cols, function(col) {
+  trt_labels <- map_chr(res_cols, function(col) {
     lbl <- attr(wide[[col]], "label")
     if (is.null(lbl)) col else lbl
-  }, character(1))
+  })
 
   # Identify rowlabel columns and find the stat label column (the last one)
-  label_cols <- grep("^rowlabel\\d+$", names(wide), value = TRUE)
+  label_cols <- str_subset(names(wide), "^rowlabel\\d+$")
   if (length(label_cols) == 0) return(wide)
 
   stat_col <- label_cols[length(label_cols)]
@@ -385,10 +385,10 @@ format_with_precision <- function(fmt, var_names, stats, group_vars,
 
   if (length(prec_by) == 0 || nrow(precision_table) == 1) {
     # Single precision group — resolve once, format all
-    resolved <- lapply(fmt$parsed$groups, function(g) {
+    resolved <- map(fmt$parsed$groups, function(g) {
       resolve_precision(g, precision_table$max_int[1], precision_table$max_dec[1])
     })
-    fmt_args <- lapply(var_names, function(v) stats[[v]])
+    fmt_args <- map(var_names, function(v) stats[[v]])
     return(do.call(apply_formats, c(list(fmt), fmt_args, list(precision = resolved))))
   }
 
@@ -403,10 +403,10 @@ format_with_precision <- function(fmt, var_names, stats, group_vars,
     }
     if (!any(mask)) next
 
-    resolved <- lapply(fmt$parsed$groups, function(g) {
+    resolved <- map(fmt$parsed$groups, function(g) {
       resolve_precision(g, prec_row$max_int, prec_row$max_dec)
     })
-    sub_args <- lapply(var_names, function(v) stats[[v]][mask])
+    sub_args <- map(var_names, function(v) stats[[v]][mask])
     formatted[mask] <- do.call(apply_formats, c(list(fmt), sub_args, list(precision = resolved)))
   }
 

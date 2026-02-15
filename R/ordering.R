@@ -34,7 +34,7 @@ compute_var_order <- function(values, var_name = NULL, data_dt = NULL,
 
   # VARN companion column
   if ((is.null(method) || method == "byvarn") && !is.null(var_name) && !is.null(data_dt)) {
-    varn_col <- paste0(var_name, "N")
+    varn_col <- str_c(var_name, "N")
     if (varn_col %in% names(data_dt)) {
       lookup <- unique(data_dt[, c(var_name, varn_col), with = FALSE])
       varn_vals <- lookup[[varn_col]][match(as.character(values), as.character(lookup[[var_name]]))]
@@ -71,7 +71,7 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
 
   for (i in seq_along(by_data_vars)) {
     bv <- by_data_vars[i]
-    col_name <- paste0(".ord_by_", i)
+    col_name <- str_c(".ord_by_", i)
     counts[, (col_name) := compute_var_order(
       get(bv), var_name = bv, data_dt = dt
     )]
@@ -113,9 +113,9 @@ rename_ord_columns <- function(result) {
     data.table::setnames(result, "ordindx", "ord_layer_index")
   }
 
-  ord_cols <- grep("^ord\\d+$", names(result), value = TRUE)
+  ord_cols <- str_subset(names(result), "^ord\\d+$")
   if (length(ord_cols) > 0) {
-    new_names <- sub("^ord(\\d+)$", "ord_layer_\\1", ord_cols)
+    new_names <- str_replace(ord_cols, "^ord(\\d+)$", "ord_layer_\\1")
     data.table::setnames(result, ord_cols, new_names)
   }
 

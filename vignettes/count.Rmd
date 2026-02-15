@@ -1,0 +1,270 @@
+---
+title: "Count Layers"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Count Layers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r}
+library(tplyr2)
+library(knitr)
+```
+
+## Introduction
+
+Counting things seems simple enough. You look at the data, tally up how many observations fall into each category, and move on. But in clinical reporting, counting is deceptively nuanced. A demographics table needs simple frequencies. An adverse events table needs both the number of subjects who experienced an event and the total number of events. A disposition table might need all of those plus custom column groupings and sorting by frequency.
+
+tplyr2 handles all of these scenarios through `group_count()`. In this vignette, we will walk through the most common counting patterns you will encounter when building clinical tables, starting with the basics and building up to nested hierarchical summaries.
+
+## A Simple Count
+
+The simplest use of `group_count()` is to count the levels of a single categorical variable. Here we build a basic disposition table showing the reasons subjects discontinued from the study, broken out by planned treatment group.
+
+```{r simple_count}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("DCDECOD")
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
+```
+
+By default, tplyr2 formats counts as `n (xx.x%)`, where the denominator is the total number of observations within each treatment column. Every level present in the data gets a row, and zero counts are filled in automatically so that no treatment arm is left with a gap.
+
+### Adding a Total Column
+
+In many tables, you need a "Total" column that pools all treatment groups. You can add one at the spec level with `total_group()`.
+
+```{r total_group}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  total_groups = list(total_group("TRT01P", label = "Total")),
+  layers = tplyr_layers(
+    group_count("DCDECOD")
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, c("rowlabel1", "res1", "res2", "res3", "res4")])
+```
+
+The `total_group()` function works by duplicating every row in the data with the treatment variable set to the label you provide (here, "Total"). This means the total column is computed through the same pipeline as every other column, keeping the logic consistent.
+
+### Custom Column Groups
+
+Sometimes you need to combine existing treatment arms into a new group. For example, you might want a "Treated" column that pools all active dose groups. The `custom_group()` function handles this.
+
+```{r custom_group}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  custom_groups = list(
+    custom_group("TRT01P",
+      "Treated" = c("Xanomeline High Dose", "Xanomeline Low Dose")
+    )
+  ),
+  layers = tplyr_layers(
+    group_count("DCDECOD")
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, c("rowlabel1", "res1", "res2", "res3", "res4")])
+```
+
+Like `total_group()`, custom groups duplicate the matching rows with the treatment variable set to the new label. Custom groups and total groups can be combined in a single spec when you need both.
+
+### Custom Format Strings
+
+The default `n (xx.x%)` format works for many tables, but you have full control over how counts are displayed through the `f_str()` function. Format strings use `x` characters to define field widths: each `x` reserves one character position.
+
+```{r format_strings}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("DCDECOD",
+      settings = layer_settings(
+        format_strings = list(
+          n_counts = f_str("xxx (xxx.x%)", "n", "pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
+```
+
+The available count statistics are:
+
+- `n` -- the number of observations
+- `pct` -- the percentage of observations (using the column total as denominator)
+- `total` -- the denominator used for the percentage calculation
+- `distinct_n` -- the number of distinct subjects (requires `distinct_by`)
+- `distinct_pct` -- the percentage of distinct subjects
+- `distinct_total` -- the distinct denominator
+
+You can combine any of these in a single format string. We will use the distinct variants in the next section.
+
+### Total Rows
+
+Many tables require a "Total" row at the bottom of each count block. Set `total_row = TRUE` in `layer_settings()` to add one.
+
+```{r total_row}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("DCDECOD",
+      settings = layer_settings(
+        total_row = TRUE,
+        total_row_label = "Overall Total"
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
+```
+
+## Distinct Versus Event Counts
+
+When summarizing adverse events, the distinction between events and subjects matters enormously. A single subject might experience the same event multiple times. If you simply count rows, you are counting events. If you want the number of subjects who experienced each event at least once, you need distinct counts.
+
+The `distinct_by` parameter in `layer_settings()` tells tplyr2 which variable identifies unique subjects. Once set, the `distinct_n` and `distinct_pct` statistics become available for use in format strings.
+
+```{r distinct_counts}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%) [xxx]", "distinct_n", "distinct_pct", "n")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 10))
+```
+
+In this output, the first number is the count of distinct subjects, the percentage is based on distinct subjects, and the number in brackets is the total event count. This pattern -- `xxx (xx.x%) [xxx]` for distinct subjects, percent, and events -- is one of the most common formats for adverse event tables.
+
+### A Note on Parenthesis Hugging
+
+You may notice that tplyr2 carefully aligns numbers within their format fields, padding with leading spaces so that decimal points and parentheses line up across rows. For even tighter alignment, tplyr2 supports "parenthesis hugging" using uppercase `X` characters in format strings. When you use `X` instead of `x`, leading spaces shift outside the parenthesis so the opening delimiter sits right next to the number. This is a more advanced feature covered in detail in the format strings documentation.
+
+## Nested Count Summaries
+
+Adverse event tables in clinical reports almost always use a hierarchical structure: body system (SOC) as the outer grouping and preferred term (PT) as the inner grouping. tplyr2 supports this directly by passing a vector of two variable names to `group_count()`.
+
+```{r nested_basic}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 15))
+```
+
+The first variable in the vector (`AEBODSYS`) becomes the outer level, and the second (`AEDECOD`) becomes the inner level. In the output, `rowlabel1` holds the body system name and `rowlabel2` holds the preferred term. Outer-level summary rows have an empty `rowlabel2`, while inner-level rows have their preferred term indented within `rowlabel2`.
+
+The outer-level counts represent the number of distinct subjects with any event in that body system, and the inner-level counts represent subjects with each specific preferred term. A subject who experienced multiple different preferred terms within the same body system is counted once at the outer level but once for each preferred term at the inner level.
+
+### Collapsing Row Labels
+
+For display purposes, you often want a single row label column with indentation indicating the hierarchy rather than two separate columns. The `collapse_row_labels()` function merges the `rowlabel` columns into one.
+
+```{r nested_collapsed}
+collapsed <- collapse_row_labels(result, indent = "   ")
+kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
+```
+
+The `indent` parameter controls the string used for each level of nesting. Here we use three spaces, but you can use any string that suits your output format.
+
+### Controlling Indentation at the Layer Level
+
+You can also control the indentation of inner-level labels directly in the layer settings using the `indentation` parameter. This sets the prefix applied to `rowlabel2` values before any post-processing.
+
+```{r nested_indentation}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        indentation = "    ",
+        format_strings = list(
+          n_counts = f_str("xxx", "n")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 12))
+```
+
+### Nested Counts with Total Rows
+
+Total rows work with nested counts as well. When `total_row = TRUE` is set on a nested layer, the total row reflects the overall count across all body systems.
+
+```{r nested_total}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        total_row = TRUE,
+        total_row_label = "Any adverse event",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+collapsed <- collapse_row_labels(result, indent = "   ")
+kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
+```
+
+## Where to Go from Here
+
+Count layers in tplyr2 cover a wide range of clinical table patterns, but there is much more to explore. Here are some related topics covered in other vignettes:
+
+- **Denominators**: Control how percentages are calculated with `denoms_by` and `denom_ignore` in `layer_settings()`.
+- **Missing counts**: Add rows for missing values with the `missing_count` parameter.
+- **Shift tables**: Use `group_shift()` for cross-tabulation of baseline versus post-baseline categories.
+- **Descriptive statistics**: Use `group_desc()` for continuous variable summaries like mean, median, and standard deviation.
+- **Post-processing**: Apply row masks, column headers, and conditional formatting to polish your final output.

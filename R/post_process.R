@@ -12,7 +12,7 @@
 apply_row_masks <- function(result, row_breaks = FALSE) {
   if (!is.data.frame(result) || nrow(result) == 0) return(result)
 
-  label_cols <- sort(grep("^rowlabel\\d+$", names(result), value = TRUE))
+  label_cols <- sort(str_subset(names(result), "^rowlabel\\d+$"))
   if (length(label_cols) == 0) return(result)
 
   layer_idx <- result[["ord_layer_index"]]
@@ -76,7 +76,7 @@ apply_row_masks <- function(result, row_breaks = FALSE) {
 collapse_row_labels <- function(result, indent = "  ") {
   if (!is.data.frame(result) || nrow(result) == 0) return(result)
 
-  label_cols <- sort(grep("^rowlabel\\d+$", names(result), value = TRUE))
+  label_cols <- sort(str_subset(names(result), "^rowlabel\\d+$"))
   if (length(label_cols) == 0) return(result)
 
   row_label <- character(nrow(result))
@@ -86,7 +86,7 @@ collapse_row_labels <- function(result, indent = "  ") {
     value <- ""
     for (j in seq_along(label_cols)) {
       val <- result[[label_cols[j]]][i]
-      if (!is.na(val) && nchar(val) > 0) {
+      if (!is.na(val) && str_length(val) > 0) {
         depth <- j
         value <- val
       }
@@ -118,7 +118,7 @@ collapse_row_labels <- function(result, indent = "  ") {
 add_column_headers <- function(result, header_format = NULL) {
   if (!is.data.frame(result) || nrow(result) == 0) return(result)
 
-  res_cols <- sort(grep("^res\\d+$", names(result), value = TRUE))
+  res_cols <- sort(str_subset(names(result), "^res\\d+$"))
   if (length(res_cols) == 0) return(result)
 
   # Build header from column labels
@@ -132,9 +132,9 @@ add_column_headers <- function(result, header_format = NULL) {
   }
 
   if (!is.null(header_format)) {
-    parts <- strsplit(header_format, " \\| ")[[1]]
+    parts <- str_split(header_format, " \\| ")[[1]]
     # First part goes to row label column
-    label_cols <- sort(grep("^rowlabel\\d+$|^row_label$", names(result), value = TRUE))
+    label_cols <- sort(str_subset(names(result), "^rowlabel\\d+$|^row_label$"))
     if (length(label_cols) > 0 && length(parts) > 0) {
       header_row[[label_cols[1]]] <- parts[1]
     }
@@ -159,15 +159,15 @@ add_column_headers <- function(result, header_format = NULL) {
   if (!is.null(header_n) && is.data.frame(header_n)) {
     for (rc in res_cols) {
       val <- header_row[[rc]]
-      if (is.character(val) && grepl("\\*\\*", val)) {
+      if (is.character(val) && str_detect(val, "\\*\\*")) {
         for (r in seq_len(nrow(header_n))) {
           # Get the level name from the first non-.n column
           level_col <- setdiff(names(header_n), ".n")
           level_val <- as.character(header_n[[level_col[1]]][r])
           n_val <- header_n$.n[r]
-          pattern <- paste0("\\*\\*", level_val, "\\*\\*")
-          replacement <- paste0("(N=", n_val, ")")
-          val <- gsub(pattern, replacement, val)
+          pattern <- str_c("\\*\\*", level_val, "\\*\\*")
+          replacement <- str_c("(N=", n_val, ")")
+          val <- str_replace_all(val, pattern, replacement)
         }
         header_row[[rc]] <- val
       }
@@ -192,11 +192,11 @@ add_column_headers <- function(result, header_format = NULL) {
 #' @return Character string with newlines inserted
 #' @export
 str_indent_wrap <- function(x, width = 80, indent = 0, exdent = 0) {
-  vapply(x, function(s) {
-    if (is.na(s) || nchar(s) == 0) return(s)
+  map_chr(x, function(s) {
+    if (is.na(s) || str_length(s) == 0) return(s)
     wrapped <- strwrap(s, width = width, indent = indent, exdent = exdent)
-    paste(wrapped, collapse = "\n")
-  }, character(1), USE.NAMES = FALSE)
+    str_c(wrapped, collapse = "\n")
+  })
 }
 
 #' Apply conditional formatting to a column
@@ -212,12 +212,12 @@ str_indent_wrap <- function(x, width = 80, indent = 0, exdent = 0) {
 #' @export
 apply_conditional_format <- function(result, column, condition_fn, format_fn) {
   if (!column %in% names(result)) {
-    stop(sprintf("Column '%s' not found in result", column))
+    stop(str_glue("Column '{column}' not found in result"))
   }
 
   vals <- result[[column]]
-  mask <- vapply(vals, condition_fn, logical(1))
-  result[[column]][mask] <- vapply(vals[mask], format_fn, character(1))
+  mask <- map_lgl(vals, condition_fn)
+  result[[column]][mask] <- map_chr(vals[mask], format_fn)
   result
 }
 
@@ -231,12 +231,12 @@ apply_conditional_format <- function(result, column, condition_fn, format_fn) {
 #' @return Numeric vector
 #' @export
 str_extract_num <- function(x, index = 1L) {
-  vapply(x, function(s) {
+  map_dbl(x, function(s) {
     if (is.na(s)) return(NA_real_)
-    nums <- regmatches(s, gregexpr("-?[0-9]+\\.?[0-9]*", s))[[1]]
+    nums <- str_extract_all(s, "-?[0-9]+\\.?[0-9]*")[[1]]
     if (length(nums) < index) return(NA_real_)
     as.numeric(nums[index])
-  }, numeric(1), USE.NAMES = FALSE)
+  })
 }
 
 #' Replace leading whitespace with a specified string
@@ -249,13 +249,14 @@ str_extract_num <- function(x, index = 1L) {
 #' @return Character vector with leading spaces replaced
 #' @export
 replace_leading_whitespace <- function(x, replace_with = "\u00a0") {
-  vapply(x, function(s) {
+  map_chr(x, function(s) {
     if (is.na(s)) return(NA_character_)
-    leading <- nchar(s) - nchar(sub("^ +", "", s))
+    stripped <- str_replace(s, "^ +", "")
+    leading <- str_length(s) - str_length(stripped)
     if (leading > 0) {
-      paste0(strrep(replace_with, leading), sub("^ +", "", s))
+      str_c(strrep(replace_with, leading), stripped)
     } else {
       s
     }
-  }, character(1), USE.NAMES = FALSE)
+  })
 }

@@ -16,9 +16,14 @@ Depends:
 Imports:
     data.table,
     jsonlite,
-    rlang
+    purrr,
+    rlang,
+    stringr
 Suggests:
     testthat (>= 3.0.0),
-    yaml
+    yaml,
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 LazyData: true

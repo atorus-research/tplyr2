@@ -38,7 +38,7 @@ tplyr2_options <- function(...) {
   args <- list(...)
   if (length(args) == 0) {
     # Return current values with defaults
-    result <- lapply(names(defaults), function(nm) {
+    result <- map(names(defaults), function(nm) {
       getOption(nm, defaults[[nm]])
     })
     names(result) <- names(defaults)
@@ -46,8 +46,8 @@ tplyr2_options <- function(...) {
   }
 
   # Set options
-  opt_names <- paste0("tplyr2.", names(args))
-  old_vals <- lapply(opt_names, getOption)
+  opt_names <- str_c("tplyr2.", names(args))
+  old_vals <- map(opt_names, getOption)
   names(old_vals) <- opt_names
 
   new_opts <- stats::setNames(args, opt_names)
@@ -70,8 +70,8 @@ tplyr2_options <- function(...) {
 get_data_labels <- function(data) {
   if (!is.data.frame(data)) stop("data must be a data.frame")
 
-  vapply(names(data), function(col) {
-    lbl <- attr(data[[col]], "label")
+  map_chr(data, function(col_data) {
+    lbl <- attr(col_data, "label")
     if (is.null(lbl)) NA_character_ else as.character(lbl)
-  }, character(1))
+  })
 }

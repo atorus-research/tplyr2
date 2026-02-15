@@ -150,24 +150,24 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- Format ---
   fmt <- get_count_format(settings)
-  fmt_args <- lapply(fmt$vars, function(v) counts[[v]])
+  fmt_args <- map(fmt$vars, function(v) counts[[v]])
   counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
 
   # Format missing row if present
   if (!is.null(missing_row)) {
-    fmt_args_m <- lapply(fmt$vars, function(v) missing_row[[v]])
+    fmt_args_m <- map(fmt$vars, function(v) missing_row[[v]])
     missing_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_m))]
   }
 
   # Format missing subjects row if present
   if (!is.null(missing_subjects_row)) {
-    fmt_args_ms <- lapply(fmt$vars, function(v) missing_subjects_row[[v]])
+    fmt_args_ms <- map(fmt$vars, function(v) missing_subjects_row[[v]])
     missing_subjects_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_ms))]
   }
 
   # Format total row if present
   if (!is.null(total_result)) {
-    fmt_args_t <- lapply(fmt$vars, function(v) total_result[[v]])
+    fmt_args_t <- map(fmt$vars, function(v) total_result[[v]])
     total_result[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_t))]
   }
 
@@ -209,7 +209,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (!is.null(method)) {
     # Find the rowlabel column that holds the target variable values
     tv_label_idx <- length(by_labels) + length(by_data_vars) + 1L
-    tv_label_col <- paste0("rowlabel", tv_label_idx)
+    tv_label_col <- str_c("rowlabel", tv_label_idx)
     if (tv_label_col %in% names(wide)) {
       tv_vals <- wide[[tv_label_col]]
       if (method == "bycount") {
@@ -320,7 +320,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
                                      limit_data_by, denom_group)
 
     # Format
-    fmt_args <- lapply(fmt$vars, function(v) counts[[v]])
+    fmt_args <- map(fmt$vars, function(v) counts[[v]])
     counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
 
     # Build row labels for this level
@@ -338,7 +338,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # Fill NA rowlabel columns with ""
   for (i in seq_len(n_label_cols)) {
-    col_name <- paste0("rowlabel", i)
+    col_name <- str_c("rowlabel", i)
     if (col_name %in% names(combined)) {
       combined[is.na(get(col_name)), (col_name) := ""]
     }
@@ -360,7 +360,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       total_missings, distinct_by, missing_count,
       get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt
     )
-    fmt_args_t <- lapply(fmt$vars, function(v) total_result[[v]])
+    fmt_args_t <- map(fmt$vars, function(v) total_result[[v]])
     total_result[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_t))]
 
     # Build row labels for total row
@@ -385,7 +385,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     )
     missing_row <- missing_result$missing_row
 
-    fmt_args_m <- lapply(fmt$vars, function(v) missing_row[[v]])
+    fmt_args_m <- map(fmt$vars, function(v) missing_row[[v]])
     missing_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_m))]
 
     build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
@@ -399,7 +399,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # Fill any remaining NA rowlabel columns
   for (i in seq_len(n_label_cols)) {
-    col_name <- paste0("rowlabel", i)
+    col_name <- str_c("rowlabel", i)
     if (col_name %in% names(combined)) {
       combined[is.na(get(col_name)), (col_name) := ""]
     }
@@ -409,7 +409,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   numeric_snapshot <- data.table::copy(combined)
 
   # Cast to wide
-  row_label_cols <- paste0("rowlabel", seq_len(n_label_cols))
+  row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
   wide <- cast_to_wide(combined, row_label_cols, cols, layer_index, col_n = col_n)
 
   # Add ord2 for nesting depth
@@ -453,21 +453,21 @@ build_nested_row_labels <- function(counts, by_labels, by_data_vars, target_vars
 
   # by_labels (constant text)
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := lbl]
     col_idx <- col_idx + 1L
   }
 
   # by_data_vars
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := as.character(get(bv))]
     col_idx <- col_idx + 1L
   }
 
   # Target variable columns
   for (tv_idx in seq_along(target_vars)) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
 
     if (tv_idx <= level) {
       # This target var is in the grouping — populate with its value
@@ -475,7 +475,7 @@ build_nested_row_labels <- function(counts, by_labels, by_data_vars, target_vars
       if (tv_idx == level && level > 1) {
         # Apply indentation to the current level (not the outermost)
         indent_str <- strrep(indentation, level - 1)
-        val <- paste0(indent_str, val)
+        val <- str_c(indent_str, val)
       }
       counts[, (col_name) := val]
     } else {
@@ -497,26 +497,26 @@ build_nested_row_labels_special <- function(dt, by_labels, by_data_vars,
 
   # by_labels
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     dt[, (col_name) := lbl]
     col_idx <- col_idx + 1L
   }
 
   # by_data_vars (empty for special rows)
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     dt[, (col_name) := ""]
     col_idx <- col_idx + 1L
   }
 
   # First target var column gets the label (e.g. "Total")
-  col_name <- paste0("rowlabel", col_idx)
+  col_name <- str_c("rowlabel", col_idx)
   dt[, (col_name) := as.character(get(tv))]
   col_idx <- col_idx + 1L
 
   # Remaining target var columns are blank
   while (col_idx <= n_label_cols) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     dt[, (col_name) := ""]
     col_idx <- col_idx + 1L
   }
@@ -885,7 +885,7 @@ build_row_labels_special <- function(dt, by_labels, by_data_vars, tv, existing_l
 
   # Add label columns (same constant labels as main rows)
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     if (!col_name %in% names(dt)) {
       dt[, (col_name) := lbl]
     }
@@ -894,7 +894,7 @@ build_row_labels_special <- function(dt, by_labels, by_data_vars, tv, existing_l
 
   # Add by data variable columns (use empty string for special rows if not present)
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     if (!col_name %in% names(dt)) {
       dt[, (col_name) := ""]
     }
@@ -904,14 +904,14 @@ build_row_labels_special <- function(dt, by_labels, by_data_vars, tv, existing_l
   # The last rowlabel should be the target variable value (e.g., "Total" or "Missing")
   # which is stored in the tv column of the data.table
   if (col_idx <= n_label_cols) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     dt[, (col_name) := as.character(get(tv))]
     col_idx <- col_idx + 1L
   }
 
   # Fill any remaining label columns with empty string
   while (col_idx <= n_label_cols) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     if (!col_name %in% names(dt)) {
       dt[, (col_name) := ""]
     }
@@ -1046,7 +1046,7 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
 
   # Add label columns
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := lbl]
     label_cols[[col_name]] <- col_name
     col_idx <- col_idx + 1L
@@ -1054,14 +1054,14 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
 
   # Add by data variable columns as row labels
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := as.character(get(bv))]
     label_cols[[col_name]] <- col_name
     col_idx <- col_idx + 1L
   }
 
   # Add target variable as row label
-  col_name <- paste0("rowlabel", col_idx)
+  col_name <- str_c("rowlabel", col_idx)
   counts[, (col_name) := as.character(get(tv))]
   label_cols[[col_name]] <- col_name
 
@@ -1094,17 +1094,17 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
     data.table::setnames(wide, "formatted", "res1")
   } else {
     # Build dcast formula: row_labels ~ cols
-    lhs <- paste(row_label_cols, collapse = " + ")
+    lhs <- str_c(row_label_cols, collapse = " + ")
 
     if (length(cols) == 1) {
       rhs <- cols[1]
     } else {
       # For multiple cols, create interaction column
-      dt[, .col_combo := do.call(paste, c(.SD, sep = " | ")), .SDcols = cols]
+      dt[, .col_combo := do.call(str_c, c(.SD, sep = " | ")), .SDcols = cols]
       rhs <- ".col_combo"
     }
 
-    formula_str <- paste(lhs, "~", rhs)
+    formula_str <- str_c(lhs, " ~ ", rhs)
     wide <- data.table::dcast(
       dt,
       as.formula(formula_str),
@@ -1115,7 +1115,7 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
     # Rename value columns from dcast names to res1, res2, ...
     val_cols <- setdiff(names(wide), row_label_cols)
     col_labels <- build_col_labels(val_cols, col_n)
-    new_names <- paste0("res", seq_along(val_cols))
+    new_names <- str_c("res", seq_along(val_cols))
     data.table::setnames(wide, val_cols, new_names)
 
     # Clean up temp column
@@ -1130,7 +1130,7 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
 
   # Attach label attributes to result columns
   if (!is.null(col_labels)) {
-    res_cols <- paste0("res", seq_along(col_labels))
+    res_cols <- str_c("res", seq_along(col_labels))
     for (i in seq_along(res_cols)) {
       data.table::setattr(wide[[res_cols[i]]], "label", col_labels[i])
     }
@@ -1161,19 +1161,19 @@ build_col_labels <- function(raw_labels, col_n) {
   if (length(col_n_vars) == 1) {
     n_lookup <- setNames(col_n$.n, as.character(col_n[[col_n_vars[1]]]))
   } else {
-    combo_strings <- do.call(paste, c(col_n[, col_n_vars, with = FALSE], sep = " | "))
+    combo_strings <- do.call(str_c, c(col_n[, col_n_vars, with = FALSE], sep = " | "))
     n_lookup <- setNames(col_n$.n, combo_strings)
   }
 
-  vapply(raw_labels, function(lbl) {
+  map_chr(raw_labels, function(lbl) {
     # Split label; use first length(col_n_vars) parts for N lookup
-    parts <- strsplit(lbl, " | ", fixed = TRUE)[[1]]
+    parts <- str_split(lbl, fixed(" | "))[[1]]
     if (length(parts) > length(col_n_vars)) {
-      key <- paste(parts[seq_len(length(col_n_vars))], collapse = " | ")
+      key <- str_c(parts[seq_len(length(col_n_vars))], collapse = " | ")
     } else {
       key <- lbl
     }
     n_val <- n_lookup[key]
-    if (!is.na(n_val)) paste0(lbl, " (N=", n_val, ")") else lbl
-  }, character(1), USE.NAMES = FALSE)
+    if (!is.na(n_val)) str_c(lbl, " (N=", n_val, ")") else lbl
+  })
 }

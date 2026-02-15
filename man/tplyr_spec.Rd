@@ -9,6 +9,7 @@ tplyr_spec(
   where = NULL,
   pop_data = NULL,
   total_groups = NULL,
+  custom_groups = NULL,
   layers = tplyr_layers(),
   settings = NULL
 )
@@ -21,6 +22,8 @@ tplyr_spec(
 \item{pop_data}{A pop_data() object for population-based features (optional)}
 
 \item{total_groups}{List of total_group() objects (optional)}
+
+\item{custom_groups}{List of custom_group() objects (optional)}
 
 \item{layers}{A list of layer objects from tplyr_layers()}
 

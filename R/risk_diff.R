@@ -145,7 +145,7 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
 #' @return Character vector of formatted risk difference strings
 #' @keywords internal
 format_risk_diff <- function(rd_data, fmt) {
-  fmt_args <- lapply(fmt$vars, function(v) rd_data[[v]])
+  fmt_args <- map(fmt$vars, function(v) rd_data[[v]])
   do.call(apply_formats, c(list(fmt), fmt_args))
 }
 
@@ -179,7 +179,7 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
   tv_label_idx <- length(by_data_vars) + 1L
   # Account for by_labels (string labels in `by` that aren't data vars)
   # The TV is in the last rowlabel position
-  all_label_cols <- sort(grep("^rowlabel\\d+$", names(wide), value = TRUE))
+  all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
   if (length(all_label_cols) == 0) return(wide)
   tv_label_col <- all_label_cols[length(all_label_cols)]
 
@@ -187,7 +187,7 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
 
   for (ci_idx in seq_along(comparisons)) {
     comp <- comparisons[[ci_idx]]
-    comp_label <- paste(comp[1], "vs", comp[2])
+    comp_label <- str_c(comp[1], " vs ", comp[2])
 
     rd_subset <- rd_data[.comp_idx == ci_idx]
 
@@ -196,7 +196,7 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
       rd_subset[, .formatted := format_risk_diff(.SD, fmt)]
 
       # Build column name
-      rd_col <- paste0("rdiff", ci_idx)
+      rd_col <- str_c("rdiff", ci_idx)
 
       # Match rows between wide and rd_subset using the tv column
       wide[, (rd_col) := ""]

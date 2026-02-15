@@ -6,7 +6,21 @@
 \usage{
 apply_overrides(spec, overrides)
 }
+\arguments{
+\item{spec}{A tplyr_spec object}
+
+\item{overrides}{Named list of override values}
+}
+\value{
+Modified spec (shallow copy)
+}
 \description{
-Apply build-time overrides to a spec
+Merges override parameters into a copy of the spec. Handles special cases:
+\itemize{
+\item \code{where}: If character, parsed to an expression via
+\code{rlang::parse_expr()}.
+\item \code{pop_data}: If a list, sub-fields are merged into the existing
+pop_data config rather than replacing it entirely.
+}
 }
 \keyword{internal}

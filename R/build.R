@@ -37,11 +37,6 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   # Convert to data.table (copy to avoid modifying user's data)
   dt <- data.table::as.data.table(data)
 
-  # Tag rows for metadata traceability
-  if (metadata) {
-    dt[, .orig_row_idx := .I]
-  }
-
   # Data compatibility validation
   validate_build_data(spec, dt)
 
@@ -77,11 +72,12 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   if (length(cols) > 0) {
     if (!is.null(pop_dt)) {
       pop_cols <- resolve_pop_cols(pop_config, cols)
-      col_n <- pop_dt[, list(.n = .N), by = pop_cols]
-      # Rename pop columns to match spec cols if they differ
-      if (!identical(pop_cols, cols)) {
-        data.table::setnames(col_n, unname(pop_cols), names(pop_cols))
+      # Rename pop_dt columns to match spec cols so all downstream code works
+      if (!identical(unname(pop_cols), cols)) {
+        new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
+        data.table::setnames(pop_dt, unname(pop_cols), new_names)
       }
+      col_n <- pop_dt[, list(.n = .N), by = cols]
       header_n <- data.table::copy(col_n)
     } else {
       col_n <- dt[, list(.n = .N), by = cols]
@@ -127,7 +123,7 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   result <- harmonize_and_bind(layer_results)
 
   # Sort by layer index first, then within-layer ordering columns
-  all_ord <- grep("^ord", names(result), value = TRUE)
+  all_ord <- str_subset(names(result), "^ord")
   other_ord <- sort(setdiff(all_ord, "ordindx"))
   ord_cols <- c("ordindx", other_ord)
   data.table::setorderv(result, ord_cols)
@@ -151,7 +147,8 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   # Attach metadata (row_id column + cell-level traceability)
   if (metadata) {
     output$row_id <- generate_row_ids(output)
-    cell_meta <- build_cell_metadata(output, dt, spec, names(data))
+    pop_col_map <- if (!is.null(pop_config)) resolve_pop_cols(pop_config, cols) else NULL
+    cell_meta <- build_cell_metadata(output, spec, names(data), pop_col_map)
     attr(output, "tplyr_meta") <- cell_meta
   }
 
@@ -206,13 +203,13 @@ harmonize_and_bind <- function(layer_results) {
   }
 
   # Collect all column names across layers
-  all_names <- unique(unlist(lapply(layer_results, names)))
+  all_names <- unique(unlist(map(layer_results, names)))
 
   # Separate by type: rowlabel*, res*, rdiff*, ord*
-  label_cols <- sort(grep("^rowlabel", all_names, value = TRUE))
-  res_cols <- sort(grep("^res\\d", all_names, value = TRUE))
-  rdiff_cols <- sort(grep("^rdiff", all_names, value = TRUE))
-  ord_cols <- sort(grep("^ord", all_names, value = TRUE))
+  label_cols <- sort(str_subset(all_names, "^rowlabel"))
+  res_cols <- sort(str_subset(all_names, "^res\\d"))
+  rdiff_cols <- sort(str_subset(all_names, "^rdiff"))
+  ord_cols <- sort(str_subset(all_names, "^ord"))
 
   target_cols <- c(label_cols, res_cols, rdiff_cols, ord_cols)
 
@@ -221,7 +218,7 @@ harmonize_and_bind <- function(layer_results) {
     dt <- layer_results[[i]]
     missing_cols <- setdiff(target_cols, names(dt))
     for (col in missing_cols) {
-      if (grepl("^ord", col)) {
+      if (str_detect(col, "^ord")) {
         dt[, (col) := NA_real_]
       } else {
         dt[, (col) := ""]

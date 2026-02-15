@@ -17,7 +17,7 @@ tplyr_write_spec <- function(spec, path) {
     stop("'spec' must be a tplyr_spec object", call. = FALSE)
   }
 
-  ext <- tolower(tools::file_ext(path))
+  ext <- str_to_lower(tools::file_ext(path))
   serializable <- spec_to_serializable(spec)
 
   if (ext == "json") {
@@ -53,7 +53,7 @@ tplyr_read_spec <- function(path) {
     stop("File not found: ", path, call. = FALSE)
   }
 
-  ext <- tolower(tools::file_ext(path))
+  ext <- str_to_lower(tools::file_ext(path))
 
   if (ext == "json") {
     raw <- jsonlite::fromJSON(path, simplifyVector = FALSE)
@@ -88,18 +88,18 @@ spec_to_serializable <- function(spec) {
   }
 
   if (!is.null(spec$total_groups)) {
-    result$total_groups <- lapply(spec$total_groups, function(tg) {
+    result$total_groups <- map(spec$total_groups, function(tg) {
       list(col_var = tg$col_var, label = tg$label)
     })
   }
 
   if (!is.null(spec$custom_groups)) {
-    result$custom_groups <- lapply(spec$custom_groups, function(cg) {
+    result$custom_groups <- map(spec$custom_groups, function(cg) {
       list(col_var = cg$col_var, groups = cg$groups)
     })
   }
 
-  result$layers <- lapply(spec$layers, serialize_layer)
+  result$layers <- map(spec$layers, serialize_layer)
   result$settings <- spec$settings
 
   result
@@ -133,7 +133,7 @@ serialize_settings <- function(settings) {
 
   # format_strings: list of f_str -> serialize each
   if (!is.null(settings$format_strings)) {
-    out$format_strings <- lapply(settings$format_strings, serialize_f_str)
+    out$format_strings <- map(settings$format_strings, serialize_f_str)
   }
 
   # Simple pass-through fields
@@ -158,7 +158,7 @@ serialize_settings <- function(settings) {
 
   # custom_summaries: named list of expressions
   if (!is.null(settings$custom_summaries)) {
-    out$custom_summaries <- lapply(settings$custom_summaries, function(expr) {
+    out$custom_summaries <- map(settings$custom_summaries, function(expr) {
       serialize_expr(expr)
     })
   }
@@ -228,7 +228,7 @@ serialize_by <- function(by) {
 
   # List form with potential label elements
   if (is.list(by)) {
-    return(lapply(by, function(b) {
+    return(map(by, function(b) {
       if (is_label(b)) {
         list(value = as.character(b), `_type` = "label")
       } else {
@@ -245,7 +245,7 @@ serialize_by <- function(by) {
 #' @keywords internal
 serialize_function <- function(fn) {
   if (is.null(fn)) return(NULL)
-  list(`_fn` = paste(deparse(fn), collapse = "\n"))
+  list(`_fn` = str_c(deparse(fn), collapse = "\n"))
 }
 
 # ---- Deserialization helpers (plain list -> spec) ----
@@ -268,7 +268,7 @@ serializable_to_spec <- function(raw) {
   # Reconstruct total_groups
   total_groups <- NULL
   if (!is.null(raw$total_groups)) {
-    total_groups <- lapply(raw$total_groups, function(tg) {
+    total_groups <- map(raw$total_groups, function(tg) {
       structure(
         list(col_var = tg$col_var, label = tg$label),
         class = "tplyr_total_group"
@@ -279,9 +279,9 @@ serializable_to_spec <- function(raw) {
   # Reconstruct custom_groups
   custom_groups <- NULL
   if (!is.null(raw$custom_groups)) {
-    custom_groups <- lapply(raw$custom_groups, function(cg) {
+    custom_groups <- map(raw$custom_groups, function(cg) {
       # Group values come back as lists from JSON — convert to char vectors
-      grps <- lapply(cg$groups, function(g) unlist(g))
+      grps <- map(cg$groups, function(g) unlist(g))
       structure(
         list(col_var = cg$col_var, groups = grps),
         class = "tplyr_custom_group"
@@ -290,7 +290,7 @@ serializable_to_spec <- function(raw) {
   }
 
   # Reconstruct layers
-  layers <- lapply(raw$layers, deserialize_layer)
+  layers <- map(raw$layers, deserialize_layer)
 
   structure(
     list(
@@ -393,7 +393,7 @@ deserialize_by <- function(raw) {
     # Check if it's a list of items (not a single object)
     has_type <- !is.null(raw[["_type"]])
     if (!has_type && length(raw) > 0) {
-      result <- lapply(raw, function(b) {
+      result <- map(raw, function(b) {
         if (is.list(b) && !is.null(b[["_type"]]) && b[["_type"]] == "label") {
           label(b$value)
         } else if (is.list(b)) {
@@ -403,7 +403,7 @@ deserialize_by <- function(raw) {
         }
       })
       # If all elements are simple strings, collapse to character vector
-      if (all(vapply(result, function(x) is.character(x) && !is_label(x) && length(x) == 1, logical(1)))) {
+      if (all(map_lgl(result, function(x) is.character(x) && !is_label(x) && length(x) == 1))) {
         return(unlist(result))
       }
       return(result)
@@ -420,7 +420,7 @@ deserialize_settings <- function(raw) {
 
   # Reconstruct format_strings
   if (!is.null(raw$format_strings)) {
-    raw$format_strings <- lapply(raw$format_strings, deserialize_f_str)
+    raw$format_strings <- map(raw$format_strings, deserialize_f_str)
   }
 
   # Reconstruct denom_where
@@ -430,7 +430,7 @@ deserialize_settings <- function(raw) {
 
   # Reconstruct custom_summaries
   if (!is.null(raw$custom_summaries)) {
-    raw$custom_summaries <- lapply(raw$custom_summaries, deserialize_expr)
+    raw$custom_summaries <- map(raw$custom_summaries, deserialize_expr)
   }
 
   # Reconstruct risk_diff format

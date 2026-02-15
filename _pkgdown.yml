@@ -1,0 +1,149 @@
+url: https://github.com/mstackhouse/tplyr2
+
+template:
+  bootstrap: 5
+  bslib:
+    bg: "#FFFFFF"
+    fg: "#1D252D"
+    primary: "#1D252D"
+
+search:
+  exclude: ['news/index.html']
+
+reference:
+- title: Build
+  desc: High-level functions to create and build a table
+  contents:
+    - tplyr_spec
+    - tplyr_build
+    - is_tplyr_spec
+
+- title: Layers
+  desc: Creating layers and adding them to a spec
+  contents:
+    - tplyr_layers
+    - is_tplyr_layer
+    - group_count
+    - group_desc
+    - group_shift
+    - group_analyze
+    - label
+    - layer_settings
+
+- title: Formatting
+  desc: Controlling the display of numeric results
+  contents:
+    - f_str
+    - apply_formats
+
+- title: Population Data and Groups
+  desc: Population data, total groups, and custom groups
+  contents:
+    - pop_data
+    - is_pop_data
+    - total_group
+    - custom_group
+    - tplyr_header_n
+
+- title: Metadata
+  desc: Cell-level traceability and source data extraction
+  contents:
+    - tplyr_meta_result
+    - tplyr_meta_subset
+    - generate_row_ids
+
+- title: Numeric Data
+  desc: Accessing raw unformatted results
+  contents:
+    - tplyr_numeric_data
+    - tplyr_stats_data
+
+- title: Post-Processing
+  desc: Post-processing functions for display formatting
+  contents:
+    - add_column_headers
+    - apply_conditional_format
+    - apply_row_masks
+    - collapse_row_labels
+    - replace_leading_whitespace
+    - str_extract_num
+    - str_indent_wrap
+
+- title: Serialization
+  desc: Saving and loading spec files
+  contents:
+    - tplyr_write_spec
+    - tplyr_read_spec
+
+- title: Analysis Results Data
+  desc: ARD format conversion
+  contents:
+    - tplyr_to_ard
+    - tplyr_from_ard
+
+- title: Datasets
+  desc: Example clinical trial datasets
+  contents:
+    - tplyr_adae
+    - tplyr_adlb
+    - tplyr_adsl
+
+- title: Options and Helpers
+  desc: Package options and helper functions
+  contents:
+    - tplyr2_options
+    - get_data_labels
+
+articles:
+- title: Getting Started
+  navbar: Getting Started
+  contents:
+    - tplyr2
+
+- title: Table Basics
+  navbar: Table Basics
+  contents:
+    - table
+
+- title: Layer Basics
+  navbar: Layer Basics
+  contents:
+    - desc
+    - count
+    - shift
+
+- title: Formatting
+  navbar: Formatting
+  contents:
+    - general_string_formatting
+    - desc_layer_formatting
+
+- title: Table Customization
+  navbar: Table Customization
+  contents:
+    - sort
+    - denom
+    - options
+
+- title: Metadata
+  navbar: Metadata
+  contents:
+    - metadata
+
+- title: Advanced
+  navbar: Advanced
+  contents:
+    - riskdiff
+    - analyze
+    - serialization
+    - ard
+
+- title: Post-Processing
+  navbar: Post-Processing
+  contents:
+    - post_processing
+
+- title: Migration
+  navbar: Migration
+  contents:
+    - migration

@@ -4,7 +4,7 @@
 \alias{cast_to_wide}
 \title{Cast long data to wide output format}
 \usage{
-cast_to_wide(dt, row_label_cols, cols, layer_index)
+cast_to_wide(dt, row_label_cols, cols, layer_index, col_n = NULL)
 }
 \description{
 Cast long data to wide output format

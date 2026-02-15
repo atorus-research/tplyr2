@@ -11,12 +11,7 @@ f_str <- function(format_string, ..., empty = NULL) {
   parsed <- parse_format_string(format_string)
 
   if (length(parsed$groups) != length(vars)) {
-    stop(
-      sprintf(
-        "Format string has %d format group(s) but %d variable(s) were provided",
-        length(parsed$groups), length(vars)
-      )
-    )
+    stop(str_glue("Format string has {length(parsed$groups)} format group(s) but {length(vars)} variable(s) were provided"))
   }
 
   structure(
@@ -54,12 +49,7 @@ apply_formats <- function(fmt, ..., precision = NULL) {
   literals <- parsed$literals
 
   if (length(args) != length(groups)) {
-    stop(
-      sprintf(
-        "Expected %d numeric vector(s) but got %d",
-        length(groups), length(args)
-      )
-    )
+    stop(str_glue("Expected {length(groups)} numeric vector(s) but got {length(args)}"))
   }
 
   n <- length(args[[1]])
@@ -87,7 +77,7 @@ apply_formats <- function(fmt, ..., precision = NULL) {
 
   # Handle empty values: if all format group values are NA, replace with empty
   if (!is.null(fmt$empty)) {
-    all_na <- Reduce(`&`, lapply(args, is.na))
+    all_na <- Reduce(`&`, map(args, is.na))
     if (".overall" %in% names(fmt$empty)) {
       result[all_na] <- fmt$empty[[".overall"]]
     }
@@ -162,24 +152,24 @@ format_number_vec <- function(values, group, precision = NULL) {
 #' @keywords internal
 hug_format_group <- function(prefix, num_part, trailing_literal) {
   # Split trailing literal into body + closing delimiter (last character)
-  lit_len <- nchar(trailing_literal)
+  lit_len <- str_length(trailing_literal)
   if (lit_len > 0) {
-    lit_body <- substr(trailing_literal, 1L, lit_len - 1L)
-    lit_close <- substr(trailing_literal, lit_len, lit_len)
+    lit_body <- str_sub(trailing_literal, 1L, lit_len - 1L)
+    lit_close <- str_sub(trailing_literal, lit_len, lit_len)
   } else {
     lit_body <- ""
     lit_close <- ""
   }
 
-  vapply(seq_along(prefix), function(j) {
+  map_chr(seq_along(prefix), function(j) {
     np <- num_part[j]
     # Count leading spaces in formatted number
-    stripped <- sub("^ +", "", np)
-    n_spaces <- nchar(np) - nchar(stripped)
+    stripped <- str_replace(np, "^ +", "")
+    n_spaces <- str_length(np) - str_length(stripped)
     # Hugged: stripped number + literal body + shifted spaces + closing delimiter
-    hugged <- paste0(stripped, lit_body, strrep(" ", n_spaces), lit_close)
-    paste0(prefix[j], hugged)
-  }, character(1), USE.NAMES = FALSE)
+    hugged <- str_c(stripped, lit_body, strrep(" ", n_spaces), lit_close)
+    str_c(prefix[j], hugged)
+  })
 }
 
 #' Parse a format string into groups and literals
@@ -188,15 +178,14 @@ parse_format_string <- function(fmt) {
   # Pattern matches format groups: x/X/a/A characters with optional +N and decimal
   pattern <- "[xXaA]+(\\+\\d+)?(\\.[xXaA]+(\\+\\d+)?)?"
 
-  matches <- gregexpr(pattern, fmt, perl = TRUE)[[1]]
+  match_positions <- str_locate_all(fmt, pattern)[[1]]
 
-  if (matches[1] == -1L) {
+  if (nrow(match_positions) == 0) {
     stop("No format groups found in format string: ", fmt)
   }
 
-  match_starts <- as.integer(matches)
-  match_lengths <- attr(matches, "match.length")
-  match_ends <- match_starts + match_lengths - 1L
+  match_starts <- match_positions[, "start"]
+  match_ends <- match_positions[, "end"]
 
   n_groups <- length(match_starts)
   groups <- vector("list", n_groups)
@@ -206,19 +195,19 @@ parse_format_string <- function(fmt) {
   for (i in seq_along(match_starts)) {
     # Literal before this group
     if (match_starts[i] > prev_end + 1L) {
-      literals[i] <- substr(fmt, prev_end + 1L, match_starts[i] - 1L)
+      literals[i] <- str_sub(fmt, prev_end + 1L, match_starts[i] - 1L)
     }
 
     # Parse the group
-    group_str <- substr(fmt, match_starts[i], match_ends[i])
+    group_str <- str_sub(fmt, match_starts[i], match_ends[i])
     groups[[i]] <- parse_format_group(group_str)
 
     prev_end <- match_ends[i]
   }
 
   # Trailing literal
-  if (prev_end < nchar(fmt)) {
-    literals[n_groups + 1L] <- substr(fmt, prev_end + 1L, nchar(fmt))
+  if (prev_end < str_length(fmt)) {
+    literals[n_groups + 1L] <- str_sub(fmt, prev_end + 1L, str_length(fmt))
   }
 
   list(groups = groups, literals = literals)
@@ -228,17 +217,17 @@ parse_format_string <- function(fmt) {
 #' @keywords internal
 parse_format_group <- function(group_str) {
   # Split on decimal point
-  if (grepl("\\.", group_str)) {
-    dot_pos <- regexpr("\\.", group_str)
-    int_part <- substr(group_str, 1, dot_pos - 1L)
-    dec_part <- substr(group_str, dot_pos + 1L, nchar(group_str))
+  if (str_detect(group_str, "\\.")) {
+    dot_pos <- str_locate(group_str, "\\.")[1, "start"]
+    int_part <- str_sub(group_str, 1, dot_pos - 1L)
+    dec_part <- str_sub(group_str, dot_pos + 1L, str_length(group_str))
   } else {
     int_part <- group_str
     dec_part <- ""
   }
 
   int_info <- parse_format_part(int_part)
-  dec_info <- if (nchar(dec_part) > 0) {
+  dec_info <- if (str_length(dec_part) > 0) {
     parse_format_part(dec_part)
   } else {
     list(width = 0L, auto = FALSE, offset = 0L, hug = FALSE)
@@ -247,7 +236,7 @@ parse_format_group <- function(group_str) {
   list(
     int = int_info,
     dec = dec_info,
-    has_decimal = nchar(dec_part) > 0
+    has_decimal = str_length(dec_part) > 0
   )
 }
 
@@ -256,13 +245,13 @@ parse_format_group <- function(group_str) {
 parse_format_part <- function(part) {
   # Check for +N suffix
   offset <- 0L
-  if (grepl("\\+\\d+$", part)) {
-    offset_match <- regmatches(part, regexpr("\\+\\d+$", part))
-    offset <- as.integer(sub("\\+", "", offset_match))
-    part <- sub("\\+\\d+$", "", part)
+  if (str_detect(part, "\\+\\d+$")) {
+    offset_match <- str_extract(part, "\\+\\d+$")
+    offset <- as.integer(str_replace(offset_match, "\\+", ""))
+    part <- str_replace(part, "\\+\\d+$", "")
   }
 
-  chars <- strsplit(part, "")[[1]]
+  chars <- str_split(part, "")[[1]]
   width <- length(chars)
   auto <- any(chars %in% c("a", "A"))
   hug <- any(chars %in% c("X", "A"))
@@ -272,10 +261,10 @@ parse_format_part <- function(part) {
 
 #' @export
 print.tplyr_f_str <- function(x, ...) {
-  cat(sprintf("tplyr format string: \"%s\"\n", x$format_string))
-  cat(sprintf("  Variables: %s\n", paste(x$vars, collapse = ", ")))
+  cat(str_glue("tplyr format string: \"{x$format_string}\"\n"))
+  cat(str_glue("  Variables: {str_c(x$vars, collapse = ', ')}\n"))
   if (!is.null(x$empty)) {
-    cat(sprintf("  Empty: %s\n", deparse(x$empty)))
+    cat(str_glue("  Empty: {deparse(x$empty)}\n"))
   }
   invisible(x)
 }

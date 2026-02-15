@@ -49,19 +49,19 @@ collect_precision_values <- function(vals) {
   # Max integer width: number of digits in the integer part
   abs_vals <- abs(vals)
   int_parts <- floor(abs_vals)
-  int_chars <- nchar(as.character(as.integer(int_parts)))
+  int_chars <- str_length(as.character(as.integer(int_parts)))
   max_int <- max(int_chars, na.rm = TRUE)
 
   # Max decimal precision: count significant decimal places
   # Use format to avoid scientific notation
   char_vals <- format(vals, scientific = FALSE, trim = TRUE)
-  dec_counts <- vapply(char_vals, function(s) {
-    if (!grepl("\\.", s)) return(0L)
-    dec_part <- sub(".*\\.", "", s)
+  dec_counts <- map_int(char_vals, function(s) {
+    if (!str_detect(s, "\\.")) return(0L)
+    dec_part <- str_replace(s, ".*\\.", "")
     # Remove trailing zeros
-    dec_part <- sub("0+$", "", dec_part)
-    nchar(dec_part)
-  }, integer(1), USE.NAMES = FALSE)
+    dec_part <- str_replace(dec_part, "0+$", "")
+    str_length(dec_part)
+  })
   max_dec <- max(dec_counts, 0L, na.rm = TRUE)
 
   list(max_int = as.integer(max_int), max_dec = as.integer(max_dec))

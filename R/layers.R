@@ -165,7 +165,7 @@ group_analyze <- function(target_var, by = NULL, where = NULL,
 #' @export
 tplyr_layers <- function(...) {
   layers <- list(...)
-  if (!all(vapply(layers, inherits, logical(1), "tplyr_layer"))) {
+  if (!all(map_lgl(layers, inherits, "tplyr_layer"))) {
     stop("All arguments to tplyr_layers() must be tplyr_layer objects")
   }
   layers

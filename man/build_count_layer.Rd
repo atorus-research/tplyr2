@@ -4,7 +4,7 @@
 \alias{build_count_layer}
 \title{Process a count layer}
 \usage{
-build_count_layer(dt, layer, cols, layer_index)
+build_count_layer(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL)
 }
 \arguments{
 \item{dt}{data.table with the (filtered) input data}
@@ -16,7 +16,7 @@ build_count_layer(dt, layer, cols, layer_index)
 \item{layer_index}{Integer index of this layer}
 }
 \value{
-A data.table with row_label*, var1_\emph{, and ord_} columns
+A data.table with rowlabel*, res*, and ord* columns
 }
 \description{
 Process a count layer

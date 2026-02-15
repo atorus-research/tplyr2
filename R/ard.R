@@ -25,7 +25,7 @@ tplyr_to_ard <- function(result) {
   internal_cols <- c("formatted", ".missing_sort", ".total_sort", ".sort_key",
                      ".nest_level", ".row_order", ".comp_idx", ".formatted",
                      ".sort_outer", ".sort_inner", ".dummy",
-                     ".orig_row_idx", ".row_indices")
+                     ".row_indices")
 
   ard_parts <- vector("list", length(nd))
 
@@ -43,8 +43,8 @@ tplyr_to_ard <- function(result) {
     for (col in all_cols) {
       # Skip internal columns
       if (col %in% internal_cols) next
-      if (grepl("^\\.", col)) next
-      if (grepl("^rowlabel", col)) next
+      if (str_detect(col, "^\\.")) next
+      if (str_detect(col, "^rowlabel")) next
 
       if (is.numeric(dt[[col]])) {
         stat_cols <- c(stat_cols, col)
@@ -131,7 +131,7 @@ tplyr_from_ard <- function(ard, spec) {
 
   result <- harmonize_and_bind(layer_results)
 
-  all_ord <- grep("^ord", names(result), value = TRUE)
+  all_ord <- str_subset(names(result), "^ord")
   other_ord <- sort(setdiff(all_ord, "ordindx"))
   ord_cols <- c("ordindx", other_ord)
   data.table::setorderv(result, ord_cols)
@@ -151,7 +151,7 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
 
   # Pivot from long to wide: one column per stat name
   if (length(group_cols) > 0) {
-    formula_str <- paste(paste(group_cols, collapse = " + "), "~ stat_name")
+    formula_str <- str_c(str_c(group_cols, collapse = " + "), " ~ stat_name")
   } else {
     layer_ard[, .row := 1L]
     formula_str <- ".row ~ stat_name"
@@ -179,7 +179,7 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
       inherits(layer, "tplyr_shift_layer")) {
     # Apply count format
     fmt <- get_count_format(settings)
-    fmt_args <- lapply(fmt$vars, function(v) {
+    fmt_args <- map(fmt$vars, function(v) {
       if (v %in% names(wide_stats)) wide_stats[[v]] else NA_real_
     })
     wide_stats[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
@@ -196,13 +196,13 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
     col_idx <- 1L
 
     for (lbl in by_labels) {
-      col_name <- paste0("rowlabel", col_idx)
+      col_name <- str_c("rowlabel", col_idx)
       wide_stats[, (col_name) := lbl]
       row_label_cols <- c(row_label_cols, col_name)
       col_idx <- col_idx + 1L
     }
     for (bv in by_data_vars) {
-      col_name <- paste0("rowlabel", col_idx)
+      col_name <- str_c("rowlabel", col_idx)
       wide_stats[, (col_name) := as.character(get(bv))]
       row_label_cols <- c(row_label_cols, col_name)
       col_idx <- col_idx + 1L
@@ -236,13 +236,13 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
     col_idx <- 1L
 
     for (lbl in by_labels) {
-      col_name <- paste0("rowlabel", col_idx)
+      col_name <- str_c("rowlabel", col_idx)
       wide_stats[, (col_name) := lbl]
       row_label_cols <- c(row_label_cols, col_name)
       col_idx <- col_idx + 1L
     }
     for (bv in by_data_vars) {
-      col_name <- paste0("rowlabel", col_idx)
+      col_name <- str_c("rowlabel", col_idx)
       wide_stats[, (col_name) := as.character(get(bv))]
       row_label_cols <- c(row_label_cols, col_name)
       col_idx <- col_idx + 1L
@@ -284,7 +284,7 @@ create_desc_rows_from_ard <- function(wide_stats, fmt_list, desc_group) {
 
     for (fname in names(fmt_list)) {
       fmt <- fmt_list[[fname]]
-      fmt_args <- lapply(fmt$vars, function(v) {
+      fmt_args <- map(fmt$vars, function(v) {
         if (v %in% names(stat_row)) stat_row[[v]] else NA_real_
       })
       formatted_val <- do.call(apply_formats, c(list(fmt), fmt_args))

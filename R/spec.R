@@ -50,16 +50,14 @@ is_tplyr_spec <- function(x) {
 #' @export
 print.tplyr_spec <- function(x, ...) {
   cat("tplyr2 table specification\n")
-  cat(sprintf("  Column variables: %s\n", paste(x$cols, collapse = ", ")))
+  cat(str_glue("  Column variables: {str_c(x$cols, collapse = ', ')}\n"))
   if (!is.null(x$where) && !identical(x$where, TRUE)) {
-    cat(sprintf("  Where: %s\n", deparse(x$where)))
+    cat(str_glue("  Where: {deparse(x$where)}\n"))
   }
-  cat(sprintf("  Layers: %d\n", length(x$layers)))
-  for (i in seq_along(x$layers)) {
-    layer <- x$layers[[i]]
-    name <- layer$settings$name %||% paste0("Layer ", i)
-    cat(sprintf("    [%d] %s: %s (%s)\n",
-                i, layer$layer_type, paste(layer$target_var, collapse = " > "), name))
-  }
+  cat(str_glue("  Layers: {length(x$layers)}\n"))
+  iwalk(x$layers, function(layer, i) {
+    name <- layer$settings$name %||% str_c("Layer ", i)
+    cat(str_glue("    [{i}] {layer$layer_type}: {str_c(layer$target_var, collapse = ' > ')} ({name})\n"))
+  })
   invisible(x)
 }

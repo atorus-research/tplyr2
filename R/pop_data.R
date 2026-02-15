@@ -36,9 +36,9 @@ is_pop_data <- function(x) {
 #' @export
 print.tplyr_pop_data <- function(x, ...) {
   cat("tplyr2 population data config\n")
-  cat(sprintf("  Columns: %s\n", paste(x$cols, collapse = ", ")))
+  cat(str_glue("  Columns: {str_c(x$cols, collapse = ', ')}\n"))
   if (!is.null(x$where) && !identical(x$where, TRUE)) {
-    cat(sprintf("  Where: %s\n", deparse(x$where)))
+    cat(str_glue("  Where: {deparse(x$where)}\n"))
   }
   invisible(x)
 }
@@ -65,7 +65,7 @@ total_group <- function(col_var, label = "Total") {
 
 #' @export
 print.tplyr_total_group <- function(x, ...) {
-  cat(sprintf("tplyr2 total group: %s = \"%s\"\n", x$col_var, x$label))
+  cat(str_glue("tplyr2 total group: {x$col_var} = \"{x$label}\"\n"))
   invisible(x)
 }
 
@@ -94,10 +94,10 @@ custom_group <- function(col_var, ...) {
 
 #' @export
 print.tplyr_custom_group <- function(x, ...) {
-  cat(sprintf("tplyr2 custom group on %s\n", x$col_var))
-  for (nm in names(x$groups)) {
-    cat(sprintf("  \"%s\" = [%s]\n", nm, paste(x$groups[[nm]], collapse = ", ")))
-  }
+  cat(str_glue("tplyr2 custom group on {x$col_var}\n"))
+  walk(names(x$groups), function(nm) {
+    cat(str_glue("  \"{nm}\" = [{str_c(x$groups[[nm]], collapse = ', ')}]\n"))
+  })
   invisible(x)
 }
 

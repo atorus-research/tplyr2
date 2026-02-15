@@ -4,12 +4,14 @@
 \alias{apply_formats}
 \title{Apply format strings to numeric values}
 \usage{
-apply_formats(fmt, ...)
+apply_formats(fmt, ..., precision = NULL)
 }
 \arguments{
 \item{fmt}{An f_str object or character format string}
 
 \item{...}{Numeric vectors, one per variable in the f_str (positional matching)}
+
+\item{precision}{Optional list of resolved precision per group (for auto-precision)}
 }
 \value{
 Character vector of formatted values

@@ -4,7 +4,7 @@
 \alias{tplyr_build}
 \title{Build a tplyr2 table from a spec and data}
 \usage{
-tplyr_build(spec, data, pop_data = NULL, ...)
+tplyr_build(spec, data, pop_data = NULL, metadata = FALSE, ...)
 }
 \arguments{
 \item{spec}{A tplyr_spec object (or path to a JSON/YAML spec file)}
@@ -13,10 +13,14 @@ tplyr_build(spec, data, pop_data = NULL, ...)
 
 \item{pop_data}{Optional population data.frame (overrides spec pop_data)}
 
+\item{metadata}{If TRUE, attach cell-level metadata enabling traceability
+back to source data rows via \code{tplyr_meta_result()} and
+\code{tplyr_meta_subset()}.}
+
 \item{...}{Additional named arguments to override spec-level parameters}
 }
 \value{
-A data.frame with row_label, var, and ord columns
+A data.frame with rowlabel, res, and ord columns
 }
 \description{
 Executes the table specification against the provided data, producing

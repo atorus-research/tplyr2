@@ -99,7 +99,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   # --- Format ---
   fmt <- get_count_format(settings)
-  fmt_args <- lapply(fmt$vars, function(v) counts[[v]])
+  fmt_args <- map(fmt$vars, function(v) counts[[v]])
   counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
 
   # --- Build row labels ---
@@ -117,13 +117,13 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   # Include by_data_vars ordering too
   for (bv in by_data_vars) {
     if (is.factor(dt[[bv]])) {
-      counts[, paste0(".by_order_", bv) := match(get(bv), levels(dt[[bv]]))]
+      counts[, str_c(".by_order_", bv) := match(get(bv), levels(dt[[bv]]))]
     }
   }
 
   # --- Cast to wide format ---
   # Include .row_order in row labels for dcast, then remove after
-  order_cols <- grep("^\\.row_order$|^\\.by_order_", names(counts), value = TRUE)
+  order_cols <- str_subset(names(counts), "^\\.row_order$|^\\.by_order_")
   row_label_cols_with_order <- c(order_cols, row_label_cols)
   wide <- cast_to_wide(counts, row_label_cols_with_order, all_cols, layer_index, col_n = col_n)
 
@@ -205,14 +205,14 @@ build_shift_row_labels <- function(counts, by_labels, by_data_vars, row_var) {
   col_idx <- 1L
 
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := lbl]
     label_cols[[col_name]] <- col_name
     col_idx <- col_idx + 1L
   }
 
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     counts[, (col_name) := as.character(get(bv))]
     label_cols[[col_name]] <- col_name
     col_idx <- col_idx + 1L

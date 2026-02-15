@@ -9,7 +9,7 @@
 validate_spec <- function(spec) {
   if (!inherits(spec, "tplyr_spec")) {
     stop("'spec' must be a tplyr_spec object (got class: ",
-         paste(class(spec), collapse = ", "), ")", call. = FALSE)
+         str_c(class(spec), collapse = ", "), ")", call. = FALSE)
   }
 
   if (!is.null(spec$cols) && !is.character(spec$cols)) {
@@ -20,14 +20,13 @@ validate_spec <- function(spec) {
     stop("'layers' must be a list", call. = FALSE)
   }
 
-  for (i in seq_along(spec$layers)) {
-    if (!inherits(spec$layers[[i]], "tplyr_layer")) {
-      stop(sprintf("Layer %d is not a tplyr_layer object (class: %s)",
-                   i, paste(class(spec$layers[[i]]), collapse = ", ")),
+  iwalk(spec$layers, function(layer, i) {
+    if (!inherits(layer, "tplyr_layer")) {
+      stop(str_glue("Layer {i} is not a tplyr_layer object (class: {str_c(class(layer), collapse = ', ')})"),
            call. = FALSE)
     }
-    validate_layer(spec$layers[[i]], i)
-  }
+    validate_layer(layer, i)
+  })
 
   invisible(TRUE)
 }
@@ -40,8 +39,8 @@ validate_spec <- function(spec) {
 #' @keywords internal
 validate_layer <- function(layer, index) {
   if (!is.character(layer$target_var) || length(layer$target_var) == 0) {
-    stop(sprintf("Layer %d: target_var must be a non-empty character vector",
-                 index), call. = FALSE)
+    stop(str_glue("Layer {index}: target_var must be a non-empty character vector"),
+         call. = FALSE)
   }
 
   # Shift-specific: must be named with row and column
@@ -49,17 +48,16 @@ validate_layer <- function(layer, index) {
     if (length(layer$target_var) != 2 ||
         is.null(names(layer$target_var)) ||
         !all(c("row", "column") %in% names(layer$target_var))) {
-      stop(sprintf(
-        "Layer %d: shift layer target_var must have names 'row' and 'column'",
-        index), call. = FALSE)
+      stop(str_glue("Layer {index}: shift layer target_var must have names 'row' and 'column'"),
+           call. = FALSE)
     }
   }
 
   # Analyze-specific: must have a function
   if (inherits(layer, "tplyr_analyze_layer")) {
     if (is.null(layer$analyze_fn) || !is.function(layer$analyze_fn)) {
-      stop(sprintf("Layer %d: analyze layer must have a valid analyze_fn",
-                   index), call. = FALSE)
+      stop(str_glue("Layer {index}: analyze layer must have a valid analyze_fn"),
+           call. = FALSE)
     }
   }
 
@@ -79,16 +77,16 @@ validate_layer <- function(layer, index) {
 #' @keywords internal
 validate_format_strings <- function(fmt_list, layer_index) {
   if (!is.list(fmt_list)) {
-    stop(sprintf("Layer %d: format_strings must be a named list of f_str objects",
-                 layer_index), call. = FALSE)
+    stop(str_glue("Layer {layer_index}: format_strings must be a named list of f_str objects"),
+         call. = FALSE)
   }
 
-  for (nm in names(fmt_list)) {
+  walk(names(fmt_list), function(nm) {
     if (!inherits(fmt_list[[nm]], "tplyr_f_str")) {
-      stop(sprintf("Layer %d: format_strings[['%s']] must be an f_str object",
-                   layer_index, nm), call. = FALSE)
+      stop(str_glue("Layer {layer_index}: format_strings[['{nm}']] must be an f_str object"),
+           call. = FALSE)
     }
-  }
+  })
 
   invisible(TRUE)
 }
@@ -106,50 +104,37 @@ validate_build_data <- function(spec, dt) {
   dt_names <- names(dt)
 
   # Check that cols exist in data
-  for (col in spec$cols) {
+  walk(spec$cols, function(col) {
     if (!col %in% dt_names) {
-      stop(sprintf(
-        "Column variable '%s' not found in data. Available columns: %s",
-        col, paste(utils::head(dt_names, 20), collapse = ", ")),
-        call. = FALSE)
+      stop(str_glue("Column variable '{col}' not found in data. Available columns: {str_c(utils::head(dt_names, 20), collapse = ', ')}"),
+           call. = FALSE)
     }
-  }
+  })
 
   # Check each layer's target_var and by vars
-  for (i in seq_along(spec$layers)) {
-    layer <- spec$layers[[i]]
-
-    # For shift layers, check both row and column target vars
-    if (inherits(layer, "tplyr_shift_layer")) {
-      for (tv in layer$target_var) {
-        if (!tv %in% dt_names) {
-          stop(sprintf("Layer %d: target variable '%s' not found in data",
-                       i, tv), call. = FALSE)
-        }
+  iwalk(spec$layers, function(layer, i) {
+    # Check target vars exist in data
+    walk(layer$target_var, function(tv) {
+      if (!tv %in% dt_names) {
+        stop(str_glue("Layer {i}: target variable '{tv}' not found in data"),
+             call. = FALSE)
       }
-    } else {
-      for (tv in layer$target_var) {
-        if (!tv %in% dt_names) {
-          stop(sprintf("Layer %d: target variable '%s' not found in data",
-                       i, tv), call. = FALSE)
-        }
-      }
-    }
+    })
 
     # Check by data vars (not labels)
     if (!is.null(layer$by)) {
       by_info <- classify_by(layer$by, dt_names)
-      for (bv in by_info$data_vars) {
+      walk(by_info$data_vars, function(bv) {
         if (!bv %in% dt_names) {
-          stop(sprintf("Layer %d: by variable '%s' not found in data",
-                       i, bv), call. = FALSE)
+          stop(str_glue("Layer {i}: by variable '{bv}' not found in data"),
+               call. = FALSE)
         }
-      }
+      })
     }
 
     # Warn about unknown stat names in format strings
     validate_layer_stats(layer, i)
-  }
+  })
 
   invisible(TRUE)
 }
@@ -171,7 +156,7 @@ validate_layer_stats <- function(layer, index) {
 
   if (is.null(layer$settings$format_strings)) return(invisible(TRUE))
 
-  for (nm in names(layer$settings$format_strings)) {
+  walk(names(layer$settings$format_strings), function(nm) {
     fmt <- layer$settings$format_strings[[nm]]
 
     if (inherits(layer, "tplyr_count_layer") ||
@@ -189,15 +174,13 @@ validate_layer_stats <- function(layer, index) {
       return(invisible(TRUE))
     }
 
-    for (v in fmt$vars) {
+    walk(fmt$vars, function(v) {
       if (!v %in% valid_stats) {
-        warning(sprintf(
-          "Layer %d: format string '%s' references variable '%s' which is not a recognized statistic for %s layers",
-          index, nm, v, layer$layer_type),
-          call. = FALSE)
+        warning(str_glue("Layer {index}: format string '{nm}' references variable '{v}' which is not a recognized statistic for {layer$layer_type} layers"),
+                call. = FALSE)
       }
-    }
-  }
+    })
+  })
 
   invisible(TRUE)
 }

@@ -151,7 +151,7 @@ format_analyze_results <- function(fn_combined, format_strings, group_vars) {
       fmt <- format_strings[[fname]]
 
       if (nrow(stat_row) > 0) {
-        fmt_args <- lapply(fmt$vars, function(v) {
+        fmt_args <- map(fmt$vars, function(v) {
           if (v %in% names(stat_row)) stat_row[[v]] else NA_real_
         })
         formatted_val <- do.call(apply_formats, c(list(fmt), fmt_args))
@@ -185,14 +185,14 @@ build_analyze_row_labels <- function(combined, by_labels, by_data_vars) {
   col_idx <- 1L
 
   for (lbl in by_labels) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     combined[, (col_name) := lbl]
     row_label_cols <- c(row_label_cols, col_name)
     col_idx <- col_idx + 1L
   }
 
   for (bv in by_data_vars) {
-    col_name <- paste0("rowlabel", col_idx)
+    col_name <- str_c("rowlabel", col_idx)
     combined[, (col_name) := as.character(get(bv))]
     row_label_cols <- c(row_label_cols, col_name)
     col_idx <- col_idx + 1L

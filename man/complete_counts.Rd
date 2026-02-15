@@ -4,7 +4,15 @@
 \alias{complete_counts}
 \title{Complete count data to ensure all combinations exist}
 \usage{
-complete_counts(counts, dt, cols, by_data_vars, tv)
+complete_counts(
+  counts,
+  dt,
+  cols,
+  by_data_vars,
+  tv,
+  limit_data_by = NULL,
+  denom_group = NULL
+)
 }
 \description{
 Complete count data to ensure all combinations exist

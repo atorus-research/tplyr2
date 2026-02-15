@@ -7,7 +7,8 @@
 tplyr_layers(...)
 }
 \arguments{
-\item{...}{Layer objects created by group_count(), group_desc(), or group_shift()}
+\item{...}{Layer objects created by group_count(), group_desc(),
+group_shift(), or group_analyze()}
 }
 \value{
 A list of tplyr_layer objects

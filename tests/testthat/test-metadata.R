@@ -34,7 +34,7 @@ test_that("tplyr_meta attribute is attached when metadata = TRUE", {
   expect_false(is.null(attr(result, "tplyr_meta")))
 })
 
-test_that("tplyr_meta_result returns tplyr_meta object for count cell", {
+test_that("tplyr_meta_result returns tplyr_meta object with filters for count cell", {
   data <- data.frame(
     TRT = rep(c("A", "B"), each = 5),
     SEX = c("M", "F", "M", "F", "M", "F", "M", "F", "M", "F")
@@ -48,7 +48,10 @@ test_that("tplyr_meta_result returns tplyr_meta object for count cell", {
   rid <- result$row_id[1]
   meta <- tplyr_meta_result(result, rid, "res1")
   expect_s3_class(meta, "tplyr_meta")
-  expect_true(is.integer(meta$row_indices))
+  expect_true(is.list(meta$filters))
+  expect_true(length(meta$filters) > 0)
+  expect_true(is.character(meta$names))
+  expect_true(length(meta$names) > 0)
 })
 
 test_that("tplyr_meta_result errors without metadata", {
@@ -116,16 +119,16 @@ test_that("row count in metadata matches cell count", {
 
   for (i in seq_len(nrow(result))) {
     rid <- result$row_id[i]
-    meta1 <- tplyr_meta_result(result, rid, "res1")
-    if (!is.null(meta1)) {
-      # Number of source rows should match the count for that cell
+    # Evaluate the filter and check count
+    subset_data <- tplyr_meta_subset(result, rid, "res1", data)
+    if (!is.null(subset_data)) {
       sex_val <- result$rowlabel1[i]
       res1_label <- attr(result$res1, "label")
       col_level <- sub("\\s*\\(N=\\d+\\)$", "", res1_label)
 
       matching_nd <- nd[nd$SEX == sex_val & nd$TRT == col_level, ]
       if (nrow(matching_nd) > 0) {
-        expect_equal(length(meta1$row_indices), matching_nd$n[1])
+        expect_equal(nrow(subset_data), matching_nd$n[1])
       }
     }
   }
@@ -152,8 +155,12 @@ test_that("metadata works with desc layer", {
   rid <- result$row_id[1]
   meta <- tplyr_meta_result(result, rid, "res1")
   expect_s3_class(meta, "tplyr_meta")
-  # Desc layer: all rows in the group contribute
-  expect_true(length(meta$row_indices) > 0)
+  expect_true(length(meta$filters) > 0)
+  # Desc layer: target_var should be in names
+  expect_true("AGE" %in% meta$names)
+  # Functional check: subsetting should return rows
+  subset_data <- tplyr_meta_subset(result, rid, "res1", data)
+  expect_true(nrow(subset_data) > 0)
 })
 
 test_that("metadata works with by variables", {
@@ -201,6 +208,10 @@ test_that("metadata works with where filter", {
     # Source rows should have FLAG == "Y"
     expect_true(all(subset$FLAG == "Y"))
   }
+
+  # Verify the where filter appears in metadata
+  meta <- tplyr_meta_result(result, rid, "res1")
+  expect_true("FLAG" %in% meta$names)
 })
 
 test_that("metadata works with analyze layer", {
@@ -280,7 +291,7 @@ test_that("tplyr_meta_subset returns NULL for nonexistent cell", {
   expect_null(subset)
 })
 
-test_that("metadata for special rows (Total) has empty indices", {
+test_that("metadata for Total row has proper filters", {
   data <- data.frame(
     TRT = rep(c("A", "B"), each = 5),
     SEX = c("M", "F", "M", "F", "M", "F", "M", "F", "M", "F")
@@ -299,10 +310,12 @@ test_that("metadata for special rows (Total) has empty indices", {
   if (nrow(total_row) > 0) {
     rid <- total_row$row_id[1]
     meta <- tplyr_meta_result(result, rid, "res1")
-    # Total row: "Total" doesn't match any actual SEX value in data
-    # so row_indices should be empty
     expect_s3_class(meta, "tplyr_meta")
-    expect_equal(length(meta$row_indices), 0)
+    # Total row should have filters (at least the column variable filter)
+    expect_true(length(meta$filters) > 0)
+    # Subset should return all rows for that treatment group
+    subset_data <- tplyr_meta_subset(result, rid, "res1", data)
+    expect_equal(nrow(subset_data), 5)
   }
 })
 
@@ -324,6 +337,9 @@ test_that("metadata with shift layer", {
   rid <- result$row_id[1]
   meta <- tplyr_meta_result(result, rid, "res1")
   expect_s3_class(meta, "tplyr_meta")
+  # Should reference both shift variables
+  expect_true("BNRIND" %in% meta$names)
+  expect_true("ANRIND" %in% meta$names)
 })
 
 test_that("metadata multi-layer integration", {
@@ -356,4 +372,505 @@ test_that("metadata multi-layer integration", {
   meta2 <- tplyr_meta_result(result, desc_row$row_id, "res1")
   expect_s3_class(meta2, "tplyr_meta")
   expect_equal(meta2$layer_index, 2L)
+})
+
+# --- New filter-expression-specific tests ---
+
+test_that("filter expressions reference correct variables", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 5),
+    SEX = c("M", "F", "M", "F", "M", "F", "M", "F", "M", "F")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(group_count("SEX"))
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+  f_row <- result[result$rowlabel1 == "F", ]
+  meta <- tplyr_meta_result(result, f_row$row_id, "res1")
+  expect_true("TRT" %in% meta$names)
+  expect_true("SEX" %in% meta$names)
+  # Verify filter expressions contain these variable references
+  filter_vars <- unique(unlist(lapply(meta$filters, all.vars)))
+  expect_true("TRT" %in% filter_vars)
+  expect_true("SEX" %in% filter_vars)
+})
+
+test_that("total group metadata translates to correct filter", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 5),
+    SEX = c("M", "F", "M", "F", "M", "F", "M", "F", "M", "F")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    total_groups = list(total_group("TRT", "Total")),
+    layers = tplyr_layers(group_count("SEX"))
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+
+  # Find the res column for "Total"
+  total_col <- NULL
+  for (rc in grep("^res", names(result), value = TRUE)) {
+    lbl <- attr(result[[rc]], "label")
+    if (!is.null(lbl) && grepl("Total", lbl)) {
+      total_col <- rc
+      break
+    }
+  }
+  expect_false(is.null(total_col))
+
+  rid <- result$row_id[1]
+  meta <- tplyr_meta_result(result, rid, total_col)
+  # Total group: should NOT have a TRT == "Total" filter
+  filter_strs <- vapply(meta$filters, deparse1, character(1))
+  expect_false(any(grepl('"Total"', filter_strs)))
+  # Subset should return rows for both A and B
+  subset_data <- tplyr_meta_subset(result, rid, total_col, data)
+  expect_true(all(c("A", "B") %in% subset_data$TRT))
+})
+
+test_that("custom group metadata translates to %in% filter", {
+  data <- data.frame(
+    TRT = rep(c("A", "B", "C"), each = 4),
+    SEX = rep(c("M", "F"), 6)
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    custom_groups = list(custom_group("TRT", "AB" = c("A", "B"))),
+    layers = tplyr_layers(group_count("SEX"))
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+
+  # Find the res column for "AB"
+  ab_col <- NULL
+  for (rc in grep("^res", names(result), value = TRUE)) {
+    lbl <- attr(result[[rc]], "label")
+    if (!is.null(lbl) && grepl("AB", lbl)) {
+      ab_col <- rc
+      break
+    }
+  }
+  expect_false(is.null(ab_col))
+
+  rid <- result$row_id[1]
+  meta <- tplyr_meta_result(result, rid, ab_col)
+  # Should have a %in% filter with the component values
+  filter_strs <- vapply(meta$filters, deparse1, character(1))
+  expect_true(any(grepl('%in%', filter_strs)))
+  # Subset should return rows for A and B only
+  subset_data <- tplyr_meta_subset(result, rid, ab_col, data)
+  expect_true(all(subset_data$TRT %in% c("A", "B")))
+  expect_false("C" %in% subset_data$TRT)
+})
+
+test_that("missing count metadata uses is.na filter", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 5),
+    SEX = c("M", "F", NA, "M", "F", "M", NA, "F", "M", "F")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(
+      group_count("SEX",
+        settings = layer_settings(
+          missing_count = list(label = "Missing")
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+
+  missing_row <- result[result$rowlabel1 == "Missing", ]
+  if (nrow(missing_row) > 0) {
+    rid <- missing_row$row_id[1]
+    meta <- tplyr_meta_result(result, rid, "res1")
+    # Should have an is.na filter
+    filter_strs <- vapply(meta$filters, deparse1, character(1))
+    expect_true(any(grepl("is\\.na", filter_strs)))
+    # Subset should return rows with NA SEX
+    subset_data <- tplyr_meta_subset(result, rid, "res1", data)
+    expect_true(all(is.na(subset_data$SEX)))
+  }
+})
+
+test_that("print.tplyr_meta produces readable output", {
+  meta <- tplyr_meta(
+    names = c("TRT", "SEX"),
+    filters = list(str2lang('TRT == "A"'), str2lang('SEX == "M"')),
+    layer_index = 1L
+  )
+  out <- capture.output(print(meta))
+  expect_true(any(grepl("tplyr_meta", out)))
+  expect_true(any(grepl("TRT", out)))
+  expect_true(any(grepl("SEX", out)))
+})
+
+test_that("tplyr_meta_subset roundtrip matches manual filter", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 10),
+    GRP = rep(c("G1", "G2"), times = 10),
+    SEX = rep(c("M", "F"), 10)
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(group_count("SEX", by = "GRP"))
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+
+  # Get a specific cell and its metadata
+  g1_f_row <- result[result$rowlabel1 == "G1" & result$rowlabel2 == "F", ]
+  if (nrow(g1_f_row) > 0) {
+    rid <- g1_f_row$row_id[1]
+    res1_label <- attr(result$res1, "label")
+    col_val <- sub("\\s*\\(N=\\d+\\)$", "", res1_label)
+
+    # Get subset via metadata
+    meta_subset <- tplyr_meta_subset(result, rid, "res1", data)
+
+    # Manual filter
+    manual_subset <- data[data$TRT == col_val & data$GRP == "G1" & data$SEX == "F", ]
+
+    expect_equal(nrow(meta_subset), nrow(manual_subset))
+  }
+})
+
+test_that("metadata with layer-level where filter", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 10),
+    SEX = rep(c("M", "F"), 10),
+    SEVERITY = rep(c("MILD", "MODERATE"), 10)
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(
+      group_count("SEX",
+        where = SEVERITY == "MODERATE"
+      )
+    )
+  )
+  result <- tplyr_build(spec, data, metadata = TRUE)
+  rid <- result$row_id[1]
+  subset <- tplyr_meta_subset(result, rid, "res1", data)
+  if (!is.null(subset) && nrow(subset) > 0) {
+    expect_true(all(subset$SEVERITY == "MODERATE"))
+  }
+
+  meta <- tplyr_meta_result(result, rid, "res1")
+  expect_true("SEVERITY" %in% meta$names)
+})
+
+# --- Anti-join / missing subjects metadata tests ---
+
+test_that("missing_subjects metadata has anti_join with correct structure", {
+  target <- data.frame(
+    TRT = c("A", "A", "B"),
+    USUBJID = c("S1", "S2", "S3"),
+    VAL = c("X", "Y", "X")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A", "B", "B"),
+    USUBJID = c("S1", "S2", "S4", "S3", "S5")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  expect_equal(nrow(ms_row), 1)
+
+  rid <- ms_row$row_id[1]
+  meta <- tplyr_meta_result(result, rid, "res1")
+  expect_s3_class(meta, "tplyr_meta")
+
+  # Should have anti_join
+  expect_false(is.null(meta$anti_join))
+  expect_s3_class(meta$anti_join, "tplyr_meta_anti_join")
+
+  # on field should be the distinct_by variable
+  expect_equal(meta$anti_join$on, "USUBJID")
+
+  # join_meta should have column filters
+  expect_true(length(meta$anti_join$join_meta$filters) > 0)
+  pop_filter_vars <- unique(unlist(lapply(meta$anti_join$join_meta$filters, all.vars)))
+  expect_true("TRT" %in% pop_filter_vars)
+})
+
+test_that("missing_subjects metadata subset returns correct subjects", {
+  target <- data.frame(
+    TRT = c("A", "A", "B"),
+    USUBJID = c("S1", "S2", "S3"),
+    VAL = c("X", "Y", "X")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A", "B", "B"),
+    USUBJID = c("S1", "S2", "S4", "S3", "S5")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  rid <- ms_row$row_id[1]
+
+  # Find column for TRT=A
+  a_col <- NULL
+  for (rc in grep("^res\\d+$", names(result), value = TRUE)) {
+    lbl <- attr(result[[rc]], "label")
+    if (!is.null(lbl) && grepl("^A", lbl)) {
+      a_col <- rc
+      break
+    }
+  }
+  expect_false(is.null(a_col))
+
+  # Subset for TRT=A missing subjects: should return S4
+  subset_a <- tplyr_meta_subset(result, rid, a_col, target, pop_data = pop)
+  expect_true(is.data.frame(subset_a))
+  expect_equal(nrow(subset_a), 1)
+  expect_equal(subset_a$USUBJID, "S4")
+  expect_equal(subset_a$TRT, "A")
+
+  # Find column for TRT=B
+  b_col <- NULL
+  for (rc in grep("^res\\d+$", names(result), value = TRUE)) {
+    lbl <- attr(result[[rc]], "label")
+    if (!is.null(lbl) && grepl("^B", lbl)) {
+      b_col <- rc
+      break
+    }
+  }
+  expect_false(is.null(b_col))
+
+  # Subset for TRT=B missing subjects: should return S5
+  subset_b <- tplyr_meta_subset(result, rid, b_col, target, pop_data = pop)
+  expect_equal(nrow(subset_b), 1)
+  expect_equal(subset_b$USUBJID, "S5")
+  expect_equal(subset_b$TRT, "B")
+})
+
+test_that("missing_subjects metadata warns when pop_data not provided to subset", {
+  target <- data.frame(
+    TRT = c("A", "A"),
+    USUBJID = c("S1", "S2"),
+    VAL = c("X", "Y")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A"),
+    USUBJID = c("S1", "S2", "S3")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  rid <- ms_row$row_id[1]
+
+  # Calling without pop_data should warn
+  expect_warning(
+    tplyr_meta_subset(result, rid, "res1", target),
+    "pop_data is required"
+  )
+})
+
+test_that("missing_subjects metadata with by-variables filters correctly", {
+  target <- data.frame(
+    TRT = c("A", "A", "A", "B"),
+    USUBJID = c("S1", "S2", "S3", "S4"),
+    GRP = c("G1", "G1", "G2", "G1"),
+    VAL = c("X", "Y", "X", "X")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A", "A", "B", "B"),
+    USUBJID = c("S1", "S2", "S3", "S5", "S4", "S6"),
+    GRP = c("G1", "G1", "G2", "G1", "G1", "G1")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        by = "GRP",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+
+  # Find the Not in Pop row for GRP=G1
+  ms_g1 <- result[result$rowlabel1 == "G1" & result$rowlabel2 == "Not in Pop", ]
+  if (nrow(ms_g1) > 0) {
+    rid <- ms_g1$row_id[1]
+    meta <- tplyr_meta_result(result, rid, "res1")
+
+    # Anti-join should exist
+    expect_false(is.null(meta$anti_join))
+
+    # Main filters should include by-var (GRP) and col-var (TRT)
+    filter_vars <- unique(unlist(lapply(meta$filters, all.vars)))
+    expect_true("GRP" %in% filter_vars)
+    expect_true("TRT" %in% filter_vars)
+
+    # Pop-side filters should also include GRP and TRT
+    pop_vars <- unique(unlist(lapply(meta$anti_join$join_meta$filters, all.vars)))
+    expect_true("GRP" %in% pop_vars)
+    expect_true("TRT" %in% pop_vars)
+  }
+})
+
+test_that("missing_subjects without distinct_by has no anti_join in metadata", {
+  target <- data.frame(
+    TRT = c("A", "A", "B"),
+    VAL = c("X", "Y", "X")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A", "A", "B", "B", "B"),
+    VAL = c("X", "Y", "Z", "W", "X", "Y", "Z")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  if (nrow(ms_row) > 0) {
+    rid <- ms_row$row_id[1]
+    meta <- tplyr_meta_result(result, rid, "res1")
+    # Without distinct_by, no anti_join (row-level counting is not expressible)
+    expect_null(meta$anti_join)
+  }
+})
+
+test_that("missing_subjects metadata with pop_data where filter", {
+  target <- data.frame(
+    TRT = c("A", "A"),
+    USUBJID = c("S1", "S2"),
+    VAL = c("X", "Y")
+  )
+  pop <- data.frame(
+    TRT = c("A", "A", "A", "A"),
+    USUBJID = c("S1", "S2", "S3", "S4"),
+    SAFFL = c("Y", "Y", "Y", "N")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT", where = SAFFL == "Y"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  if (nrow(ms_row) > 0) {
+    rid <- ms_row$row_id[1]
+    meta <- tplyr_meta_result(result, rid, "res1")
+
+    # Anti-join pop filters should include the pop where filter
+    expect_false(is.null(meta$anti_join))
+    pop_filter_vars <- unique(unlist(lapply(meta$anti_join$join_meta$filters, all.vars)))
+    expect_true("SAFFL" %in% pop_filter_vars)
+
+    # Functional check: S4 has SAFFL=N so should be excluded from pop
+    # Only S3 is the truly missing subject (in pop, not in target, SAFFL=Y)
+    subset <- tplyr_meta_subset(result, rid, "res1", target, pop_data = pop)
+    expect_equal(nrow(subset), 1)
+    expect_equal(subset$USUBJID, "S3")
+  }
+})
+
+test_that("missing_subjects with zero missing produces correct metadata", {
+  data <- data.frame(
+    TRT = c("A", "B"),
+    USUBJID = c("S1", "S2"),
+    VAL = c("X", "X")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(
+      group_count("VAL",
+        settings = layer_settings(
+          distinct_by = "USUBJID",
+          missing_subjects = TRUE,
+          missing_subjects_label = "Not in Pop"
+        )
+      )
+    )
+  )
+  result <- tplyr_build(spec, data, pop_data = data, metadata = TRUE)
+  ms_row <- result[result$rowlabel1 == "Not in Pop", ]
+  if (nrow(ms_row) > 0) {
+    rid <- ms_row$row_id[1]
+    # Subset should return 0 rows (everyone in pop is also in target)
+    subset <- tplyr_meta_subset(result, rid, "res1", data, pop_data = data)
+    expect_equal(nrow(subset), 0)
+  }
+})
+
+test_that("print.tplyr_meta displays anti-join info", {
+  meta <- tplyr_meta(
+    names = c("TRT", "USUBJID"),
+    filters = list(str2lang('TRT == "A"')),
+    layer_index = 1L,
+    anti_join = tplyr_meta_anti_join(
+      join_meta = tplyr_meta(
+        names = "TRT",
+        filters = list(str2lang('TRT == "A"')),
+        layer_index = 1L
+      ),
+      on = "USUBJID"
+    )
+  )
+  out <- capture.output(print(meta))
+  expect_true(any(grepl("Anti-join", out)))
+  expect_true(any(grepl("USUBJID", out)))
 })
