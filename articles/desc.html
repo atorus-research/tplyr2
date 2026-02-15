@@ -10,13 +10,14 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Descriptive Statistics Layers">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Descriptive Statistics Layers">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
@@ -35,11 +36,6 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Getting Started</h6></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Table Basics</h6></li>
-    <li><a class="dropdown-item" href="../articles/table.html">Table Properties</a></li>
-    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Layer Basics</h6></li>
     <li><a class="dropdown-item" href="../articles/desc.html">Descriptive Statistics Layers</a></li>
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
@@ -68,6 +64,8 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Migration</h6></li>
     <li><a class="dropdown-item" href="../articles/migration.html">Migrating from Tplyr v1</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
       </ul>
@@ -97,9 +95,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tplyr2</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -117,7 +112,7 @@ numbers are formatted – all in one place.</p>
 <p>Let’s start with a typical example. Using the built-in
 <code>tplyr_adsl</code> dataset, we will summarize age by treatment
 group.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -138,7 +133,7 @@ group.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -313,7 +308,7 @@ to match SAS output, which uses a different algorithm (closest to R’s
 Type 3).</p>
 <p>You can change the quantile algorithm globally using
 <code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code>:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Default Type 7 (R default)</span></span>
 <span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
@@ -329,7 +324,7 @@ Type 3).</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_type7</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_type7</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_type7</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_type7</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_type7</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Type 7 (R default)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Type 7 (R default)</caption>
@@ -346,12 +341,12 @@ Type 3).</p>
 <td align="left">71.0, 82.0</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Type 3 (matches SAS PROC UNIVARIATE default)</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>quantile_type <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_type3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_type3</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_type3</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_type3</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_type3</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Type 3 (SAS-like)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Type 3 (SAS-like)</caption>
@@ -368,7 +363,7 @@ Type 3).</p>
 <td align="left">71.0, 82.0</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>quantile_type <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span></code></pre></div>
@@ -394,7 +389,7 @@ parameter. Each custom summary is a named expression that uses
 <code>.var</code> as a placeholder for the target variable’s values.</p>
 <p>Here is an example computing a geometric mean alongside the standard
 mean:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -414,7 +409,7 @@ mean:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -466,7 +461,7 @@ in a study, you can register it at the session level using
 <code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code>. Once registered, the custom statistic is
 available by name in any <code>format_strings</code> specification, just
 like the built-in summaries.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Register a coefficient of variation summary for the session</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span></span>
 <span>  custom_summaries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -490,7 +485,7 @@ like the built-in summaries.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -519,7 +514,7 @@ like the built-in summaries.</p>
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Clean up</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>custom_summaries <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
@@ -532,7 +527,7 @@ a custom summary <code>"mean"</code>, it replaces the built-in mean
 calculation. This is useful when your study requires a non-standard
 definition of a standard statistic, such as using a trimmed mean instead
 of the arithmetic mean.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -550,7 +545,7 @@ of the arithmetic mean.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -580,7 +575,7 @@ table – for example, a demographics table that includes age, height, and
 weight. Rather than creating separate layers for each variable, you can
 pass a character vector of variable names to
 <code><a href="../reference/group_desc.html">group_desc()</a></code>.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -600,7 +595,7 @@ pass a character vector of variable names to
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -755,7 +750,7 @@ followed by the second, and so on.</li>
 <code>by</code> parameter. If you add a text label through
 <code>by</code>, it becomes the outermost row label, followed by the
 variable name, then the statistic label.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -773,7 +768,7 @@ variable name, then the statistic label.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="18%">

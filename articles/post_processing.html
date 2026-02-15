@@ -10,13 +10,14 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Post-Processing">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Post-Processing">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
@@ -35,11 +36,6 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Getting Started</h6></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Table Basics</h6></li>
-    <li><a class="dropdown-item" href="../articles/table.html">Table Properties</a></li>
-    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Layer Basics</h6></li>
     <li><a class="dropdown-item" href="../articles/desc.html">Descriptive Statistics Layers</a></li>
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
@@ -68,6 +64,8 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Migration</h6></li>
     <li><a class="dropdown-item" href="../articles/migration.html">Migrating from Tplyr v1</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
       </ul>
@@ -97,9 +95,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tplyr2</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -120,7 +115,7 @@ utility functions for targeted tasks.</p>
 <p>We will use a multi-layer table throughout this vignette so that the
 effect of each post-processing step is visible. The spec combines a
 demographics count layer with a descriptive statistics layer on age.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -146,7 +141,7 @@ demographics count layer with a descriptive statistics layer on age.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -255,9 +250,9 @@ column top-to-bottom and blanks any value that is identical to the row
 above it. This deduplication respects layer boundaries, so a label that
 appears at the end of one layer and the beginning of another is never
 accidentally blanked.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">masked</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/apply_row_masks.html">apply_row_masks</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">masked</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">masked</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -359,9 +354,9 @@ accidentally blanked.</p>
 <p>When <code>row_breaks = TRUE</code>, a blank row is inserted at every
 layer boundary. Combined with masking, this gives the table a clean,
 sectioned appearance.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">masked_breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/apply_row_masks.html">apply_row_masks</a></span><span class="op">(</span><span class="va">result</span>, row_breaks <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">masked_breaks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">masked_breaks</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">14</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -482,9 +477,9 @@ separate <code>rowlabel1</code>, <code>rowlabel2</code>, etc.
 collapses them into one column. Repeating parent values are split into
 their own rows, and each nesting level receives progressively more
 indentation.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="va">result</span>, <span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">collapsed</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">collapsed</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">row_label</th>
@@ -581,7 +576,7 @@ for display, but sometimes you need the underlying numbers for
 programmatic comparisons, sorting, or conditional formatting.
 <code><a href="../reference/str_extract_num.html">str_extract_num()</a></code> pulls out the Nth numeric value from each
 string.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Extract the count (first number) from the first result column</span></span>
 <span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/str_extract_num.html">str_extract_num</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">res1</span>, index <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">counts</span>, <span class="fl">8</span><span class="op">)</span></span>
@@ -605,7 +600,7 @@ within the string, numbered left to right), you can establish a
 condition upon which a replacement string is used. Either the
 replacement can replace the entire string, or it can refill just the
 format group while preserving the original width and alignment.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">string</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">" 0  (0.0%)"</span>, <span class="st">" 8  (9.3%)"</span>, <span class="st">"78 (90.7%)"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Replace the full string when the percentage (2nd format group) is 0</span></span>
@@ -631,7 +626,7 @@ This works in fixed-width contexts (PDFs, monospaced fonts), but HTML
 collapses consecutive spaces. <code><a href="../reference/replace_leading_whitespace.html">replace_leading_whitespace()</a></code>
 swaps each leading space for a non-breaking space (<code>\u00a0</code>),
 preserving alignment in web-based output.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">original</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"  5 ( 6.1%)"</span>, <span class="st">" 12 (14.6%)"</span>, <span class="st">"  3 ( 3.7%)"</span><span class="op">)</span></span>
 <span><span class="va">replaced</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/replace_leading_whitespace.html">replace_leading_whitespace</a></span><span class="op">(</span><span class="va">original</span><span class="op">)</span></span>
 <span></span>
@@ -651,7 +646,7 @@ might use <code>"&amp;nbsp;"</code> for raw HTML output.</p>
 tplyr2’s string formatting, but it can also be used on its own. Given an
 <code>f_str</code> object and matching numeric vectors, it returns
 formatted character strings.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fmt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx.x (xxx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="va">fmt</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">75.3</span>, <span class="fl">68.1</span>, <span class="fl">80.5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8.21</span>, <span class="fl">7.55</span>, <span class="fl">9.03</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] " 75.3 (  8.21)" " 68.1 (  7.55)" " 80.5 (  9.03)"</span></span></code></pre></div>
@@ -666,7 +661,7 @@ parameter for auto-precision formatting.</p>
 <p><code><a href="../reference/str_indent_wrap.html">str_indent_wrap()</a></code> wraps long text strings to a specified
 width while automatically preserving any existing indentation and
 applying hyphenation to words that exceed the column width.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ex_text</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RENAL AND URINARY DISORDERS"</span>, <span class="st">"   NEPHROLITHIASIS"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="../reference/str_indent_wrap.html">str_indent_wrap</a></span><span class="op">(</span><span class="va">ex_text</span>, width <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\n\n"</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; RENAL</span></span>
@@ -689,7 +684,7 @@ using the <code>tab_width</code> parameter (default 5).</p>
 <p>In practice, you will chain several post-processing steps together.
 Here is a complete pipeline that takes raw build output and produces a
 display-ready table.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -712,7 +707,7 @@ display-ready table.</p>
 <span><span class="va">display</span> <span class="op">&lt;-</span> <span class="va">output</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">display</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">display</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="54%">
@@ -863,7 +858,7 @@ first can still be useful.</p>
 collapsing labels. Here we replace the percentage with
 <code>(&lt;1%)</code> in the placebo arm when the percentage rounds to 0
 but the count is non-zero.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Apply conditional formatting before collapsing labels</span></span>
 <span><span class="va">output</span><span class="op">$</span><span class="va">res1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/apply_conditional_format.html">apply_conditional_format</a></span><span class="op">(</span></span>
 <span>  <span class="va">output</span><span class="op">$</span><span class="va">res1</span>, <span class="fl">2</span>, <span class="va">x</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"(&lt;1%)"</span></span>
@@ -872,7 +867,7 @@ but the count is non-zero.</p>
 <span><span class="va">display_formatted</span> <span class="op">&lt;-</span> <span class="va">output</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">display_formatted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">display_formatted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">row_label</th>

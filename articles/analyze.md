@@ -1,10 +1,5 @@
 # Custom Analysis Layers
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 tplyr2 provides three built-in layer types –

@@ -1,10 +1,5 @@
 # Spec Serialization
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 One of the central design principles of tplyr2 is the separation of

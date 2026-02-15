@@ -4,9 +4,6 @@
 
 - [Getting Started with
   tplyr2](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md):
-
-### Table Basics
-
 - [Table
   Properties](https://github.com/mstackhouse/tplyr2/articles/table.md):
 

@@ -1,10 +1,5 @@
 # Risk Difference
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 In clinical trials, adverse event tables typically display the frequency

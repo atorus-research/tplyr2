@@ -1,10 +1,5 @@
 # Metadata and Traceability
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Why Traceability Matters
 
 Clinical summary tables go through rigorous quality control. When a

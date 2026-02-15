@@ -1,10 +1,5 @@
 # Advanced Descriptive Statistics Formatting
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 This vignette covers advanced formatting for
 [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
 layers: empty value handling, auto-precision, precision capping,

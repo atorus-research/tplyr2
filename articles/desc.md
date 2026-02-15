@@ -1,10 +1,5 @@
 # Descriptive Statistics Layers
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 Descriptive statistics tables are among the most common outputs in

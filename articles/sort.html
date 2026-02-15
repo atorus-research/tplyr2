@@ -10,13 +10,14 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Sorting a tplyr2 Table">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Sorting a tplyr2 Table">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
@@ -35,11 +36,6 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Getting Started</h6></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Table Basics</h6></li>
-    <li><a class="dropdown-item" href="../articles/table.html">Table Properties</a></li>
-    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Layer Basics</h6></li>
     <li><a class="dropdown-item" href="../articles/desc.html">Descriptive Statistics Layers</a></li>
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
@@ -68,6 +64,8 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Migration</h6></li>
     <li><a class="dropdown-item" href="../articles/migration.html">Migrating from Tplyr v1</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
       </ul>
@@ -97,9 +95,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tplyr2</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -134,7 +129,7 @@ statistics in the <code>format_strings</code> list.</li>
 <code>ord_layer_2</code>, which tracks the nesting depth. Additional
 <code>by</code> variables may produce further ordering columns.</p>
 <p>Let’s see this in a simple example.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -143,7 +138,7 @@ statistics in the <code>format_strings</code> list.</li>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -219,7 +214,7 @@ row because there is only one layer.</p>
 <p>When a spec contains multiple layers, <code>ord_layer_index</code> is
 what keeps them in the right order. Consider a table that combines a
 count layer with a descriptive statistics layer.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -238,7 +233,7 @@ count layer with a descriptive statistics layer.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="39%">
@@ -303,11 +298,11 @@ count layer with a descriptive statistics layer.</p>
 desc layer rows have <code>ord_layer_index = 2</code>. If you wanted to
 flip the layers so that the descriptive statistics appear first, you can
 sort by <code>ord_layer_index</code> in a custom order:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Swap layer order: desc first, then counts</span></span>
 <span><span class="va">result</span><span class="op">$</span><span class="va">sort_key</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">ord_layer_index</span> <span class="op">==</span> <span class="fl">2</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="va">reordered</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">sort_key</span>, <span class="va">result</span><span class="op">$</span><span class="va">ord_layer_1</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">reordered</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">reordered</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="3%">
@@ -400,7 +395,7 @@ rows are sorted alphabetically.</li>
 </h3>
 <p>When the target variable is a factor, tplyr2 uses its level order.
 This gives you direct control over the row sequence.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">adsl</span> <span class="op">&lt;-</span> <span class="va">tplyr_adsl</span></span>
 <span><span class="va">adsl</span><span class="op">$</span><span class="va">DCDECOD</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">adsl</span><span class="op">$</span><span class="va">DCDECOD</span>, levels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>  <span class="st">"COMPLETED"</span>,</span>
@@ -427,7 +422,7 @@ This gives you direct control over the row sequence.</p>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">adsl</span><span class="op">)</span></span>
 <span><span class="va">sorted</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">ord_layer_1</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="38%">
@@ -523,7 +518,7 @@ preferred sort order. For example, <code>RACEN</code> provides a numeric
 key for <code>RACE</code>. When tplyr2 detects a column named
 <code>&lt;VAR&gt;N</code> in the data, it uses those values
 automatically.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -537,7 +532,7 @@ automatically.</p>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="va">sorted</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">ord_layer_1</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="42%">
@@ -590,7 +585,7 @@ reflects the position of each statistic within the
 <code>format_strings</code> list. The first entry gets 1, the second
 gets 2, and so forth. There is no additional setting needed – the order
 you write your format strings in is the order your rows appear.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -609,7 +604,7 @@ you write your format strings in is the order your rows appear.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -694,7 +689,7 @@ then VARN companions, then falls back to alphabetical.</p>
 <p>The <code>"bycount"</code> method sorts rows by their count values in
 descending order, which is common for adverse event tables where the
 most frequent events should appear first.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -708,7 +703,7 @@ most frequent events should appear first.</p>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="va">sorted</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">ord_layer_1</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="38%">
@@ -802,7 +797,7 @@ treatment column rather than all columns. The <code>ordering_cols</code>
 parameter lets you specify which column level to use for deriving the
 sort counts, and <code>result_order_var</code> specifies which statistic
 to sort by (defaulting to <code>"n"</code>).</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -818,7 +813,7 @@ to sort by (defaulting to <code>"n"</code>).</p>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="va">sorted</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">result</span><span class="op">$</span><span class="va">ord_layer_1</span><span class="op">)</span>, <span class="op">]</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">sorted</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span>, <span class="st">"ord_layer_1"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="38%">
@@ -910,7 +905,7 @@ to sort by (defaulting to <code>"n"</code>).</p>
 outer-level rows (e.g., body system) alternate with their inner-level
 rows (e.g., preferred term). The ordering system handles both
 levels.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -926,7 +921,7 @@ levels.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"ord_layer_index"</span>,</span>
 <span>                       <span class="st">"ord_layer_1"</span>, <span class="st">"ord_layer_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
@@ -1065,7 +1060,7 @@ groupings, accepting <code>"asc"</code> or <code>"desc"</code>.</p>
 post-processing. When you are ready to produce a final display table,
 you will typically sort your data using the <code>ord_layer_*</code>
 columns and then drop them before rendering.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -1096,7 +1091,7 @@ columns and then drop them before rendering.</p>
 <span></span>
 <span><span class="co"># Drop ordering columns for display</span></span>
 <span><span class="va">display_cols</span> <span class="op">&lt;-</span> <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="va">display_cols</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="va">display_cols</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
 <col width="14%">

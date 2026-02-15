@@ -10,13 +10,14 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Spec Serialization">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="Spec Serialization">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
@@ -35,11 +36,6 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Getting Started</h6></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Table Basics</h6></li>
-    <li><a class="dropdown-item" href="../articles/table.html">Table Properties</a></li>
-    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Layer Basics</h6></li>
     <li><a class="dropdown-item" href="../articles/desc.html">Descriptive Statistics Layers</a></li>
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
@@ -68,6 +64,8 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Migration</h6></li>
     <li><a class="dropdown-item" href="../articles/migration.html">Migrating from Tplyr v1</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
       </ul>
@@ -97,9 +95,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tplyr2</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -137,7 +132,7 @@ package.</li>
 <p>The <code><a href="../reference/tplyr_write_spec.html">tplyr_write_spec()</a></code> function takes a spec object and
 a file path. The format is determined by the file extension: use
 <code>.json</code> for JSON output.</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  where <span class="op">=</span> <span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>,</span>
@@ -169,16 +164,16 @@ read it back and build the same table.</p>
 <p>The <code><a href="../reference/tplyr_read_spec.html">tplyr_read_spec()</a></code> function reads a spec from a JSON
 or YAML file and reconstructs the full <code>tplyr_spec</code> object,
 including all expressions, format strings, and layer configurations.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">loaded_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_read_spec.html">tplyr_read_spec</a></span><span class="op">(</span><span class="va">json_path</span><span class="op">)</span></span>
 <span><span class="va">loaded_spec</span></span>
 <span><span class="co">#&gt; tplyr2 table specification</span></span>
 <span><span class="co">#&gt; Column variables: TRT01PWhere: SAFFL == "Y"Layers: 2[1] count: SEX (Layer 1)[2] desc: AGE (Layer 2)</span></span></code></pre></div>
 <p>The loaded spec is functionally identical to the original. You can
 build it against any dataset that has the required columns.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">loaded_spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -241,7 +236,7 @@ everything.</p>
 </h2>
 <p>If you prefer YAML over JSON, simply use a <code>.yaml</code> or
 <code>.yml</code> file extension. The API is identical.</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">yaml_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".yaml"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/tplyr_write_spec.html">tplyr_write_spec</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">yaml_path</span><span class="op">)</span></span>
 <span></span>
@@ -271,11 +266,11 @@ each one with a specific convention.</p>
 language objects. They are serialized by deparsing the expression to a
 string and wrapping it in a marker object.</p>
 <p>In JSON, a <code>where</code> clause looks like this:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="dt">"where"</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>    <span class="dt">"_expr"</span><span class="fu">:</span> <span class="st">"SAFFL == </span><span class="ch">\"</span><span class="st">Y</span><span class="ch">\"</span><span class="st">"</span></span>
-<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="fu">}</span></span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="dt">"where"</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>    <span class="dt">"_expr"</span><span class="fu">:</span> <span class="st">"SAFFL == </span><span class="ch">\"</span><span class="st">Y</span><span class="ch">\"</span><span class="st">"</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>  <span class="fu">}</span></span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>On deserialization, the string is parsed back into an R expression
 using <code><a href="https://rlang.r-lib.org/reference/parse_expr.html" class="external-link">rlang::parse_expr()</a></code>. This preserves the original
 filter logic exactly.</p>
@@ -287,11 +282,11 @@ filter logic exactly.</p>
 format template, the variable names, and the optional <code>empty</code>
 parameter. A marker class field (<code>_class: "tplyr_f_str"</code>)
 identifies them for reconstruction.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"format_string"</span><span class="fu">:</span> <span class="st">"xx.x (xx.xx)"</span><span class="fu">,</span></span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">"vars"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"mean"</span><span class="ot">,</span> <span class="st">"sd"</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="dt">"_class"</span><span class="fu">:</span> <span class="st">"tplyr_f_str"</span></span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="dt">"format_string"</span><span class="fu">:</span> <span class="st">"xx.x (xx.xx)"</span><span class="fu">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="dt">"vars"</span><span class="fu">:</span> <span class="ot">[</span><span class="st">"mean"</span><span class="ot">,</span> <span class="st">"sd"</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="dt">"_class"</span><span class="fu">:</span> <span class="st">"tplyr_f_str"</span></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>When read back, the <code><a href="../reference/f_str.html">f_str()</a></code> constructor is called with
 these components, re-parsing the format string and rebuilding the
 internal structure.</p>
@@ -302,10 +297,10 @@ internal structure.</p>
 <p>When you use <code><a href="../reference/label.html">label()</a></code> in a <code>by</code> parameter to
 create an explicit text label, the label is serialized with a type
 marker so it can be distinguished from a data variable name.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="dt">"value"</span><span class="fu">:</span> <span class="st">"Age (Years)"</span><span class="fu">,</span></span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="dt">"_type"</span><span class="fu">:</span> <span class="st">"label"</span></span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"value"</span><span class="fu">:</span> <span class="st">"Age (Years)"</span><span class="fu">,</span></span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">"_type"</span><span class="fu">:</span> <span class="st">"label"</span></span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>Regular data variable names (character strings) pass through
 as-is.</p>
 </div>
@@ -315,9 +310,9 @@ as-is.</p>
 <p>Analyze layers created with <code><a href="../reference/group_analyze.html">group_analyze()</a></code> include a
 user-defined function. These are serialized by deparsing the function
 body to a string.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="dt">"_fn"</span><span class="fu">:</span> <span class="st">"function(.data, .target_var) {</span><span class="ch">\n</span><span class="st">  ...</span><span class="ch">\n</span><span class="st">}"</span></span>
-<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="dt">"_fn"</span><span class="fu">:</span> <span class="st">"function(.data, .target_var) {</span><span class="ch">\n</span><span class="st">  ...</span><span class="ch">\n</span><span class="st">}"</span></span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
 <p>On deserialization, the string is parsed and evaluated to recreate
 the function object. Note that functions which depend on objects in a
 specific environment (closures that capture external variables) may not
@@ -330,7 +325,7 @@ are self-contained.</p>
 </h2>
 <p>Let’s look at the actual JSON content produced by our earlier spec to
 see these conventions in practice.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">json_content</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">json_path</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="va">json_content</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; {</span></span>
@@ -406,7 +401,7 @@ Within the settings, <code>format_strings</code> contains the serialized
 <p>Let’s serialize a spec that exercises more of the system: nested
 counts with distinct counting, a <code>where</code> clause, and a total
 row.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">complex_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  where <span class="op">=</span> <span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>,</span>
@@ -437,10 +432,10 @@ row.</p>
 <span><span class="va">complex_path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".json"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/tplyr_write_spec.html">tplyr_write_spec</a></span><span class="op">(</span><span class="va">complex_spec</span>, <span class="va">complex_path</span><span class="op">)</span></span></code></pre></div>
 <p>Now read it back and build.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">reloaded</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_read_spec.html">tplyr_read_spec</a></span><span class="op">(</span><span class="va">complex_path</span><span class="op">)</span></span>
 <span><span class="va">complex_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">reloaded</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">complex_result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">complex_result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">complex_result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">complex_result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
 <col width="18%">
@@ -567,7 +562,7 @@ that every change to a table definition is tracked. If a reviewer asks
 “what changed between the draft and final version of Table 14.1?”, you
 can answer that question with a <code>git diff</code> of the spec
 file.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># In your analysis script</span></span>
 <span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_read_spec.html">tplyr_read_spec</a></span><span class="op">(</span><span class="st">"specs/table_14_1.json"</span><span class="op">)</span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">adsl</span><span class="op">)</span></span></code></pre></div>
@@ -588,7 +583,7 @@ that requires a specific environment.</p>
 <p>Because specs carry no data, the same spec can be applied to datasets
 from different studies, time points, or populations. This is useful for
 standardized tables that appear across multiple studies.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Same spec, different data subsets</span></span>
 <span><span class="va">saffl_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">loaded_spec</span>, <span class="va">tplyr_adsl</span><span class="op">[</span><span class="va">tplyr_adsl</span><span class="op">$</span><span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>, <span class="op">]</span><span class="op">)</span></span>
 <span><span class="va">ittfl_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">loaded_spec</span>, <span class="va">tplyr_adsl</span><span class="op">[</span><span class="va">tplyr_adsl</span><span class="op">$</span><span class="va">ITTFL</span> <span class="op">==</span> <span class="st">"Y"</span>, <span class="op">]</span><span class="op">)</span></span></code></pre></div>

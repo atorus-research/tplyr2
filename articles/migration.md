@@ -1,10 +1,5 @@
 # Migrating from Tplyr v1
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 Both Tplyr v1 and tplyr2 build formatted clinical summary tables from

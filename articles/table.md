@@ -1,10 +1,5 @@
 # Table Properties
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 In tplyr2, a table is defined by its **specification**. The

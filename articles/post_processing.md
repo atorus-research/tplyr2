@@ -1,10 +1,5 @@
 # Post-Processing
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)

@@ -1,10 +1,5 @@
 # Count Layers
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 Counting things seems simple enough. You look at the data, tally up how

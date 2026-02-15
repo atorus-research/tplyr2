@@ -1,10 +1,5 @@
 # General String Formatting
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 Clinical tables live and die by their alignment. When a reviewer scans a

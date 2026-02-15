@@ -10,13 +10,14 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="tplyr2 Options">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><link href="../extra.css" rel="stylesheet">
+<meta property="og:title" content="tplyr2 Options">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
@@ -35,11 +36,6 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Getting Started</h6></li>
-    <li><hr class="dropdown-divider"></li>
-    <li><h6 class="dropdown-header" data-toc-skip>Table Basics</h6></li>
-    <li><a class="dropdown-item" href="../articles/table.html">Table Properties</a></li>
-    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Layer Basics</h6></li>
     <li><a class="dropdown-item" href="../articles/desc.html">Descriptive Statistics Layers</a></li>
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
@@ -68,6 +64,8 @@
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Migration</h6></li>
     <li><a class="dropdown-item" href="../articles/migration.html">Migrating from Tplyr v1</a></li>
+    <li><hr class="dropdown-divider"></li>
+    <li><a class="dropdown-item" href="../articles/index.html">More articles...</a></li>
   </ul>
 </li>
       </ul>
@@ -97,9 +95,6 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">tplyr2</span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://yihui.org/knitr/" class="external-link">knitr</a></span><span class="op">)</span></span></code></pre></div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
@@ -120,7 +115,7 @@ with <code><a href="https://rdrr.io/r/base/options.html" class="external-link">o
 </h2>
 <p>To see what every option is currently set to, call
 <code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code> with no arguments:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="co">#&gt; $tplyr2.IBMRounding</span></span>
 <span><span class="co">#&gt; [1] FALSE</span></span>
@@ -160,7 +155,7 @@ option.</p>
 <p>Let’s see the difference in practice. We will build a simple
 descriptive statistics table and compare the mean under both rounding
 methods.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Create data where rounding makes a visible difference</span></span>
 <span><span class="va">demo_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  TRT <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Drug"</span>, <span class="st">"Placebo"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
@@ -182,7 +177,7 @@ methods.</p>
 <span></span>
 <span><span class="co"># Default: banker's rounding</span></span>
 <span><span class="va">result_bankers</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">demo_data</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_bankers</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_bankers</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_bankers</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_bankers</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Banker's rounding (default)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Banker’s rounding (default)</caption>
@@ -197,12 +192,12 @@ methods.</p>
 <td align="left">3.0</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># IBM rounding</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>IBMRounding <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_ibm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">demo_data</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_ibm</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_ibm</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_ibm</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_ibm</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"IBM rounding (round-half-away-from-zero)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>IBM rounding (round-half-away-from-zero)</caption>
@@ -217,7 +212,7 @@ methods.</p>
 <td align="left">3.0</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>IBMRounding <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
@@ -239,7 +234,7 @@ R’s Type 3, which selects the nearest even order statistic.</p>
 <p>In tplyr2, the <code>quantile_type</code> option controls which
 algorithm is used for <code>q1</code>, <code>q3</code>, and
 <code>iqr</code> in descriptive statistics layers.</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -256,7 +251,7 @@ algorithm is used for <code>q1</code>, <code>q3</code>, and
 <span></span>
 <span><span class="co"># Type 7 (R default)</span></span>
 <span><span class="va">result_t7</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_t7</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_t7</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_t7</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_t7</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Quantile Type 7 (R default)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Quantile Type 7 (R default)</caption>
@@ -281,12 +276,12 @@ algorithm is used for <code>q1</code>, <code>q3</code>, and
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Type 3 (SAS-compatible)</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>quantile_type <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_t3</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_t3</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_t3</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_t3</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_t3</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Quantile Type 3 (SAS-compatible)"</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <caption>Quantile Type 3 (SAS-compatible)</caption>
@@ -311,7 +306,7 @@ algorithm is used for <code>q1</code>, <code>q3</code>, and
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>quantile_type <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span></code></pre></div>
@@ -333,7 +328,7 @@ recorded to six decimal places would produce very wide columns.</p>
 <p>The <code>precision_cap</code> option lets you set a global ceiling
 on auto-precision widths. It takes a named numeric vector with
 <code>int</code> and/or <code>dec</code> components.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Without a cap, precision is driven entirely by the data</span></span>
 <span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
@@ -350,7 +345,7 @@ on auto-precision widths. It takes a named numeric vector with
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_nocap</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_nocap</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_nocap</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_nocap</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_nocap</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Auto-precision, no cap"</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <caption>Auto-precision, no cap</caption>
@@ -376,12 +371,12 @@ on auto-precision widths. It takes a named numeric vector with
 <td align="left">67.28 ( 14.124)</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Apply a global cap: max 3 integer digits, max 1 decimal digit</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>precision_cap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>int <span class="op">=</span> <span class="fl">3</span>, dec <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result_capped</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result_capped</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_capped</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result_capped</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result_capped</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>,</span>
 <span>      caption <span class="op">=</span> <span class="st">"Auto-precision, capped at int=3, dec=1"</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <caption>Auto-precision, capped at int=3, dec=1</caption>
@@ -407,7 +402,7 @@ on auto-precision widths. It takes a named numeric vector with
 <td align="left">67.28 ( 14.124)</td>
 </tr></tbody>
 </table>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>precision_cap <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
@@ -428,7 +423,7 @@ summaries (<code>n</code>, <code>mean</code>, <code>sd</code>,
 across many tables – geometric means, coefficients of variation, or any
 other derived measure – you can register them at the session level so
 they are available everywhere.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Register session-level custom summaries</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span></span>
 <span>  custom_summaries <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
@@ -454,7 +449,7 @@ they are available everywhere.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
 <th align="left">rowlabel1</th>
@@ -508,7 +503,7 @@ layers.</li>
 (e.g., <code>mean</code>), in which case it replaces the built-in
 calculation.</li>
 </ul>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>custom_summaries <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
 </div>
@@ -527,7 +522,7 @@ scientific notation will never appear in your tables. In most cases, you
 will not need to change this. However, if you have a specific reason to
 allow scientific notation (or if you are debugging formatting), you can
 adjust it:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Check the current value</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="va">tplyr2.scipen</span></span>
 <span><span class="co">#&gt; [1] 9999</span></span></code></pre></div>
@@ -540,7 +535,7 @@ in your session.</p>
 <h2 id="resetting-options">Resetting Options<a class="anchor" aria-label="anchor" href="#resetting-options"></a>
 </h2>
 <p>To return all options to their defaults, set each one explicitly:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span></span>
 <span>  IBMRounding     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quantile_type   <span class="op">=</span> <span class="fl">7L</span>,</span>

@@ -1,10 +1,5 @@
 # Analysis Results Data
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 Clinical summary tables are typically built for human consumption:

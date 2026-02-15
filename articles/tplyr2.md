@@ -1,10 +1,5 @@
 # Getting Started with tplyr2
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## How tplyr2 Works
 
 If you have worked with clinical data long enough, you know that summary

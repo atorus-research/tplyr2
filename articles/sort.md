@@ -1,10 +1,5 @@
 # Sorting a tplyr2 Table
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 When you build a table with

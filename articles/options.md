@@ -1,10 +1,5 @@
 # tplyr2 Options
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 tplyr2 provides a set of session-level options that control how tables

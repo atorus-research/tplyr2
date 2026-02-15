@@ -1,10 +1,5 @@
 # Denominators
 
-``` r
-library(tplyr2)
-library(knitr)
-```
-
 ## Introduction
 
 When a clinical table displays a percentage, the natural question is: a
