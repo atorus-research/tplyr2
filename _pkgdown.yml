@@ -6,6 +6,8 @@ template:
     bg: "#FFFFFF"
     fg: "#1D252D"
     primary: "#1D252D"
+  params:
+    bootswatch: yeti
 
 search:
   exclude: ['news/index.html']
@@ -96,13 +98,8 @@ reference:
 
 articles:
 - title: Getting Started
-  navbar: Getting Started
   contents:
     - tplyr2
-
-- title: Table Basics
-  navbar: Table Basics
-  contents:
     - table
 
 - title: Layer Basics
