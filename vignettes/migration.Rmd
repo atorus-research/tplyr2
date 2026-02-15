@@ -15,9 +15,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 options(rmarkdown.html_vignette.check_title = FALSE)
-```
-
-```{r}
 library(tplyr2)
 library(knitr)
 ```
