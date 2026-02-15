@@ -50,3 +50,5 @@ rsconnect/
 .Rproj.user
 
 scratch/
+/.quarto/
+**/*.quarto_ipynb
