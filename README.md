@@ -1,30 +1,183 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
 # tplyr2
-Currently just an idea repo to POC what a new Tplyr framework might be
 
-Below is an idea list of significant changes from Tplyr's current architecture:
+<!-- badges: start -->
 
-- Framework is rewritten in data.table to focus on performance
-- table object is uptimately a spec - and data itself is provided to `build()` and not `tplyr_table()`.
-   - All the validators end up moving to the build process, so we could realistically build up a check queue based on the table settings provided. So basically:
-      - Construct a table and add layers
-      - For each layer, any compliance check (i.e. variable exists, variable type is accurate, etc.) that can't be evaluated without the input dataframe is added to a queue of checks
-      - Before build starts executing, the queue of checks runs
-   - If the table object isn't holding data, then the use of environments isn't as significant. Furthermore, data.table allows modification by reference when necessary so memory can be optimized. This would reduce some unexpected sideeffects. 
-- Remove the concept of treat_var and take only use the cols parameter
-- Recursive implementation of nested count layers
-  - Allow more than inner and outer layer, and there's an opportunity for efficiency increases here as well
-- Allow for either separate `where` statements for target variables on nested count layers, or allow nesting of layers
-- Better support for analysis results data
-  - Pull from concepts of ardis, but try to build in better support for the actual CDISC standard
-  - Allow for output of ARD, and then build from intake of ARD and a table spec
-  - There are additionally parts of our numeric data that the structure can just be improved. For example, in the descriptive statistics layers, I probably could have avoided some complex transpositions and assembly of summary variables by just not transposing in the first place.
-- Redesign concept of sorting variables
-  - This is the single slowest part of Tplyr and much of the structure could be rethought
-  - Sorting might better be handled during numeric summaries, trying to avoid as much transposition as possible
-- Change the way execution of build works
-  - We eval in the layer environments and this introduces a lot of complexity. Clean this up to have a more straightforward functional approach
-- Error handling generally has to be improved. All traces of {assertthat} need to be ripped out, and messages can get distorted through the `tryCatch()` that happens during build.
-- Try to design a framework for an open ended analyze function
-  - Great concept that's been requested, but some of the rigidity in Tplyr makes this hard to implement.
-- Unify string formatting into 1 application function (i.e. `Tplyr::apply_formats()`)
-- By not building on environments, avoid weird side effects of namespace issues like [this issue](https://github.com/atorus-research/Tplyr/issues/154)
+[![R-CMD-check](https://github.com/atorus-research/tplyr2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/atorus-research/tplyr2/actions/workflows/R-CMD-check.yaml)
+[![Codecov test
+coverage](https://codecov.io/gh/atorus-research/tplyr2/graph/badge.svg)](https://app.codecov.io/gh/atorus-research/tplyr2)
+[<img src="https://img.shields.io/badge/License-MIT-blue.svg">](https://github.com/atorus-research/tplyr2/blob/main/LICENSE.md)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+<!-- badges: end -->
+
+**{tplyr2}** is a grammar of clinical summary tables. Clinical reports –
+demographics tables, adverse event summaries, lab shift tables – all
+share a common structural pattern. Each section is some kind of summary:
+a set of counts, a block of descriptive statistics, or a
+cross-tabulation. Rather than writing bespoke data manipulation code for
+every table, **{tplyr2}** lets you describe *what* the table should
+contain using a declarative specification, and handles the computing,
+formatting, and assembly for you.
+
+**{tplyr2}** is a ground-up rewrite of
+[**{Tplyr}**](https://github.com/atorus-research/Tplyr), built on
+[data.table](https://rdatatable.gitlab.io/data.table/) for performance.
+The spec-based API separates configuration from data, making specs
+portable, reusable, and serializable to JSON/YAML.
+
+## Installation
+
+You can install the development version of **{tplyr2}** from GitHub:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("atorus-research/tplyr2")
+```
+
+## Example
+
+Every table starts with a `tplyr_spec()` that declares the column
+structure and layers. Data is supplied at build time with
+`tplyr_build()`.
+
+``` r
+library(tplyr2)
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX", by = "Sex n (%)"),
+    group_desc(
+      "AGE",
+      by = "Age (Years)",
+      settings = layer_settings(
+        format_strings = list(
+          "n"         = f_str("xxx", "n"),
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+          "Median"    = f_str("xx.x", "median"),
+          "Min, Max"  = f_str("xx, xx", "min", "max")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+knitr::kable(result[, !grepl("^ord", names(result))])
+```
+
+| rowlabel1   | rowlabel2 | res1         | res2         | res3         |
+|:------------|:----------|:-------------|:-------------|:-------------|
+| Sex n (%)   | F         | 53 (61.6%)   | 40 (47.6%)   | 50 (59.5%)   |
+| Sex n (%)   | M         | 33 (38.4%)   | 44 (52.4%)   | 34 (40.5%)   |
+| Age (Years) | n         | 86           | 84           | 84           |
+| Age (Years) | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
+| Age (Years) | Median    | 76.0         | 76.0         | 77.5         |
+| Age (Years) | Min, Max  | 52, 89       | 56, 88       | 51, 88       |
+
+## Key Concepts
+
+- **Spec**: A `tplyr_spec()` object is pure configuration – no data, no
+  side effects. It describes the column variable, filters, population
+  data, and layers.
+- **Layers**: Each layer is a summary block created with
+  `group_count()`, `group_desc()`, `group_shift()`, or
+  `group_analyze()`.
+- **Build**: `tplyr_build(spec, data)` executes the spec against a
+  dataset and returns a formatted data frame.
+- **Format strings**: `f_str()` declarations control numeric precision
+  and alignment (e.g., `f_str("xx.x (xx.xx)", "mean", "sd")`).
+
+## Layer Types
+
+### Count Layers
+
+Tabulate frequencies of categorical variables, with support for nested
+counts, distinct subject counting, and total rows.
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(
+      c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+knitr::kable(head(result[, !grepl("^ord", names(result))], 10))
+```
+
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+
+### Descriptive Statistics Layers
+
+Summarize continuous variables with built-in statistics (`n`, `mean`,
+`sd`, `median`, `min`, `max`, `q1`, `q3`, `var`, `iqr`, `missing`) or
+custom summary functions.
+
+### Shift Layers
+
+Cross-tabulate a baseline value against a post-baseline value within
+each treatment arm using `group_shift()`.
+
+### Analyze Layers
+
+Run user-defined analysis functions with `group_analyze()` for full
+flexibility.
+
+## Features
+
+- **Population data**: Control denominators with `pop_data()` and
+  display `(N=n)` header counts with `tplyr_header_n()`
+- **Total & custom groups**: Add “Total” columns or combine treatment
+  arms with `total_group()` and `custom_group()`
+- **Auto-precision**: Dynamically set decimal places based on collected
+  precision with the precision cap system
+- **Risk difference**: Compute risk differences and confidence intervals
+  on count layers
+- **Post-processing**: Row masks, row label collapsing, conditional
+  formatting, and text wrapping helpers
+- **Metadata**: Cell-level traceability to trace any result back to its
+  source records
+- **Numeric data**: Access raw unformatted results via
+  `tplyr_numeric_data()`
+- **Serialization**: Save and load specs as JSON or YAML with
+  `tplyr_write_spec()` / `tplyr_read_spec()`
+- **ARD**: Convert to and from Analysis Results Data format with
+  `tplyr_to_ard()` / `tplyr_from_ard()`
+
+## Learning More
+
+- `vignette("tplyr2")` – Getting started
+- `vignette("count")` – Count layers in depth
+- `vignette("desc")` – Descriptive statistics layers
+- `vignette("shift")` – Shift layers
+- `vignette("denom")` – Population data, header N, total and custom
+  groups
+- `vignette("general_string_formatting")` – Format string system
+- `vignette("metadata")` – Cell-level metadata and traceability
+- `vignette("serialization")` – Saving and loading specs
+- `vignette("analyze")` – Custom analyze layers
+- `vignette("post_processing")` – Post-processing helpers

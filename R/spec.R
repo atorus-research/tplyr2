@@ -1,72 +1,63 @@
-#' Create a new tplyr_spec object
+#' Create a tplyr2 table specification
 #'
-#' This function creates a new tplyr_spec S3 object.
+#' The spec is a pure configuration object describing what to compute.
+#' No data processing occurs until `tplyr_build()` is called.
 #'
-#' @param cols Grouping variable names to use as columns
-#' @param where An expression used to filter the incoming data
-#' @param pop_data Settings to use on the population data
-#' @param layers Specifications of layers to use in the table
-#' @param settings Table level configuration settings
+#' @param cols Character vector of column variable names
+#' @param where Expression for global data filter (optional)
+#' @param pop_data A pop_data() object for population-based features (optional)
+#' @param total_groups List of total_group() objects (optional)
+#' @param custom_groups List of custom_group() objects (optional)
+#' @param layers A list of layer objects from tplyr_layers()
+#' @param settings Additional spec-level settings (optional)
 #'
 #' @return A tplyr_spec object
 #' @export
-#'
 tplyr_spec <- function(
-  cols,
-  where,
-  pop_data = NULL,
-  layers = tplyr_layers(),
-  settings = NULL
+    cols,
+    where = NULL,
+    pop_data = NULL,
+    total_groups = NULL,
+    custom_groups = NULL,
+    layers = tplyr_layers(),
+    settings = NULL
 ) {
-  validate_tplyr_spec(cols, where, pop_data, layers, settings)
-  new_tplyr_spec(cols, where, pop_data, layers, settings)
-}
+  where_expr <- rlang::enexpr(where)
 
-#' Create a new tplyr_spec object
-#'
-#' This function creates a new tplyr_spec
-#'
-#' @param cols Grouping variable names to use as columns
-#' @param where An expression used to filter the incoming data
-#' @param pop_data Settings to use on the population data
-#' @param layers Specifications of layers to use in the table
-#' @param settings Table level configuration settings
-#'
-#' @return A tplyr_spec object
-#' @noRd
-new_tplyr_spec <- function(cols, where, pop_data, layers, settings) {
   structure(
     list(
       cols = cols,
-      where = where,
+      where = where_expr,
       pop_data = pop_data,
+      total_groups = total_groups,
+      custom_groups = custom_groups,
+      layers = layers,
       settings = settings
     ),
     class = "tplyr_spec"
   )
 }
 
-validate_tplyr_spec <- function(cols, where, pop_data, layers, settings) {
-  assert_arg(cols, "cols", "character")
-  assert_arg(where, "where", "expr", atomic = TRUE)
-}
-
-#' Print method for tplyr_spec objects
-#'
-#' @param x A tplyr_spec object
-#' @param ... Additional arguments passed to print
-#'
-#' @export
-# print.tplyr_spec <- function(x, ...) {
-
-# }
-
 #' Check if an object is a tplyr_spec
 #'
 #' @param x An object to check
-#'
-#' @return Logical indicating whether x is a tplyr_spec object
+#' @return Logical
 #' @export
 is_tplyr_spec <- function(x) {
   inherits(x, "tplyr_spec")
+}
+
+#' @export
+print.tplyr_spec <- function(x, ...) {
+  cat("tplyr2 table specification\n")
+  cat(str_glue("  Column variables: {str_c(x$cols, collapse = ', ')}\n"))
+  if (!is.null(x$where) && !identical(x$where, TRUE)) {
+    cat(str_glue("  Where: {deparse(x$where)}\n"))
+  }
+  cat(str_glue("  Layers: {length(x$layers)}\n"))
+  iwalk(x$layers, function(layer, i) {
+    name <- layer$settings$name %||% str_c("Layer ", i)
+    cat(str_glue("    [{i}] {layer$layer_type}: {str_c(layer$target_var, collapse = ' > ')} ({name})\n"))
+  })
+  invisible(x)
 }
