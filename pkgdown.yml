@@ -1,0 +1,25 @@
+pandoc: 3.1.11
+pkgdown: 2.2.0
+pkgdown_sha: ~
+articles:
+  analyze: analyze.html
+  ard: ard.html
+  count: count.html
+  denom: denom.html
+  desc_layer_formatting: desc_layer_formatting.html
+  desc: desc.html
+  general_string_formatting: general_string_formatting.html
+  metadata: metadata.html
+  migration: migration.html
+  options: options.html
+  post_processing: post_processing.html
+  riskdiff: riskdiff.html
+  serialization: serialization.html
+  shift: shift.html
+  sort: sort.html
+  table: table.html
+  tplyr2: tplyr2.html
+last_built: 2026-02-15T21:43Z
+urls:
+  reference: https://github.com/mstackhouse/tplyr2/reference
+  article: https://github.com/mstackhouse/tplyr2/articles

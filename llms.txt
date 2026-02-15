@@ -1,0 +1,395 @@
+# tplyr2
+
+**{tplyr2}** is a grammar of clinical summary tables. Clinical reports –
+demographics tables, adverse event summaries, lab shift tables – all
+share a common structural pattern. Each section is some kind of summary:
+a set of counts, a block of descriptive statistics, or a
+cross-tabulation. Rather than writing bespoke data manipulation code for
+every table, **{tplyr2}** lets you describe *what* the table should
+contain using a declarative specification, and handles the computing,
+formatting, and assembly for you.
+
+**{tplyr2}** is a ground-up rewrite of
+[**{Tplyr}**](https://github.com/atorus-research/Tplyr), built on
+[data.table](https://rdatatable.gitlab.io/data.table/) for performance.
+The spec-based API separates configuration from data, making specs
+portable, reusable, and serializable to JSON/YAML.
+
+## Installation
+
+You can install the development version of **{tplyr2}** from GitHub:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("atorus-research/tplyr2")
+```
+
+## Example
+
+Every table starts with a
+[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+that declares the column structure and layers. Data is supplied at build
+time with
+[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md).
+
+``` r
+library(tplyr2)
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX", by = "Sex n (%)"),
+    group_desc(
+      "AGE",
+      by = "Age (Years)",
+      settings = layer_settings(
+        format_strings = list(
+          "n"         = f_str("xxx", "n"),
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+          "Median"    = f_str("xx.x", "median"),
+          "Min, Max"  = f_str("xx, xx", "min", "max")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+knitr::kable(result[, !grepl("^ord", names(result))])
+```
+
+| rowlabel1   | rowlabel2 | res1         | res2         | res3         |
+|:------------|:----------|:-------------|:-------------|:-------------|
+| Sex n (%)   | F         | 53 (61.6%)   | 40 (47.6%)   | 50 (59.5%)   |
+| Sex n (%)   | M         | 33 (38.4%)   | 44 (52.4%)   | 34 (40.5%)   |
+| Age (Years) | n         | 86           | 84           | 84           |
+| Age (Years) | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
+| Age (Years) | Median    | 76.0         | 76.0         | 77.5         |
+| Age (Years) | Min, Max  | 52, 89       | 56, 88       | 51, 88       |
+
+## Key Concepts
+
+- **Spec**: A
+  [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+  object is pure configuration – no data, no side effects. It describes
+  the column variable, filters, population data, and layers.
+- **Layers**: Each layer is a summary block created with
+  [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md),
+  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),
+  [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md),
+  or
+  [`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md).
+- **Build**: `tplyr_build(spec, data)` executes the spec against a
+  dataset and returns a formatted data frame.
+- **Format strings**:
+  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  declarations control numeric precision and alignment (e.g.,
+  `f_str("xx.x (xx.xx)", "mean", "sd")`).
+
+## Layer Types
+
+### Count Layers
+
+Tabulate frequencies of categorical variables, with support for nested
+counts, distinct subject counting, and total rows.
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(
+      c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+knitr::kable(head(result[, !grepl("^ord", names(result))], 10))
+```
+
+| rowlabel1         | rowlabel2                      | res1      | res2      | res3      |
+|:------------------|:-------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS |                                | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION            | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY             | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA              | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+
+### Descriptive Statistics Layers
+
+Summarize continuous variables with built-in statistics (`n`, `mean`,
+`sd`, `median`, `min`, `max`, `q1`, `q3`, `var`, `iqr`, `missing`) or
+custom summary functions.
+
+### Shift Layers
+
+Cross-tabulate a baseline value against a post-baseline value within
+each treatment arm using
+[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md).
+
+### Analyze Layers
+
+Run user-defined analysis functions with
+[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+for full flexibility.
+
+## Features
+
+- **Population data**: Control denominators with
+  [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+  and display `(N=n)` header counts with
+  [`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md)
+- **Total & custom groups**: Add “Total” columns or combine treatment
+  arms with
+  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  and
+  [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+- **Auto-precision**: Dynamically set decimal places based on collected
+  precision with the precision cap system
+- **Risk difference**: Compute risk differences and confidence intervals
+  on count layers
+- **Post-processing**: Row masks, row label collapsing, conditional
+  formatting, and text wrapping helpers
+- **Metadata**: Cell-level traceability to trace any result back to its
+  source records
+- **Numeric data**: Access raw unformatted results via
+  [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+- **Serialization**: Save and load specs as JSON or YAML with
+  [`tplyr_write_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_write_spec.md)
+  /
+  [`tplyr_read_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_read_spec.md)
+- **ARD**: Convert to and from Analysis Results Data format with
+  [`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+  /
+  [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+
+## Learning More
+
+- [`vignette("tplyr2")`](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md)
+  – Getting started
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  – Count layers in depth
+- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  – Descriptive statistics layers
+- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+  – Shift layers
+- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+  – Population data, header N, total and custom groups
+- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
+  – Format string system
+- [`vignette("metadata")`](https://github.com/mstackhouse/tplyr2/articles/metadata.md)
+  – Cell-level metadata and traceability
+- [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)
+  – Saving and loading specs
+- [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
+  – Custom analyze layers
+- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+  – Post-processing helpers
+
+# Package index
+
+## Build
+
+High-level functions to create and build a table
+
+- [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+  : Create a tplyr2 table specification
+- [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+  : Build a tplyr2 table from a spec and data
+- [`is_tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/is_tplyr_spec.md)
+  : Check if an object is a tplyr_spec
+
+## Layers
+
+Creating layers and adding them to a spec
+
+- [`tplyr_layers()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_layers.md)
+  : Create a list of layers
+- [`is_tplyr_layer()`](https://github.com/mstackhouse/tplyr2/reference/is_tplyr_layer.md)
+  : Check if an object is a tplyr_layer
+- [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+  : Create a count layer
+- [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  : Create a descriptive statistics layer
+- [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
+  : Create a shift layer
+- [`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+  : Create a custom analysis layer
+- [`label()`](https://github.com/mstackhouse/tplyr2/reference/label.md)
+  : Create a text label for use in by parameters
+- [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  : Create layer settings
+
+## Formatting
+
+Controlling the display of numeric results
+
+- [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  : Create a format string object
+- [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  : Apply format strings to numeric values
+
+## Population Data and Groups
+
+Population data, total groups, and custom groups
+
+- [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+  : Create a population data configuration
+- [`is_pop_data()`](https://github.com/mstackhouse/tplyr2/reference/is_pop_data.md)
+  : Check if an object is a tplyr_pop_data
+- [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  : Create a total group configuration
+- [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+  : Create a custom column group configuration
+- [`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md)
+  : Extract header N from a tplyr2 build result
+
+## Metadata
+
+Cell-level traceability and source data extraction
+
+- [`tplyr_meta()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta.md)
+  : Metadata object for a tplyr output cell
+- [`tplyr_meta_result()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_result.md)
+  : Get metadata for a specific output cell
+- [`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md)
+  : Get source data rows for a specific output cell
+- [`generate_row_ids()`](https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.md)
+  : Generate unique row IDs for output rows
+
+## Numeric Data
+
+Accessing raw unformatted results
+
+- [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+  : Retrieve raw numeric data from a tplyr_build result
+- [`tplyr_stats_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_stats_data.md)
+  : Retrieve raw statistic values from a tplyr_build result
+
+## Post-Processing
+
+Post-processing functions for display formatting
+
+- [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)
+  : Conditional reformatting of a pre-populated string of numbers
+- [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+  : Apply row masks to blank repeated row labels
+- [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+  : Collapse row labels into a single column
+- [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md)
+  : Replace leading whitespace with a specified string
+- [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)
+  : Extract numeric values from formatted strings
+- [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)
+  : Wrap strings to a specific width with hyphenation while preserving
+  indentation
+
+## Serialization
+
+Saving and loading spec files
+
+- [`tplyr_write_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_write_spec.md)
+  : Write a tplyr_spec to JSON or YAML
+- [`tplyr_read_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_read_spec.md)
+  : Read a tplyr_spec from JSON or YAML
+
+## Analysis Results Data
+
+ARD format conversion
+
+- [`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+  : Convert tplyr_build output to Analysis Results Data (ARD) format
+- [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+  : Reconstruct a formatted table from ARD and a spec
+
+## Datasets
+
+Example clinical trial datasets
+
+- [`tplyr_adae`](https://github.com/mstackhouse/tplyr2/reference/tplyr_adae.md)
+  : Adverse events analysis dataset
+- [`tplyr_adlb`](https://github.com/mstackhouse/tplyr2/reference/tplyr_adlb.md)
+  : Laboratory data analysis dataset
+- [`tplyr_adsl`](https://github.com/mstackhouse/tplyr2/reference/tplyr_adsl.md)
+  : Subject-level analysis dataset
+
+## Options and Helpers
+
+Package options and helper functions
+
+- [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
+  : Get or set tplyr2 package options
+- [`get_data_labels()`](https://github.com/mstackhouse/tplyr2/reference/get_data_labels.md)
+  : Extract variable labels from a data.frame
+
+# Articles
+
+### Getting Started
+
+- [Getting Started with
+  tplyr2](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md):
+
+### Table Basics
+
+- [Table
+  Properties](https://github.com/mstackhouse/tplyr2/articles/table.md):
+
+### Layer Basics
+
+- [Descriptive Statistics
+  Layers](https://github.com/mstackhouse/tplyr2/articles/desc.md):
+- [Count
+  Layers](https://github.com/mstackhouse/tplyr2/articles/count.md):
+- [Shift
+  Layers](https://github.com/mstackhouse/tplyr2/articles/shift.md):
+
+### Formatting
+
+- [General String
+  Formatting](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md):
+- [Advanced Descriptive Statistics
+  Formatting](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md):
+
+### Table Customization
+
+- [Sorting a tplyr2
+  Table](https://github.com/mstackhouse/tplyr2/articles/sort.md):
+- [Denominators](https://github.com/mstackhouse/tplyr2/articles/denom.md):
+- [tplyr2
+  Options](https://github.com/mstackhouse/tplyr2/articles/options.md):
+
+### Metadata
+
+- [Metadata and
+  Traceability](https://github.com/mstackhouse/tplyr2/articles/metadata.md):
+
+### Advanced
+
+- [Risk
+  Difference](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md):
+- [Custom Analysis
+  Layers](https://github.com/mstackhouse/tplyr2/articles/analyze.md):
+- [Spec
+  Serialization](https://github.com/mstackhouse/tplyr2/articles/serialization.md):
+- [Analysis Results
+  Data](https://github.com/mstackhouse/tplyr2/articles/ard.md):
+
+### Post-Processing
+
+- [Post-Processing](https://github.com/mstackhouse/tplyr2/articles/post_processing.md):
+
+### Migration
+
+- [Migrating from Tplyr
+  v1](https://github.com/mstackhouse/tplyr2/articles/migration.md):

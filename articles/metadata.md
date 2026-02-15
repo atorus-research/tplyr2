@@ -1,0 +1,383 @@
+# Metadata and Traceability
+
+``` r
+library(tplyr2)
+library(knitr)
+```
+
+## Why Traceability Matters
+
+Clinical summary tables go through rigorous quality control. When a
+reviewer questions a number, the programmer needs to trace that cell
+back to the exact rows in the source data that produced it. Without a
+systematic approach, this means re-reading code, reconstructing filter
+logic, and manually subsetting the data – a tedious and error-prone
+process.
+
+tplyr2 solves this with cell-level metadata. When you build a table with
+`metadata = TRUE`, the package records the filter expressions that
+define every cell. You can then query any cell to inspect the filters or
+retrieve the source data rows directly. This is valuable for regulatory
+review, quality control, and powering interactive drill-down interfaces
+in Shiny applications.
+
+## Building with Metadata
+
+Enabling metadata is a single argument to
+[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md):
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX"),
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "n" = f_str("xxx", "n"),
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+```
+
+The returned data frame has two additions compared to a normal build:
+
+1.  A `row_id` column containing a unique identifier for each output
+    row.
+2.  A `tplyr_meta` attribute – a named list of metadata objects keyed by
+    `"row_id||column"`.
+
+## Row IDs
+
+Row IDs are constructed from the layer index and row label values. For a
+count layer with `target_var = "SEX"` in layer 1, the IDs are `1_F` and
+`1_M`. For a descriptive statistics layer in layer 2, they are `2_n` and
+`2_Mean (SD)`.
+
+``` r
+result$row_id
+#> [1] "1_F"         "1_M"         "2_n"         "2_Mean (SD)"
+```
+
+IDs are deterministic – building the same spec against the same data
+always produces the same values. The
+[`generate_row_ids()`](https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.md)
+function creates these identifiers and can also be called on any tplyr2
+output, even one built without metadata.
+
+## Inspecting Cell Metadata
+
+Once you have a row ID and a column name,
+[`tplyr_meta_result()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_result.md)
+returns the metadata object for that cell:
+
+``` r
+meta <- tplyr_meta_result(result, "1_F", "res1")
+meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT01P, SEX
+#>   Filters:
+#>     TRT01P == "Placebo"
+#>     SEX == "F"
+```
+
+The `tplyr_meta` object contains:
+
+- **names**: Variable names relevant to this cell.
+- **filters**: A list of R call expressions that, combined with `&`,
+  define the data subset.
+- **layer_index**: Which layer this cell belongs to.
+- **anti_join**: `NULL` for normal cells, or a `tplyr_meta_anti_join`
+  object for missing subjects rows.
+
+If the cell does not exist, the function returns `NULL`. If you try to
+access metadata on a result built without it, you get a clear error:
+
+``` r
+result_no_meta <- tplyr_build(spec, tplyr_adsl, metadata = FALSE)
+tplyr_meta_result(result_no_meta, "1_F", "res1")
+#> Error:
+#> ! No metadata available. Rebuild with metadata = TRUE
+```
+
+## Getting Source Data
+
+The real power of metadata is in
+[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md).
+It evaluates the stored filters against the original data, returning the
+rows that produced a cell:
+
+``` r
+source_rows <- tplyr_meta_subset(result, "1_F", "res1", tplyr_adsl)
+nrow(source_rows)
+#> [1] 53
+all(source_rows$SEX == "F")
+#> [1] TRUE
+unique(source_rows$TRT01P)
+#> [1] "Placebo"
+```
+
+The number of rows returned matches the count displayed in the cell.
+
+## Metadata for Count Layers
+
+Count cells are defined by the intersection of the column variable level
+and the target variable level. When a `by` variable is present, it adds
+an additional filter:
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("DCDECOD", by = "EOSSTT")
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")]))
+```
+
+| rowlabel1 | rowlabel2          | res1       | res2       | res3       |
+|:----------|:-------------------|:-----------|:-----------|:-----------|
+| COMPLETED | ADVERSE EVENT      | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
+| COMPLETED | COMPLETED          | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |
+| COMPLETED | DEATH              | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
+| COMPLETED | LACK OF EFFICACY   | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
+| COMPLETED | LOST TO FOLLOW-UP  | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
+| COMPLETED | PHYSICIAN DECISION | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
+
+``` r
+rid <- result$row_id[1]
+meta <- tplyr_meta_result(result, rid, "res1")
+meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT01P, EOSSTT, DCDECOD
+#>   Filters:
+#>     TRT01P == "Placebo"
+#>     EOSSTT == "COMPLETED"
+#>     DCDECOD == "ADVERSE EVENT"
+```
+
+### Total Rows
+
+When `total_row = TRUE`, the total row’s metadata omits the target
+variable filter, leaving only the column variable and any by-variables:
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX", settings = layer_settings(total_row = TRUE))
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+total_row <- result[result$rowlabel1 == "Total", ]
+meta <- tplyr_meta_result(result, total_row$row_id, "res1")
+meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT01P, SEX
+#>   Filters:
+#>     TRT01P == "Placebo"
+```
+
+``` r
+source_rows <- tplyr_meta_subset(result, total_row$row_id, "res1", tplyr_adsl)
+nrow(source_rows)
+#> [1] 86
+```
+
+## Metadata for Descriptive Statistics Layers
+
+Each row in a desc layer represents a statistic (n, mean, etc.), not a
+data category. All stat rows within the same column point to the same
+source data – the observations on which those statistics were computed:
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "n" = f_str("xxx", "n"),
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+n_meta <- tplyr_meta_result(result, "1_n", "res1")
+n_meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT01P, AGE
+#>   Filters:
+#>     TRT01P == "Placebo"
+```
+
+The `names` field includes the target variable (`AGE`). You can verify
+the statistics by subsetting and computing them directly:
+
+``` r
+source_rows <- tplyr_meta_subset(result, "1_n", "res1", tplyr_adsl)
+c(n = nrow(source_rows), mean = mean(source_rows$AGE), sd = sd(source_rows$AGE))
+#>         n      mean        sd 
+#> 86.000000 75.209302  8.590167
+```
+
+## Where Filters in Metadata
+
+Both spec-level and layer-level `where` filters are captured in the
+metadata, so you can always see the full filtering chain:
+
+``` r
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  where = SAFFL == "Y",
+  layers = tplyr_layers(
+    group_count("SEX")
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+meta <- tplyr_meta_result(result, result$row_id[1], "res1")
+meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT01P, SEX, SAFFL
+#>   Filters:
+#>     TRT01P == "Placebo"
+#>     SEX == "F"
+#>     SAFFL == "Y"
+```
+
+The filter list includes `SAFFL == "Y"` alongside the column and target
+variable filters. The `names` field lists every variable in the
+subsetting logic.
+
+## Anti-Join Metadata for Missing Subjects
+
+Some tables include a row for subjects in the population data but not in
+the analysis data. The metadata for these rows uses a special
+`anti_join` field:
+
+``` r
+target <- data.frame(
+  TRT = c("A", "A", "B"),
+  USUBJID = c("S1", "S2", "S3"),
+  VAL = c("X", "Y", "X")
+)
+
+pop <- data.frame(
+  TRT = c("A", "A", "A", "B", "B"),
+  USUBJID = c("S1", "S2", "S4", "S3", "S5")
+)
+
+spec <- tplyr_spec(
+  cols = "TRT",
+  pop_data = pop_data(cols = "TRT"),
+  layers = tplyr_layers(
+    group_count("VAL",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        missing_subjects = TRUE,
+        missing_subjects_label = "Not in Target"
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+kable(result[, c("rowlabel1", "res1", "res2")])
+```
+
+| rowlabel1     | res1      | res2      |
+|:--------------|:----------|:----------|
+| Not in Target | 1 (33.3%) | 1 (50.0%) |
+| X             | 1 (33.3%) | 1 (50.0%) |
+| Y             | 1 (33.3%) | 0 ( 0.0%) |
+
+``` r
+ms_row <- result[result$rowlabel1 == "Not in Target", ]
+meta <- tplyr_meta_result(result, ms_row$row_id, "res1")
+meta
+#> tplyr_meta [layer 1]
+#>   Names: TRT, VAL
+#>   Filters:
+#>     TRT == "A"
+#>   Anti-join:
+#>     On: USUBJID
+#>     Pop filters:
+#>       TRT == "A"
+```
+
+The `anti_join` contains a `join_meta` (filters for the population side)
+and `on` (the join key, typically `"USUBJID"`). When calling
+[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md)
+on such a row, you must supply `pop_data`:
+
+``` r
+missing_a <- tplyr_meta_subset(result, ms_row$row_id, "res1",
+                                target, pop_data = pop)
+missing_a
+#>   TRT USUBJID
+#> 1   A      S4
+```
+
+Subject S4 is in the population for `TRT = "A"` but absent from the
+target, so the anti-join returns that one row. Omitting `pop_data`
+produces a warning:
+
+``` r
+tplyr_meta_subset(result, ms_row$row_id, "res1", target)
+#> Warning: pop_data is required for anti-join metadata but was not provided
+#>   TRT USUBJID VAL
+#> 1   A      S1   X
+#> 2   A      S2   Y
+```
+
+## Practical Applications
+
+The most common use of metadata is cell verification during QC:
+
+``` r
+result <- tplyr_build(spec, data, metadata = TRUE)
+source <- tplyr_meta_subset(result, row_id = "1_F", column = "res2", data = data)
+nrow(source)
+```
+
+The metadata system also lends itself to Shiny applications where
+clicking a cell triggers
+[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md),
+displaying the source records in a detail panel:
+
+``` r
+observeEvent(input$table_cell_click, {
+  click <- input$table_cell_click
+  row_id <- result$row_id[click$row]
+  col_name <- names(result)[click$col]
+  source_data <- tplyr_meta_subset(result, row_id, col_name, original_data)
+  output$detail_table <- renderTable(source_data)
+})
+```
+
+## Summary
+
+| Function                                          | Purpose                               |
+|---------------------------------------------------|---------------------------------------|
+| `tplyr_build(..., metadata = TRUE)`               | Build with metadata enabled           |
+| `generate_row_ids(result)`                        | Create row identifiers                |
+| `tplyr_meta_result(result, row_id, column)`       | Inspect filter expressions for a cell |
+| `tplyr_meta_subset(result, row_id, column, data)` | Retrieve source data rows             |
+
+Every cell carries its own filter expressions – column variable, target
+variable, by-variable, where clauses, and anti-join logic for missing
+subjects. These expressions are stored at build time but only evaluated
+when you request a subset, keeping the metadata lightweight while
+providing exact reproducibility of every number in your table.
