@@ -1,0 +1,224 @@
+---
+title: "Analysis Results Data"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Analysis Results Data}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+options(rmarkdown.html_vignette.check_title = FALSE)
+```
+
+```{r}
+library(tplyr2)
+library(knitr)
+```
+
+## Introduction
+
+Clinical summary tables are typically built for human consumption: aligned columns,
+formatted numbers, parenthesized percentages. But increasingly, regulatory and
+industry workflows require the underlying results in a machine-readable,
+standards-compliant format. The Analysis Results Data (ARD) model -- part of the
+broader CDISC ecosystem -- addresses this by defining a long-format structure
+where each row represents a single statistic for a single group combination.
+
+tplyr2 supports this through two functions:
+
+- `tplyr_to_ard()` converts a built result into ARD long format.
+- `tplyr_from_ard()` reconstructs a formatted table from ARD data and a spec.
+
+Together, these functions let you separate the _computed values_ from their
+_presentation_, enabling workflows where results are archived, exchanged, or
+validated independently of formatting.
+
+## Converting to ARD
+
+Any result from `tplyr_build()` can be converted to ARD format. The raw numeric
+data is already attached to every build result as an attribute; `tplyr_to_ard()`
+melts that data into one-row-per-statistic long format.
+
+Here is a complete example using a demographics table with both count and
+descriptive statistics layers:
+
+```{r}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX"),
+    group_desc(
+      "AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "n"         = f_str("xxx", "n"),
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+          "Median"    = f_str("xx.x", "median"),
+          "Min, Max"  = f_str("xx, xx", "min", "max")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+```
+
+The formatted output looks like a typical clinical table:
+
+```{r}
+kable(result[, !grepl("^ord", names(result))])
+```
+
+Converting to ARD is a single function call:
+
+```{r}
+ard <- tplyr_to_ard(result)
+kable(head(ard, 15))
+```
+
+## ARD Structure
+
+The ARD output is a data frame in long format. Each row represents one statistic
+for one group combination. The columns are:
+
+- **analysis_id**: An integer identifying which layer produced the row. Layer 1
+  is the first layer in the spec, layer 2 is the second, and so on.
+- **Grouping columns**: The original data variables that define the groups. For a
+  count layer with `cols = "TRT01P"` and `target_var = "SEX"`, you will see
+  `TRT01P` and `SEX` columns.
+- **stat_name**: The name of the statistic -- for example, `"n"`, `"pct"`,
+  `"total"`, `"mean"`, `"sd"`, `"median"`, `"min"`, `"max"`.
+- **stat_value**: The numeric value of the statistic.
+
+Let us examine the count layer (analysis_id 1) and descriptive statistics layer
+(analysis_id 2) separately.
+
+### Count Layer ARD
+
+The count layer produces statistics like `n`, `pct`, and `total` for each
+combination of treatment arm and target variable level:
+
+```{r}
+count_ard <- ard[ard$analysis_id == 1, ]
+kable(count_ard)
+```
+
+Each sex-by-treatment combination has three rows: the raw count (`n`), the
+percentage (`pct`), and the denominator (`total`).
+
+### Descriptive Statistics Layer ARD
+
+The descriptive layer produces a richer set of statistics. Even if the format
+strings only reference `n`, `mean`, `sd`, `median`, `min`, and `max`, the
+numeric data snapshot captures all computed statistics:
+
+```{r}
+desc_ard <- ard[ard$analysis_id == 2, ]
+kable(head(desc_ard, 20))
+```
+
+This is one of the key advantages of the ARD format: it preserves every computed
+value, not just those that appear in the formatted output.
+
+## Reconstructing from ARD
+
+Given an ARD data frame and the original spec, `tplyr_from_ard()` applies the
+spec's formatting rules to rebuild the display table. This completes the
+round-trip:
+
+```{r}
+rebuilt <- tplyr_from_ard(ard, spec)
+kable(rebuilt[, !grepl("^ord", names(rebuilt))])
+```
+
+The reconstructed table applies the same format strings, row labels, and column
+structure defined in the spec. This means the spec acts as a reusable formatting
+template: the same ARD data can be reformatted with different specs if needed, or
+the same spec can be applied to ARD data from different studies.
+
+### Verifying the Round-Trip
+
+We can confirm that the formatted values match between the original build and the
+ARD reconstruction:
+
+```{r}
+original_sorted <- result[order(result$rowlabel1), ]
+rebuilt_sorted  <- rebuilt[order(rebuilt$rowlabel1), ]
+
+all(trimws(original_sorted$res1) == trimws(rebuilt_sorted$res1))
+```
+
+The formatted cell values are identical, confirming that no information is lost in
+the conversion.
+
+## Use Cases
+
+### Standards-Compliant Data Exchange
+
+When submitting results to a regulatory agency or sharing across organizations,
+the ARD format provides a self-describing, tool-agnostic representation of the
+computed values. The long format is straightforward to validate, compare across
+submissions, or load into any analysis environment.
+
+### Separating Computation from Presentation
+
+In a production workflow, you might compute results once, archive the ARD, and
+then apply formatting later -- or apply different formatting for different
+audiences. The spec defines the presentation; the ARD holds the numbers.
+
+```{r}
+# Same ARD, different formatting
+compact_spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count(
+      "SEX",
+      settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx", "n"))
+      )
+    ),
+    group_desc(
+      "AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "n"    = f_str("xx", "n"),
+          "Mean" = f_str("xx.x", "mean")
+        )
+      )
+    )
+  )
+)
+
+compact_result <- tplyr_from_ard(ard, compact_spec)
+kable(compact_result[, !grepl("^ord", names(compact_result))])
+```
+
+The same underlying data now appears in a more compact layout, with counts
+displayed without percentages and only two descriptive statistics rows.
+
+### Archiving and Reproducibility
+
+Because the ARD captures every computed statistic as a plain numeric value, it
+serves as a durable archive of the analysis results. Paired with a saved spec
+(see `vignette("serialize")`), the full table can be reproduced at any time
+without re-running the analysis against the source data.
+
+## Summary
+
+The ARD workflow in tplyr2 is straightforward:
+
+1. Build your table with `tplyr_build()` as usual.
+2. Convert to long format with `tplyr_to_ard()` to get one row per statistic.
+3. Reconstruct a formatted table with `tplyr_from_ard()` using any compatible spec.
+
+This separation of computed results from formatted output supports
+standards-compliant data exchange, flexible re-formatting, and reproducible
+archiving of analysis results.
