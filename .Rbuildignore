@@ -1,3 +1,13 @@
 ^tplyr2\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
+^\.claude$
+^\.github$
+^CLAUDE\.md$
+^_pkgdown\.yml$
+^archive$
+^docs$
+^pseudo_code\.R$
+^scratch$
+^scratch\.R$
+^data-raw$
