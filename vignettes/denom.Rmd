@@ -267,7 +267,7 @@ spec <- tplyr_spec(
 )
 
 result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
-collapsed <- collapse_row_labels(result, indent = "   ")
+collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 
 # Show the first section plus the missing subjects row
 nr_idx <- which(collapsed$row_label == "No events reported")

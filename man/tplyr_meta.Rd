@@ -4,18 +4,29 @@
 \alias{tplyr_meta}
 \title{Metadata object for a tplyr output cell}
 \usage{
-tplyr_meta(row_indices, layer_index)
+tplyr_meta(
+  names = character(0),
+  filters = list(),
+  layer_index = integer(0),
+  anti_join = NULL
+)
 }
 \arguments{
-\item{row_indices}{Integer vector of row indices into the original data}
+\item{names}{Character vector of variable names relevant to this cell}
+
+\item{filters}{List of R language objects (call expressions) representing
+filter conditions}
 
 \item{layer_index}{Integer layer index (1-based)}
+
+\item{anti_join}{NULL or a \code{tplyr_meta_anti_join} object for missing
+subjects rows}
 }
 \value{
 A tplyr_meta object
 }
 \description{
-Contains the source data row indices that contributed to a specific cell
-in the output table.
+Contains filter expressions that, when evaluated against the original data,
+reproduce the subset of rows that contributed to a specific cell in the
+output table.
 }
-\keyword{internal}

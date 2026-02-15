@@ -427,12 +427,12 @@ vignettes:
   differences, ordering.
 - `vignette("desc")` -- Custom summaries, auto-precision, stats-as-columns.
 - `vignette("shift")` -- Shift layers and cross-tabulation options.
-- `vignette("pop_data")` -- Population data, header N, total groups, custom
+- `vignette("denom")` -- Population data, header N, total groups, custom
   groups.
-- `vignette("post_processing")` -- Row masks, column headers, row label
-  collapsing.
+- `vignette("post_processing")` -- Row masks, row label collapsing,
+  conditional formatting, and text wrapping.
 - `vignette("metadata")` -- Cell-level metadata and traceability.
-- `vignette("serialize")` -- Saving and loading specs as JSON or YAML.
+- `vignette("serialization")` -- Saving and loading specs as JSON or YAML.
 - `vignette("analyze")` -- Custom analysis layers with user-defined functions.
 
 # References

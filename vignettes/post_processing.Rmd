@@ -23,7 +23,7 @@ library(knitr)
 
 ## Introduction
 
-`tplyr_build()` produces a data.frame with `rowlabel*`, `res*`, and `ord_layer_*` columns. This output is complete and correct, but it is not yet ready for a polished report. Row labels still repeat across consecutive rows. Multiple label columns need collapsing into one. Column headers need to be added. And depending on the output format, leading whitespace may need special handling.
+`tplyr_build()` produces a data.frame with `rowlabel*`, `res*`, and `ord_layer_*` columns. This output is complete and correct, but it is not yet ready for a polished report. Row labels still repeat across consecutive rows. Multiple label columns need collapsing into one. And depending on the output format, leading whitespace may need special handling.
 
 tplyr2 provides a set of post-processing functions that transform build output into display-ready tables. This vignette walks through each of them, starting with the most common operations and ending with utility functions for targeted tasks.
 
@@ -82,37 +82,14 @@ kable(head(masked_breaks[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")],
 
 ## Collapsing Row Labels
 
-Many display formats expect a single row label column rather than separate `rowlabel1`, `rowlabel2`, etc. `collapse_row_labels()` merges them into one `row_label` column, applying indentation to indicate depth. The first level gets no indent, the second level gets one indent, and so on.
+Many display formats expect a single row label column rather than separate `rowlabel1`, `rowlabel2`, etc. `collapse_row_labels()` takes the specified columns and collapses them into one column. Repeating parent values are split into their own rows, and each nesting level receives progressively more indentation.
 
 ```{r collapse}
-collapsed <- collapse_row_labels(result, indent = "   ")
+collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 12))
 ```
 
-The `indent` parameter accepts any string. Use two spaces for tight layouts, a tab character for TSV output, or several spaces for wider indentation. The key point is that the depth of each value determines how many copies of the indent string are prepended.
-
-## Adding Column Headers
-
-The `res*` columns produced by `tplyr_build()` carry label attributes that describe what each column represents. `add_column_headers()` reads these labels and prepends a header row to the data.frame.
-
-```{r headers_default}
-with_headers <- add_column_headers(result)
-kable(head(with_headers[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 4))
-```
-
-### Custom Header Formats
-
-You can supply a `header_format` string to override the default labels. The format uses `" | "` as a delimiter: the first segment maps to the row label column, and subsequent segments map to `res1`, `res2`, and so on.
-
-```{r headers_custom}
-with_headers <- add_column_headers(
-  result,
-  header_format = "Assessment | Placebo | Xanomeline High Dose | Xanomeline Low Dose"
-)
-kable(head(with_headers[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 4))
-```
-
-This is particularly useful when you need headers that differ from the column variable levels, or when you want to add additional context.
+The columns to collapse are provided as character strings (at least two are required). The `indent` parameter accepts any string --- it is repeated at each nesting level. The output column name defaults to `"row_label"` but can be changed via `target_col`.
 
 ## Extracting Numeric Values
 
@@ -132,23 +109,19 @@ This function handles negative numbers, decimals, and missing values gracefully.
 
 ## Conditional Formatting
 
-`apply_conditional_format()` lets you modify cell values based on a condition. It takes a column name, a function that returns `TRUE` or `FALSE` for each cell, and a formatting function that transforms matching cells.
+`apply_conditional_format()` allows you to conditionally re-format a string of numbers based on a numeric value within the string itself. By selecting a "format group" (targeting a specific number within the string, numbered left to right), you can establish a condition upon which a replacement string is used. Either the replacement can replace the entire string, or it can refill just the format group while preserving the original width and alignment.
 
 ```{r conditional}
-# Flag any cell where the count exceeds 20 by appending an asterisk
-flagged <- apply_conditional_format(
-  result,
-  column = "res1",
-  condition_fn = function(x) {
-    val <- str_extract_num(x, 1)
-    !is.na(val) && val > 20
-  },
-  format_fn = function(x) paste0(x, " *")
-)
-kable(head(flagged[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 8))
+string <- c(" 0  (0.0%)", " 8  (9.3%)", "78 (90.7%)")
+
+# Replace the full string when the percentage (2nd format group) is 0
+apply_conditional_format(string, 2, x == 0, " 0        ", full_string = TRUE)
+
+# Replace within the format group when the percentage is less than 1
+apply_conditional_format(string, 2, x < 1, "(<1%)")
 ```
 
-The condition and format functions operate on the character cell values, so you can use `str_extract_num()` inside the condition function to make decisions based on the underlying numbers. This pattern works well for highlighting values that exceed thresholds, appending footnote markers, or wrapping cells in HTML tags.
+The `format_group` parameter selects which numeric value in the string to evaluate (1st number, 2nd number, etc.). The `condition` is an expression using the variable name `x` that tests the selected number. When `full_string = FALSE` (the default), the replacement is padded to preserve column alignment within the format group's character space.
 
 ## Replacing Leading Whitespace
 
@@ -178,14 +151,14 @@ This is useful when you need to format numbers from external data sources using 
 
 ## Text Wrapping
 
-`str_indent_wrap()` wraps long text strings to a specified width, with control over first-line indentation and hanging indentation for subsequent lines.
+`str_indent_wrap()` wraps long text strings to a specified width while automatically preserving any existing indentation and applying hyphenation to words that exceed the column width.
 
 ```{r wrap}
-long_text <- "Application of Kaplan-Meier estimates for the primary efficacy endpoint of time to first occurrence of a major adverse cardiac event"
-str_indent_wrap(long_text, width = 50, indent = 0, exdent = 4)
+ex_text <- c("RENAL AND URINARY DISORDERS", "   NEPHROLITHIASIS")
+cat(paste(str_indent_wrap(ex_text, width = 8), collapse = "\n\n"), "\n")
 ```
 
-The `indent` parameter controls the first line, and `exdent` controls continuation lines. This is a thin wrapper around `strwrap()` that returns a single string with embedded newlines.
+The function automatically detects leading whitespace in each element and preserves it on wrapped continuation lines. Long words that exceed the column width are split with hyphens. Tabs are converted to spaces using the `tab_width` parameter (default 5).
 
 ## Putting It All Together
 
@@ -212,35 +185,27 @@ output <- tplyr_build(spec, tplyr_adae)
 
 # Post-processing pipeline
 display <- output |>
-  apply_row_masks() |>
-  collapse_row_labels(indent = "   ") |>
-  add_column_headers(
-    header_format = " | Placebo | Xanomeline High Dose | Xanomeline Low Dose"
-  )
+  collapse_row_labels("rowlabel1", "rowlabel2", indent = "   ")
 
 kable(head(display[, c("row_label", "res1", "res2", "res3")], 20))
 ```
 
-The order of operations matters. `apply_row_masks()` should come before `collapse_row_labels()` so that deduplication works across all label columns while they are still separate. Column headers are typically added last because they prepend rows that should not be affected by row masking.
+When combining `apply_row_masks()` and `collapse_row_labels()`, note that `collapse_row_labels()` inserts its own stub rows and removes the original label columns, so it typically replaces the need for `apply_row_masks()`. For deeply nested tables (3+ label columns), applying `apply_row_masks()` on the raw output first can still be useful.
 
 ### Adding Conditional Formatting to the Pipeline
 
-You can extend the pipeline with conditional formatting to highlight important values. Here we flag any preferred term where more than 5 subjects were affected in the placebo arm.
+You can apply conditional formatting to the result columns before collapsing labels. Here we replace the percentage with `(<1%)` in the placebo arm when the percentage rounds to 0 but the count is non-zero.
 
 ```{r pipeline_conditional}
-display_flagged <- output |>
-  apply_row_masks() |>
-  apply_conditional_format(
-    column = "res1",
-    condition_fn = function(x) {
-      val <- str_extract_num(x, 1)
-      !is.na(val) && val > 5
-    },
-    format_fn = function(x) paste0(x, " *")
-  ) |>
-  collapse_row_labels(indent = "   ")
+# Apply conditional formatting before collapsing labels
+output$res1 <- apply_conditional_format(
+  output$res1, 2, x == 0, "(<1%)"
+)
 
-kable(head(display_flagged[, c("row_label", "res1", "res2", "res3")], 15))
+display_formatted <- output |>
+  collapse_row_labels("rowlabel1", "rowlabel2", indent = "   ")
+
+kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
 ## Summary
@@ -251,11 +216,10 @@ The post-processing functions in tplyr2 serve distinct purposes but are designed
 |:---|:---|
 | `apply_row_masks()` | Blank repeated row labels, optionally insert row breaks |
 | `collapse_row_labels()` | Merge label columns into one with indentation |
-| `add_column_headers()` | Prepend header row(s) from column labels |
 | `str_extract_num()` | Pull numeric values from formatted strings |
-| `apply_conditional_format()` | Modify cells that meet a condition |
+| `apply_conditional_format()` | Conditionally reformat strings based on numeric values within them |
 | `replace_leading_whitespace()` | Swap leading spaces for non-breaking spaces |
 | `apply_formats()` | Format numeric vectors using f_str objects |
-| `str_indent_wrap()` | Wrap long text with indentation control |
+| `str_indent_wrap()` | Wrap long text with hyphenation and indentation preservation |
 
-A typical pipeline runs `apply_row_masks()` first, then `collapse_row_labels()`, then `add_column_headers()`. Conditional formatting and whitespace replacement can be inserted wherever they make sense for your output format.
+A typical pipeline runs `apply_row_masks()` first, then `collapse_row_labels()`. Conditional formatting and whitespace replacement can be inserted wherever they make sense for your output format.

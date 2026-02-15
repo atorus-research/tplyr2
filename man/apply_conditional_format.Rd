@@ -2,22 +2,47 @@
 % Please edit documentation in R/post_process.R
 \name{apply_conditional_format}
 \alias{apply_conditional_format}
-\title{Apply conditional formatting to a column}
+\title{Conditional reformatting of a pre-populated string of numbers}
 \usage{
-apply_conditional_format(result, column, condition_fn, format_fn)
+apply_conditional_format(
+  string,
+  format_group,
+  condition,
+  replacement,
+  full_string = FALSE
+)
 }
 \arguments{
-\item{result}{A data.frame}
+\item{string}{Target character vector where text may be replaced}
 
-\item{column}{Character string naming the column to format}
+\item{format_group}{An integer representing the targeted numeric field within
+the string, numbered from left to right}
 
-\item{condition_fn}{Function that takes a value and returns logical}
+\item{condition}{An expression, using the variable name \code{x} as the
+target variable within the condition}
 
-\item{format_fn}{Function that takes a value and returns the formatted value}
+\item{replacement}{A string to use as the replacement value}
+
+\item{full_string}{TRUE if the full string should be replaced, FALSE if the
+replacement should be done within the format group}
 }
 \value{
-Modified data.frame
+A character vector
 }
 \description{
-Applies a formatting function to cells in a column where a condition is met.
+This function allows you to conditionally re-format a string of numbers
+based on a numeric value within the string itself. By selecting a "format
+group", which is targeting a specific number within the string, a user can
+establish a condition upon which a provided replacement string can be used.
+Either the entire replacement can be used to replace the entire string, or
+the replacement text can refill the "format group" while preserving the
+original width and alignment of the target string.
+}
+\examples{
+string <- c(" 0  (0.0\%)", " 8  (9.3\%)", "78 (90.7\%)")
+
+apply_conditional_format(string, 2, x == 0, " 0        ", full_string = TRUE)
+
+apply_conditional_format(string, 2, x < 1, "(<1\%)")
+
 }

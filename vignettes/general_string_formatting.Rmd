@@ -248,7 +248,7 @@ spec <- tplyr_spec(
 )
 
 result <- tplyr_build(spec, tplyr_adae)
-collapsed <- collapse_row_labels(result, indent = "   ")
+collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 

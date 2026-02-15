@@ -57,104 +57,119 @@ test_that("apply_row_masks handles multiple label columns", {
 
 # --- collapse_row_labels tests ---
 
-test_that("collapse_row_labels merges columns with indentation", {
+test_that("collapse_row_labels validates inputs", {
+  expect_error(collapse_row_labels(1, "a", "b"), "must be a data frame")
+  df <- data.frame(a = 1, b = 2)
+  expect_error(collapse_row_labels(df, "a", "b", indent = 1), "must be a character string")
+  expect_error(collapse_row_labels(df, "a"), "Must have two or more columns")
+  expect_error(collapse_row_labels(df, "a", "z"), "missing from x")
+})
+
+test_that("collapse_row_labels collapses two columns with stub rows", {
   df <- data.frame(
-    rowlabel1 = c("A", "", "B", ""),
-    rowlabel2 = c("", "X", "", "Y"),
-    res1 = c("1", "2", "3", "4"),
+    row_label1 = c("A", "A", "B", "B"),
+    row_label2 = c("C", "D", "E", "F"),
+    var1 = 1:4,
     stringsAsFactors = FALSE
   )
-  result <- collapse_row_labels(df)
+  result <- collapse_row_labels(df, "row_label1", "row_label2")
+
+  # Should have stub rows inserted: A, C, D, B, E, F = 6 rows
+  expect_equal(nrow(result), 6)
   expect_true("row_label" %in% names(result))
-  expect_false("rowlabel1" %in% names(result))
-  expect_equal(result$row_label, c("A", "  X", "B", "  Y"))
+  expect_false("row_label1" %in% names(result))
+  expect_false("row_label2" %in% names(result))
+
+  # Check indentation: stubs at level 1 (no indent), data at level 2 (indented)
+  expect_equal(result$row_label[1], "A")
+  expect_equal(result$row_label[2], "  C")
+  expect_equal(result$row_label[3], "  D")
+  expect_equal(result$row_label[4], "B")
+  expect_equal(result$row_label[5], "  E")
+  expect_equal(result$row_label[6], "  F")
 })
 
-test_that("collapse_row_labels custom indent", {
+test_that("collapse_row_labels handles deeper nesting", {
   df <- data.frame(
-    rowlabel1 = c("A", ""),
-    rowlabel2 = c("", "X"),
-    res1 = c("1", "2"),
+    rl1 = c("A", "A", "A", "B", "B"),
+    rl2 = c("C", "C", "D", "E", "E"),
+    rl3 = c("G", "H", "I", "J", "K"),
+    var1 = 1:5,
     stringsAsFactors = FALSE
   )
-  result <- collapse_row_labels(df, indent = "    ")
-  expect_equal(result$row_label, c("A", "    X"))
+  result <- collapse_row_labels(df, "rl1", "rl2", "rl3")
+
+  # First group (A, C): stubs A + C, then data G, H
+  expect_equal(result$row_label[1], "A")
+  expect_equal(result$row_label[2], "  C")
+  expect_equal(result$row_label[3], "    G")
+  expect_equal(result$row_label[4], "    H")
 })
 
-test_that("collapse_row_labels single column", {
+test_that("collapse_row_labels custom indent and target_col", {
   df <- data.frame(
-    rowlabel1 = c("A", "B"),
-    res1 = c("1", "2"),
+    row_label1 = c("A", "A", "B"),
+    row_label2 = c("X", "Y", "Z"),
+    var1 = 1:3,
     stringsAsFactors = FALSE
   )
-  result <- collapse_row_labels(df)
-  expect_equal(result$row_label, c("A", "B"))
+  result <- collapse_row_labels(df, "row_label1", "row_label2",
+                                indent = "    ", target_col = "rl")
+
+  expect_true("rl" %in% names(result))
+  expect_equal(result$rl[1], "A")
+  expect_equal(result$rl[2], "    X")
+  expect_equal(result$rl[3], "    Y")
+  expect_equal(result$rl[4], "B")
+  expect_equal(result$rl[5], "    Z")
 })
 
-test_that("collapse_row_labels empty data", {
-  df <- data.frame(rowlabel1 = character(0), res1 = character(0), stringsAsFactors = FALSE)
-  result <- collapse_row_labels(df)
-  expect_equal(nrow(result), 0)
-})
-
-# --- add_column_headers tests ---
-
-test_that("add_column_headers adds header row from labels", {
+test_that("collapse_row_labels preserves data columns", {
   df <- data.frame(
-    rowlabel1 = c("X", "Y"),
-    res1 = c("1", "2"),
-    res2 = c("3", "4"),
+    row_label1 = c("A", "A"),
+    row_label2 = c("X", "Y"),
+    val = c(10, 20),
     stringsAsFactors = FALSE
   )
-  attr(df$res1, "label") <- "Placebo"
-  attr(df$res2, "label") <- "Treatment"
-  result <- add_column_headers(df)
-  expect_equal(nrow(result), 3)
-  expect_equal(result$res1[1], "Placebo")
-  expect_equal(result$res2[1], "Treatment")
-})
+  result <- collapse_row_labels(df, "row_label1", "row_label2")
 
-test_that("add_column_headers with header_format string", {
-  df <- data.frame(
-    rowlabel1 = c("X"),
-    res1 = c("1"),
-    res2 = c("2"),
-    stringsAsFactors = FALSE
-  )
-  result <- add_column_headers(df, header_format = "Variable | Col A | Col B")
-  expect_equal(nrow(result), 2)
-  expect_equal(result$rowlabel1[1], "Variable")
-  expect_equal(result$res1[1], "Col A")
-  expect_equal(result$res2[1], "Col B")
-})
-
-test_that("add_column_headers substitutes **level** placeholders", {
-  df <- data.frame(
-    rowlabel1 = c("X"),
-    res1 = c("1"),
-    stringsAsFactors = FALSE
-  )
-  attr(df, "header_n") <- data.frame(TRT = "A", .n = 50, stringsAsFactors = FALSE)
-  result <- add_column_headers(df, header_format = "Var | **A**")
-  expect_equal(result$res1[1], "(N=50)")
+  # Stub row should have NA for numeric columns
+  expect_true(is.na(result$val[1]))
+  # Data rows should retain values
+  expect_equal(result$val[2], 10)
+  expect_equal(result$val[3], 20)
 })
 
 # --- str_indent_wrap tests ---
 
-test_that("str_indent_wrap wraps text", {
-  text <- "This is a long string that should be wrapped at a reasonable width for display"
-  result <- str_indent_wrap(text, width = 30)
-  expect_true(grepl("\n", result))
+test_that("str_indent_wrap errors properly", {
+  expect_error(str_indent_wrap(1), regexp = "x must be a character vector")
+})
+
+test_that("str_indent_wrap wraps text with hyphenation and indentation", {
+  text1 <- c("RENAL AND URINARY DISORDERS", "   NEPHROLITHIASIS")
+  text2 <- c("RENAL AND URINARY DISORDERS", "\tNEPHROLITHIASIS")
+  text3 <- c("RENAL AND URINARY DISORDERS", "\t\tNEPHROLITHIASIS")
+
+  expect_equal(
+    str_indent_wrap(text1, width = 8),
+    c("RENAL\nAND\nURINARY\nDISORDE-\nRS", "   NEPHROL-\n   ITHIASI-\n   S")
+  )
+
+  expect_equal(
+    str_indent_wrap(text2, width = 9, tab_width = 4),
+    c("RENAL AND\nURINARY\nDISORDER-\nS", "    NEPHROLI-\n    THIASIS")
+  )
+
+  expect_equal(
+    str_indent_wrap(text3, width = 9, tab_width = 2),
+    c("RENAL AND\nURINARY\nDISORDER-\nS", "    NEPHROLI-\n    THIASIS")
+  )
 })
 
 test_that("str_indent_wrap handles short text", {
   result <- str_indent_wrap("Short", width = 80)
   expect_equal(result, "Short")
-})
-
-test_that("str_indent_wrap handles NA", {
-  result <- str_indent_wrap(NA_character_)
-  expect_true(is.na(result))
 })
 
 test_that("str_indent_wrap handles vector input", {
@@ -164,23 +179,50 @@ test_that("str_indent_wrap handles vector input", {
 
 # --- apply_conditional_format tests ---
 
-test_that("apply_conditional_format applies function to matching cells", {
-  df <- data.frame(
-    res1 = c(" 5 (10.0%)", "10 (20.0%)", " 0 ( 0.0%)"),
-    stringsAsFactors = FALSE
-  )
-  result <- apply_conditional_format(
-    df, "res1",
-    condition_fn = function(x) grepl("^ *0 ", x),
-    format_fn = function(x) gsub("[0-9]", "-", x)
-  )
-  expect_equal(result$res1[1], " 5 (10.0%)")
-  expect_true(grepl("-", result$res1[3]))
+test_that("apply_conditional_format validates inputs", {
+  expect_error(apply_conditional_format(1, 1, x == 0, "a"), "must be a character")
+  expect_error(apply_conditional_format("a", 1.5, x == 0, "b"), "must be an integer")
+  expect_error(apply_conditional_format("a", 1, x == 0, 1), "must be a string")
+  expect_error(apply_conditional_format("a", 1, y == 0, "b"), "variable name `x`")
+  expect_error(apply_conditional_format("a", 1, x == 0, "b", full_string = "yes"), "must be bool")
 })
 
-test_that("apply_conditional_format errors on missing column", {
-  df <- data.frame(res1 = "a", stringsAsFactors = FALSE)
-  expect_error(apply_conditional_format(df, "nonexistent", identity, identity))
+test_that("apply_conditional_format replaces full string conditionally", {
+  string <- c(" 0  (0.0%)", " 8  (9.3%)", "78 (90.7%)")
+  result <- apply_conditional_format(string, 2, x == 0, " 0        ", full_string = TRUE)
+  expect_equal(result, c(" 0        ", " 8  (9.3%)", "78 (90.7%)"))
+})
+
+test_that("apply_conditional_format replaces within format group", {
+  string <- c(" 0  (0.0%)", " 8  (9.3%)", "78 (90.7%)")
+  result <- apply_conditional_format(string, 2, x < 1, "(<1%)")
+  expect_equal(result[1], " 0   (<1%)")
+  expect_equal(result[2], " 8  (9.3%)")
+  expect_equal(result[3], "78 (90.7%)")
+})
+
+test_that("apply_conditional_format handles compound conditions", {
+  string <- c(" 0  (0.0%)", " 8  (9.3%)", "78 (90.7%)")
+  result <- apply_conditional_format(string, 1, x > 7 & x < 13, "**")
+  # Only the second element should be replaced (x = 8)
+  expect_equal(result[1], " 0  (0.0%)")
+  expect_equal(result[3], "78 (90.7%)")
+  expect_true(grepl("\\*\\*", result[2]))
+})
+
+test_that("apply_conditional_format warns on long replacement", {
+  string <- c(" 0  (0.0%)")
+  expect_warning(
+    apply_conditional_format(string, 1, x == 0, "very long replacement"),
+    "longer"
+  )
+})
+
+test_that("apply_conditional_format handles missing format groups gracefully", {
+  string <- c(" 5 (10.0%)", "text only")
+  # format_group 2 doesn't exist in "text only" — should be treated as NA (no replacement)
+  result <- apply_conditional_format(string, 2, x == 10, "XX", full_string = TRUE)
+  expect_equal(result[2], "text only")
 })
 
 # --- str_extract_num tests ---

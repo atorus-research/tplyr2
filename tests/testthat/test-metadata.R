@@ -732,25 +732,35 @@ test_that("missing_subjects metadata with by-variables filters correctly", {
   )
   result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
 
-  # Find the Not in Pop row for GRP=G1
-  ms_g1 <- result[result$rowlabel1 == "G1" & result$rowlabel2 == "Not in Pop", ]
-  if (nrow(ms_g1) > 0) {
-    rid <- ms_g1$row_id[1]
-    meta <- tplyr_meta_result(result, rid, "res1")
+  # Missing subjects row is aggregated (not broken out by GRP)
+  ms_row <- result[result$rowlabel2 == "Not in Pop", ]
+  expect_equal(nrow(ms_row), 1)
 
-    # Anti-join should exist
-    expect_false(is.null(meta$anti_join))
+  rid <- ms_row$row_id[1]
 
-    # Main filters should include by-var (GRP) and col-var (TRT)
-    filter_vars <- unique(unlist(lapply(meta$filters, all.vars)))
-    expect_true("GRP" %in% filter_vars)
-    expect_true("TRT" %in% filter_vars)
+  # Metadata for TRT=A (res1): anti-join should exist
 
-    # Pop-side filters should also include GRP and TRT
-    pop_vars <- unique(unlist(lapply(meta$anti_join$join_meta$filters, all.vars)))
-    expect_true("GRP" %in% pop_vars)
-    expect_true("TRT" %in% pop_vars)
-  }
+  meta_a <- tplyr_meta_result(result, rid, "res1")
+  expect_false(is.null(meta_a$anti_join))
+  expect_equal(meta_a$anti_join$on, "USUBJID")
+
+  # Main filters should include TRT (col var)
+  filter_vars_a <- unique(unlist(lapply(meta_a$filters, all.vars)))
+  expect_true("TRT" %in% filter_vars_a)
+
+  # Pop-side filters should include TRT
+  pop_vars_a <- unique(unlist(lapply(meta_a$anti_join$join_meta$filters, all.vars)))
+  expect_true("TRT" %in% pop_vars_a)
+
+  # Functional check: S5 is in pop TRT=A but not in target
+  subset_a <- tplyr_meta_subset(result, rid, "res1", target, pop_data = pop)
+  expect_equal(nrow(subset_a), 1)
+  expect_equal(subset_a$USUBJID, "S5")
+
+  # Metadata for TRT=B (res2): S6 is missing
+  subset_b <- tplyr_meta_subset(result, rid, "res2", target, pop_data = pop)
+  expect_equal(nrow(subset_b), 1)
+  expect_equal(subset_b$USUBJID, "S6")
 })
 
 test_that("missing_subjects without distinct_by has no anti_join in metadata", {

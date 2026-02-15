@@ -4,12 +4,10 @@
 \alias{build_cell_metadata}
 \title{Build cell-level metadata for the full output table}
 \usage{
-build_cell_metadata(output, dt, spec, col_names)
+build_cell_metadata(output, spec, col_names, pop_col_map = NULL)
 }
 \arguments{
 \item{output}{data.frame output from tplyr_build (with rowlabel/res/ord cols)}
-
-\item{dt}{data.table with \code{.orig_row_idx} (after global where + groups)}
 
 \item{spec}{tplyr_spec object}
 
@@ -19,8 +17,8 @@ build_cell_metadata(output, dt, spec, col_names)
 Named list of tplyr_meta objects, keyed by "row_id||column"
 }
 \description{
-For each output row x result column combination, determines which source
-data rows contributed by matching rowlabel values and column labels back
-to the layer's group-level row index mapping.
+For each output row x result column combination, constructs filter
+expressions that describe the source data subset for that cell. The
+expressions can be evaluated at query time against the original data.
 }
 \keyword{internal}

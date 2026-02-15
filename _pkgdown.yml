@@ -61,7 +61,6 @@ reference:
 - title: Post-Processing
   desc: Post-processing functions for display formatting
   contents:
-    - add_column_headers
     - apply_conditional_format
     - apply_row_masks
     - collapse_row_labels

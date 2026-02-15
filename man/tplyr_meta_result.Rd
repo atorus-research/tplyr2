@@ -19,6 +19,6 @@ tplyr_meta_result(result, row_id, column)
 A \code{tplyr_meta} object, or NULL if no metadata for that cell
 }
 \description{
-Returns a \code{tplyr_meta} object containing the source data row indices
-that contributed to the specified cell.
+Returns a \code{tplyr_meta} object containing the filter expressions
+that describe the source data for the specified cell.
 }

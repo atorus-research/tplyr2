@@ -2,23 +2,48 @@
 % Please edit documentation in R/post_process.R
 \name{str_indent_wrap}
 \alias{str_indent_wrap}
-\title{Wrap text with indentation}
+\title{Wrap strings to a specific width with hyphenation while preserving
+indentation}
 \usage{
-str_indent_wrap(x, width = 80, indent = 0, exdent = 0)
+str_indent_wrap(x, width = 10, tab_width = 5)
 }
 \arguments{
-\item{x}{Character string to wrap}
+\item{x}{An input character vector}
 
-\item{width}{Maximum line width}
+\item{width}{The desired width of elements within the output character vector}
 
-\item{indent}{Indentation for the first line}
-
-\item{exdent}{Indentation for subsequent lines (hanging indent)}
+\item{tab_width}{The number of spaces to which tabs should be converted}
 }
 \value{
-Character string with newlines inserted
+A character vector with string wrapping applied
 }
 \description{
-Thin wrapper around \code{strwrap()} that returns a single string with
-newlines for text wrapping.
+Leverages \code{stringr::str_wrap()} under the hood, but takes extra steps
+to preserve any indentation that has been applied to a character element,
+and use hyphenated wrapping of single words that run longer than the
+allotted wrapping width.
+}
+\details{
+\code{stringr::str_wrap()} is highly efficient, but in the context of table
+creation there are two features missing --- hyphenation for long running
+strings that overflow width, and respect for pre-indentation of a character
+element. For example, in an adverse event table, you may have body system
+rows as an un-indented column, and preferred terms as indented columns. These
+strings may run long and require wrapping to not surpass the column width.
+Furthermore, for crowded tables a single word may be longer than the column
+width itself.
+
+This function resolves these two issues, while minimizing additional overhead
+required to apply the wrapping of strings.
+
+Note: This function automatically converts tabs to spaces. Tab width varies
+depending on font, so width cannot automatically be determined within a data
+frame. Users can specify the width via \code{tab_width}.
+}
+\examples{
+ex_text1 <- c("RENAL AND URINARY DISORDERS", "   NEPHROLITHIASIS")
+ex_text2 <- c("RENAL AND URINARY DISORDERS", "\tNEPHROLITHIASIS")
+
+cat(paste(str_indent_wrap(ex_text1, width = 8), collapse = "\n\n"), "\n")
+cat(paste(str_indent_wrap(ex_text2, tab_width = 4), collapse = "\n\n"), "\n")
 }

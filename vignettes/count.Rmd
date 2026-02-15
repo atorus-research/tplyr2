@@ -204,7 +204,7 @@ The outer-level counts represent the number of distinct subjects with any event 
 For display purposes, you often want a single row label column with indentation indicating the hierarchy rather than two separate columns. The `collapse_row_labels()` function merges the `rowlabel` columns into one.
 
 ```{r nested_collapsed}
-collapsed <- collapse_row_labels(result, indent = "   ")
+collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
@@ -255,7 +255,7 @@ spec <- tplyr_spec(
 )
 
 result <- tplyr_build(spec, tplyr_adae)
-collapsed <- collapse_row_labels(result, indent = "   ")
+collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
@@ -267,4 +267,4 @@ Count layers in tplyr2 cover a wide range of clinical table patterns, but there 
 - **Missing counts**: Add rows for missing values with the `missing_count` parameter.
 - **Shift tables**: Use `group_shift()` for cross-tabulation of baseline versus post-baseline categories.
 - **Descriptive statistics**: Use `group_desc()` for continuous variable summaries like mean, median, and standard deviation.
-- **Post-processing**: Apply row masks, column headers, and conditional formatting to polish your final output.
+- **Post-processing**: Apply row masks, conditional formatting, and row label collapsing to polish your final output.

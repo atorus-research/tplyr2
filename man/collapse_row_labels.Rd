@@ -2,20 +2,42 @@
 % Please edit documentation in R/post_process.R
 \name{collapse_row_labels}
 \alias{collapse_row_labels}
-\title{Collapse multiple row label columns into one with indentation}
+\title{Collapse row labels into a single column}
 \usage{
-collapse_row_labels(result, indent = "  ")
+collapse_row_labels(x, ..., indent = "  ", target_col = "row_label")
 }
 \arguments{
-\item{result}{A data.frame produced by \code{tplyr_build()}}
+\item{x}{Input data frame}
 
-\item{indent}{Character string used for each level of indentation}
+\item{...}{Column names (as character strings) to be collapsed, must be 2 or
+more}
+
+\item{indent}{Indentation string to be used, which is multiplied at each
+indentation level}
+
+\item{target_col}{Character string naming the output column containing
+collapsed row labels}
 }
 \value{
-A data.frame with a single \code{row_label} column replacing the
-\code{rowlabel*} columns
+data.frame with row labels collapsed into a single column
 }
 \description{
-Merges all \code{rowlabel*} columns into a single \code{row_label} column.
-Deeper nesting levels receive progressively more indentation.
+This is a generalized post processing function that allows you to take groups
+of by variables and collapse them into a single column. Repeating values are
+split into separate rows, and for each level of nesting, a specified
+indentation level can be applied.
+}
+\examples{
+x <- data.frame(
+  row_label1 = c("A", "A", "A", "B", "B"),
+  row_label2 = c("C", "C", "D", "E", "F"),
+  var1 = 1:5,
+  stringsAsFactors = FALSE
+)
+
+collapse_row_labels(x, "row_label1", "row_label2")
+
+collapse_row_labels(x, "row_label1", "row_label2", indent = "    ",
+                    target_col = "rl")
+
 }

@@ -4,7 +4,7 @@
 \alias{tplyr_meta_subset}
 \title{Get source data rows for a specific output cell}
 \usage{
-tplyr_meta_subset(result, row_id, column, data)
+tplyr_meta_subset(result, row_id, column, data, pop_data = NULL)
 }
 \arguments{
 \item{result}{A data.frame from \code{tplyr_build()} built with
@@ -15,11 +15,14 @@ tplyr_meta_subset(result, row_id, column, data)
 \item{column}{Character column name (e.g., \code{"res1"})}
 
 \item{data}{The original data.frame that was passed to \code{tplyr_build()}}
+
+\item{pop_data}{Optional population data.frame, required when the cell
+represents a missing subjects row (anti-join)}
 }
 \value{
 A data.frame subset of the original data, or NULL if no metadata
 }
 \description{
-Subsets the original data to return only the rows that contributed to
-the specified output cell.
+Evaluates the stored filter expressions against the original data to return
+the rows that contributed to the specified output cell.
 }

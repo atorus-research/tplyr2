@@ -173,13 +173,17 @@ make_eq_filter <- function(var_name, value) {
   call("==", as.name(var_name), value)
 }
 
-#' Build a \%in\% filter expression
+#' Build an inclusion filter expression
+#' @param var_name Character name of the variable
+#' @param values Vector of values for the inclusion set
 #' @keywords internal
 make_in_filter <- function(var_name, values) {
   call("%in%", as.name(var_name), values)
 }
 
-#' Build a negated \%in\% filter expression
+#' Build an exclusion filter expression
+#' @param var_name Character name of the variable
+#' @param values Vector of values to exclude
 #' @keywords internal
 make_not_in_filter <- function(var_name, values) {
   call("!", call("%in%", as.name(var_name), values))
