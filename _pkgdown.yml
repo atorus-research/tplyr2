@@ -48,6 +48,7 @@ reference:
 - title: Metadata
   desc: Cell-level traceability and source data extraction
   contents:
+    - tplyr_meta
     - tplyr_meta_result
     - tplyr_meta_subset
     - generate_row_ids
