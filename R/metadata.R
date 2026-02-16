@@ -585,10 +585,11 @@ build_cell_filter_exprs <- function(output, row_idx, rc, layer, layer_idx,
 #' @keywords internal
 build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   cols <- spec$cols
-  rowlabel_cols <- sort(str_subset(names(output), "^rowlabel\\d+$"))
   res_cols <- sort(str_subset(names(output), "^res\\d+$"))
+  n_rows <- nrow(output)
+  n_res <- length(res_cols)
 
-  if (length(res_cols) == 0) return(list())
+  if (n_res == 0) return(list())
 
   # Parse column variable levels from res column labels
   col_level_map <- list()
@@ -601,34 +602,247 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
 
   # Generate row IDs
   row_ids <- generate_row_ids(output)
+  output_names <- names(output)
 
-  cells <- list()
+  # --- Pre-compute per-layer info (avoids repeated work per row) ---
+  layer_cache <- vector("list", length(spec$layers))
+  for (li in seq_along(spec$layers)) {
+    layer <- spec$layers[[li]]
+    by_info <- classify_by(layer$by, col_names)
+    var_to_rl <- build_var_to_rowlabel_map(
+      layer, by_info$data_vars, by_info$labels, col_names
+    )
 
-  for (row_idx in seq_len(nrow(output))) {
-    layer_idx <- output$ord_layer_index[row_idx]
-    if (is.na(layer_idx) || layer_idx < 1 ||
+    # Pre-compute where filters (same for every cell in this layer)
+    where_filters <- list()
+    where_names <- character(0)
+    if (!is.null(spec$where) && !identical(spec$where, TRUE)) {
+      where_filters <- c(where_filters, list(spec$where))
+      where_names <- c(where_names, all.vars(spec$where))
+    }
+    if (!is.null(layer$where) && !identical(layer$where, TRUE)) {
+      where_filters <- c(where_filters, list(layer$where))
+      where_names <- c(where_names, all.vars(layer$where))
+    }
+
+    # Pre-compute column-level filters per res_col for this layer
+    col_cache <- vector("list", n_res)
+    names(col_cache) <- res_cols
+    is_shift <- inherits(layer, "tplyr_shift_layer")
+    for (ri in seq_along(res_cols)) {
+      rc <- res_cols[ri]
+      cf <- list()
+      cn <- character(0)
+      if (rc %in% names(col_level_map) && length(cols) > 0) {
+        col_level <- col_level_map[[rc]]
+        if (is_shift) {
+          parts <- str_split(col_level, fixed(" | "))[[1]]
+          for (ci in seq_along(cols)) {
+            resolved <- translate_group_value(
+              parts[ci], cols[ci], spec$total_groups, spec$custom_groups
+            )
+            cf <- c(cf, resolved$filters)
+            cn <- c(cn, cols[ci])
+          }
+          shift_col_var <- layer$target_var["column"]
+          if (length(parts) > length(cols)) {
+            cf <- c(cf, list(make_eq_filter(shift_col_var, parts[length(cols) + 1])))
+            cn <- c(cn, shift_col_var)
+          }
+        } else if (length(cols) == 1) {
+          resolved <- translate_group_value(
+            col_level, cols[1], spec$total_groups, spec$custom_groups
+          )
+          cf <- c(cf, resolved$filters)
+          cn <- c(cn, cols[1])
+        } else {
+          parts <- str_split(col_level, fixed(" | "))[[1]]
+          for (ci in seq_along(cols)) {
+            resolved <- translate_group_value(
+              parts[ci], cols[ci], spec$total_groups, spec$custom_groups
+            )
+            cf <- c(cf, resolved$filters)
+            cn <- c(cn, cols[ci])
+          }
+        }
+      }
+
+      # Pre-compute pop-side column filters for anti-join (remapped if needed)
+      pop_cf <- cf
+      pop_cn <- cn
+      if (!is.null(pop_col_map) && !identical(unname(pop_col_map), cols)) {
+        orig_pop_cols <- unname(pop_col_map)
+        spec_col_names <- if (!is.null(names(pop_col_map))) names(pop_col_map) else cols
+        pop_cf <- map(cf, function(f) {
+          for (ci in seq_along(spec_col_names)) {
+            f <- do.call(substitute, list(f, stats::setNames(
+              list(as.name(orig_pop_cols[ci])), spec_col_names[ci]
+            )))
+          }
+          f
+        })
+        pop_cn <- orig_pop_cols
+      }
+
+      col_cache[[ri]] <- list(
+        filters = cf, names = cn,
+        pop_filters = pop_cf, pop_names = pop_cn
+      )
+    }
+
+    # Pre-compute pop_data where filter
+    pop_where_filters <- list()
+    pop_where_names <- character(0)
+    if (!is.null(spec$pop_data) && !is.null(spec$pop_data$where) &&
+        !identical(spec$pop_data$where, TRUE)) {
+      pop_where_filters <- list(spec$pop_data$where)
+      pop_where_names <- all.vars(spec$pop_data$where)
+    }
+
+    # Pre-compute layer type flags and reusable values
+    is_count <- inherits(layer, "tplyr_count_layer")
+    is_desc_or_analyze <- inherits(layer, "tplyr_desc_layer") ||
+                          inherits(layer, "tplyr_analyze_layer")
+    settings <- layer$settings
+
+    layer_cache[[li]] <- list(
+      layer = layer,
+      by_data_vars = by_info$data_vars,
+      var_to_rl = var_to_rl,
+      where_filters = where_filters,
+      where_names = where_names,
+      col_cache = col_cache,
+      pop_where_filters = pop_where_filters,
+      pop_where_names = pop_where_names,
+      is_shift = is_shift,
+      is_count = is_count,
+      is_desc_or_analyze = is_desc_or_analyze,
+      settings = settings
+    )
+  }
+
+  # --- Pre-allocate output (avoids O(n^2) named list growth) ---
+  n_cells <- n_rows * n_res
+  keys <- character(n_cells)
+  vals <- vector("list", n_cells)
+  cell_idx <- 0L
+  layer_idx_col <- output$ord_layer_index
+
+  for (row_idx in seq_len(n_rows)) {
+    layer_idx <- layer_idx_col[row_idx]
+    if (is.na(layer_idx) || layer_idx < 1L ||
         layer_idx > length(spec$layers)) next
 
-    layer <- spec$layers[[layer_idx]]
+    lc <- layer_cache[[layer_idx]]
+    layer <- lc$layer
+    var_to_rl <- lc$var_to_rl
+    settings <- lc$settings
 
-    # Build variable-to-rowlabel column mapping
-    by_info <- classify_by(layer$by, col_names)
-    by_data_vars <- by_info$data_vars
-    by_labels <- by_info$labels
+    # --- Classify row type ONCE per row ---
+    row_type <- classify_row_type(output, row_idx, layer, var_to_rl)
 
-    var_to_rl <- build_var_to_rowlabel_map(layer, by_data_vars, by_labels, col_names)
+    # --- Collect by-variable filters ONCE per row ---
+    by_f <- list()
+    by_n <- character(0)
+    for (bv in lc$by_data_vars) {
+      rl_col <- var_to_rl[[bv]]
+      if (!is.null(rl_col) && rl_col %in% output_names) {
+        bv_val <- str_trim(as.character(output[[rl_col]][row_idx]))
+        if (str_length(bv_val) > 0) {
+          by_f <- c(by_f, list(make_eq_filter(bv, bv_val)))
+          by_n <- c(by_n, bv)
+        }
+      }
+    }
 
-    for (rc in res_cols) {
-      meta <- build_cell_filter_exprs(
-        output, row_idx, rc, layer, layer_idx,
-        cols, col_level_map, var_to_rl, by_data_vars, spec,
-        pop_col_map = pop_col_map
+    # --- Compute row-specific filters ONCE per row ---
+    row_filters <- list()
+    row_names <- character(0)
+
+    if (row_type == "normal") {
+      for (var_name in names(var_to_rl)) {
+        rl_col <- var_to_rl[[var_name]]
+        if (rl_col %in% output_names) {
+          rl_val <- str_trim(as.character(output[[rl_col]][row_idx]))
+          if (str_length(rl_val) > 0) {
+            row_filters <- c(row_filters, list(make_eq_filter(var_name, rl_val)))
+            row_names <- c(row_names, var_name)
+          }
+        }
+      }
+    } else if (row_type == "total") {
+      tv <- if (lc$is_count) layer$target_var[1] else layer$target_var["row"]
+      row_names <- c(row_names, tv)
+      if (!isTRUE(settings$total_row_count_missings) &&
+          !is.null(settings$missing_count)) {
+        missing_values <- settings$missing_count$missing_values %||% character(0)
+        if (length(missing_values) > 0) {
+          row_filters <- c(row_filters, list(make_not_in_filter(tv, missing_values)))
+        }
+        row_filters <- c(row_filters, list(make_not_na_filter(tv)))
+      }
+      row_filters <- c(row_filters, by_f)
+      row_names <- c(row_names, by_n)
+    } else if (row_type == "missing") {
+      tv <- layer$target_var[1]
+      missing_values <- settings$missing_count$missing_values %||% character(0)
+      row_filters <- c(row_filters, list(make_missing_filter(tv, missing_values)))
+      row_names <- c(row_names, tv)
+      row_filters <- c(row_filters, by_f)
+      row_names <- c(row_names, by_n)
+    } else if (row_type == "missing_subjects") {
+      row_filters <- c(row_filters, by_f)
+      row_names <- c(row_names, by_n, layer$target_var[1])
+    }
+
+    # Add where filters (cached per layer)
+    row_filters <- c(row_filters, lc$where_filters)
+    row_names <- c(row_names, lc$where_names)
+
+    # desc/analyze: add target_var to names
+    if (lc$is_desc_or_analyze) {
+      row_names <- c(row_names, layer$target_var)
+    }
+
+    # --- Combine with each column's pre-computed filters ---
+    row_id <- row_ids[row_idx]
+    needs_anti_join <- row_type == "missing_subjects" &&
+      !is.null(settings$distinct_by) && length(settings$distinct_by) > 0
+
+    for (ri in seq_along(res_cols)) {
+      cc <- lc$col_cache[[ri]]
+
+      all_filters <- c(cc$filters, row_filters)
+      all_names <- unique(c(cc$names, row_names))
+
+      # Build anti-join for missing_subjects rows
+      aj <- NULL
+      if (needs_anti_join) {
+        pop_filters <- c(cc$pop_filters, by_f, lc$pop_where_filters)
+        pop_names <- unique(c(cc$pop_names, by_n, lc$pop_where_names))
+        aj <- tplyr_meta_anti_join(
+          join_meta = tplyr_meta(
+            names = pop_names,
+            filters = pop_filters,
+            layer_index = as.integer(layer_idx)
+          ),
+          on = settings$distinct_by
+        )
+      }
+
+      cell_idx <- cell_idx + 1L
+      keys[cell_idx] <- paste(row_id, res_cols[ri], sep = "||")
+      vals[[cell_idx]] <- tplyr_meta(
+        names = all_names,
+        filters = all_filters,
+        layer_index = as.integer(layer_idx),
+        anti_join = aj
       )
-
-      key <- paste(row_ids[row_idx], rc, sep = "||")
-      cells[[key]] <- meta
     }
   }
 
-  cells
+  # Trim to actual size and set names once (O(n) instead of O(n^2))
+  vals <- vals[seq_len(cell_idx)]
+  names(vals) <- keys[seq_len(cell_idx)]
+  vals
 }

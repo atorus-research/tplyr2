@@ -11,3 +11,4 @@
 ^scratch$
 ^scratch\.R$
 ^data-raw$
+^pkgdown$
