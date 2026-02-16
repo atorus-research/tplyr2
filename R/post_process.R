@@ -80,6 +80,9 @@ apply_row_masks <- function(result, row_breaks = FALSE) {
 #'   indentation level
 #' @param target_col Character string naming the output column containing
 #'   collapsed row labels
+#' @param nest Logical. If TRUE, collapse row labels in-place without inserting
+#'   stub rows for repeating values. Allows a single column to be passed. Default
+#'   is FALSE.
 #'
 #' @return data.frame with row labels collapsed into a single column
 #' @export
@@ -97,7 +100,8 @@ apply_row_masks <- function(result, row_breaks = FALSE) {
 #' collapse_row_labels(x, "row_label1", "row_label2", indent = "    ",
 #'                     target_col = "rl")
 #'
-collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label") {
+collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label",
+                                nest = FALSE) {
 
   dot_names <- c(...)
 
@@ -107,6 +111,16 @@ collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label")
 
   if (!inherits(indent, "character")) {
     stop("indent must be a character string", call. = FALSE)
+  }
+
+  # Auto-detect rowlabel columns when none are provided
+  if (is.null(dot_names)) {
+    dot_names <- sort(str_subset(names(x), "^rowlabel\\d+$"))
+    min_cols <- if (nest) 1L else 2L
+    if (length(dot_names) < min_cols) {
+      stop(str_glue("No column names provided and fewer than {min_cols} rowlabel columns found in data."),
+           call. = FALSE)
+    }
   }
 
   if (!is.character(dot_names)) {
@@ -122,6 +136,44 @@ collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label")
     stop("target_col must be a single character string.", call. = FALSE)
   }
 
+  # --- nest=TRUE: collapse in-place without adding stub rows ---
+  if (nest) {
+    dt <- as.data.table(x)
+
+    if (length(dot_names) == 1L) {
+      # Single column: just rename
+      setnames(dt, dot_names, target_col)
+    } else {
+      # For each row, take the rightmost non-blank value and apply indentation
+      # based on which column it came from (depth)
+      dt[, (target_col) := {
+        val <- character(.N)
+        depth <- integer(.N)
+        for (ci in rev(seq_along(dot_names))) {
+          col_val <- trimws(as.character(.SD[[dot_names[ci]]]))
+          unfilled <- nchar(val) == 0L & nchar(col_val) > 0L
+          val[unfilled] <- col_val[unfilled]
+          depth[unfilled] <- ci
+        }
+        # Apply indent: depth 1 = no indent, depth 2 = 1x indent, etc.
+        map2_chr(depth, val, function(d, v) {
+          if (d <= 1L) v else str_c(strrep(indent, d - 1L), v)
+        })
+      }, .SDcols = dot_names]
+
+      # Remove original rowlabel columns (except target_col if it happens to match)
+      remove_cols <- setdiff(dot_names, target_col)
+      if (length(remove_cols) > 0L) {
+        dt[, (remove_cols) := NULL]
+      }
+    }
+
+    # Put target_col first
+    keep_cols <- c(target_col, setdiff(names(dt), target_col))
+    return(as.data.frame(dt[, keep_cols, with = FALSE]))
+  }
+
+  # --- Default (nest=FALSE): insert stub rows ---
   if (length(dot_names) < 2) {
     stop("Must have two or more columns to collapse", call. = FALSE)
   }

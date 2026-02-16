@@ -11,3 +11,5 @@
 ^scratch$
 ^scratch\.R$
 ^data-raw$
+^pkgdown$
+^benchmark_comparison\.R$

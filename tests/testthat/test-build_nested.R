@@ -41,34 +41,11 @@ test_that("nested count row labels are correct", {
   expect_true("CARDIAC" %in% outer_rows$rowlabel1)
   expect_true("GI" %in% outer_rows$rowlabel1)
 
-  # Inner rows (PT level): rowlabel1 has SOC, rowlabel2 has indented PT
+  # Inner rows (PT level): rowlabel1 has SOC, rowlabel2 has clean PT (no indentation)
   inner_rows <- result[result$rowlabel2 != "", ]
   expect_true(nrow(inner_rows) >= 4)
-  # Inner values should be indented
-  expect_true(all(grepl("^  ", inner_rows$rowlabel2)))
-})
-
-test_that("nested count custom indentation works", {
-  test_data <- data.frame(
-    TRT = c("A", "A"),
-    SOC = c("CARDIAC", "CARDIAC"),
-    PT  = c("AFIB", "TACHY")
-  )
-  spec <- tplyr_spec(
-    cols = "TRT",
-    layers = tplyr_layers(
-      group_count(c("SOC", "PT"),
-        settings = layer_settings(
-          indentation = "----",
-          format_strings = list(n_counts = f_str("xxx", "n"))
-        )
-      )
-    )
-  )
-  result <- tplyr_build(spec, test_data)
-
-  inner_rows <- result[result$rowlabel2 != "", ]
-  expect_true(all(grepl("^----", inner_rows$rowlabel2)))
+  # Inner values should NOT be indented in raw output
+  expect_true(all(!grepl("^\\s", inner_rows$rowlabel2)))
 })
 
 test_that("nested count accuracy: outer = sum of inner", {

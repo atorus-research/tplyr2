@@ -4,7 +4,13 @@
 \alias{collapse_row_labels}
 \title{Collapse row labels into a single column}
 \usage{
-collapse_row_labels(x, ..., indent = "  ", target_col = "row_label")
+collapse_row_labels(
+  x,
+  ...,
+  indent = "  ",
+  target_col = "row_label",
+  nest = FALSE
+)
 }
 \arguments{
 \item{x}{Input data frame}
@@ -17,6 +23,10 @@ indentation level}
 
 \item{target_col}{Character string naming the output column containing
 collapsed row labels}
+
+\item{nest}{Logical. If TRUE, collapse row labels in-place without inserting
+stub rows for repeating values. Allows a single column to be passed. Default
+is FALSE.}
 }
 \value{
 data.frame with row labels collapsed into a single column

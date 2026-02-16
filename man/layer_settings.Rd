@@ -10,7 +10,6 @@ layer_settings(
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
-  indentation = "  ",
   total_row = FALSE,
   total_row_label = "Total",
   total_row_count_missings = TRUE,
@@ -43,8 +42,6 @@ layer_settings(
 \item{denom_ignore}{Character vector of values to exclude from denominators}
 
 \item{distinct_by}{Character string naming the variable for distinct counting}
-
-\item{indentation}{Character string for nested count indentation}
 
 \item{total_row}{Logical, whether to add a total row}
 
@@ -93,3 +90,40 @@ A tplyr_layer_settings object
 Configuration object for all layer options. Unused parameters default to NULL
 and are ignored during build. Type-specific validation happens at build time.
 }
+\section{Settings by Layer Type}{
+
+
+Not all settings apply to every layer type. The table below shows which
+settings are applicable for each of the four layer types:\tabular{lllll}{
+   Setting \tab Count \tab Desc \tab Shift \tab Analyze \cr
+   \code{format_strings} \tab X \tab X \tab X \tab X \cr
+   \code{denoms_by} \tab X \tab X \tab X \tab  \cr
+   \code{denom_where} \tab X \tab X \tab X \tab  \cr
+   \code{denom_ignore} \tab X \tab  \tab X \tab  \cr
+   \code{distinct_by} \tab X \tab  \tab X \tab  \cr
+   \code{total_row} \tab X \tab  \tab  \tab  \cr
+   \code{total_row_label} \tab X \tab  \tab  \tab  \cr
+   \code{total_row_count_missings} \tab X \tab  \tab  \tab  \cr
+   \code{missing_count} \tab X \tab  \tab  \tab  \cr
+   \code{missing_subjects} \tab X \tab  \tab  \tab  \cr
+   \code{missing_subjects_label} \tab X \tab  \tab  \tab  \cr
+   \code{keep_levels} \tab X \tab  \tab  \tab  \cr
+   \code{limit_data_by} \tab X \tab  \tab  \tab  \cr
+   \code{custom_summaries} \tab  \tab X \tab  \tab  \cr
+   \code{stats_as_columns} \tab  \tab X \tab  \tab  \cr
+   \code{precision_by} \tab  \tab X \tab  \tab  \cr
+   \code{precision_on} \tab  \tab X \tab  \tab  \cr
+   \code{precision_data} \tab  \tab X \tab  \tab  \cr
+   \code{precision_cap} \tab  \tab X \tab  \tab  \cr
+   \code{order_count_method} \tab X \tab  \tab  \tab  \cr
+   \code{ordering_cols} \tab X \tab  \tab  \tab  \cr
+   \code{result_order_var} \tab X \tab  \tab  \tab  \cr
+   \code{outer_sort_position} \tab X \tab  \tab  \tab  \cr
+   \code{risk_diff} \tab X \tab  \tab  \tab  \cr
+   \code{name} \tab X \tab X \tab X \tab X \cr
+}
+
+
+Settings provided for an inapplicable layer type are silently ignored.
+}
+

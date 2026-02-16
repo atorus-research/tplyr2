@@ -3,7 +3,6 @@ test_that("layer_settings creates settings objects", {
   expect_s3_class(s, "tplyr_layer_settings")
   expect_null(s$format_strings)
   expect_false(s$total_row)
-  expect_equal(s$indentation, "  ")
 })
 
 test_that("layer_settings accepts custom format strings", {

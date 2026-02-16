@@ -328,6 +328,74 @@ kable(head(tplyr_to_ard(result), 10))
 kable(tplyr_numeric_data(result, layer = 1))
 ```
 
+# Performance
+
+Beyond the API improvements, tplyr2 delivers significant performance gains
+over Tplyr v1 thanks to a data.table backend replacing the tidyverse internals.
+The table below summarizes benchmarks run across five layer types at data scales
+from 1x to 500x the base dataset sizes, with and without metadata enabled.
+
+## Overall Speedup by Layer Type
+
+| Layer Type | Avg Speedup | Median Speedup | Min | Max |
+|---|---|---|---|---|
+| Shift | 176.0x | 187.6x | 6.4x | 388.5x |
+| Desc | 8.0x | 7.1x | 4.1x | 18.3x |
+| Count | 4.0x | 3.1x | 2.5x | 12.6x |
+| Nested Count | 3.8x | 3.1x | 2.8x | 7.3x |
+| Multi-Layer | 2.8x | 3.0x | 1.2x | 4.0x |
+
+The grand median speedup across all scenarios is **4.0x**.
+
+## Detailed Results
+
+### Count Layers
+
+| Scale | Tplyr v1 | tplyr2 | Speedup | | Tplyr v1 (meta) | tplyr2 (meta) | Speedup |
+|---|---|---|---|---|---|---|---|
+| 1x | 0.05s | 0.01s | 4.5x | | 0.17s | 0.01s | 12.6x |
+| 10x | 0.12s | 0.03s | 3.8x | | 0.20s | 0.06s | 3.2x |
+| 50x | 0.47s | 0.16s | 3.0x | | 0.80s | 0.32s | 2.5x |
+| 100x | 0.99s | 0.32s | 3.1x | | 1.86s | 0.63s | 2.9x |
+| 250x | 2.40s | 0.74s | 3.2x | | 4.28s | 1.50s | 2.9x |
+| 500x | 5.13s | 1.43s | 3.6x | | 8.92s | 3.29s | 2.7x |
+
+### Nested Count Layers
+
+| Scale | Tplyr v1 | tplyr2 | Speedup | | Tplyr v1 (meta) | tplyr2 (meta) | Speedup |
+|---|---|---|---|---|---|---|---|
+| 1x | 0.21s | 0.05s | 4.0x | | 0.21s | 0.03s | 7.3x |
+| 10x | 0.34s | 0.11s | 3.2x | | 0.41s | 0.14s | 3.0x |
+| 50x | 0.89s | 0.31s | 2.9x | | 1.40s | 0.50s | 2.8x |
+| 100x | 1.78s | 0.61s | 2.9x | | 2.86s | 0.95s | 3.0x |
+| 250x | 5.24s | 1.23s | 4.3x | | 8.00s | 2.82s | 2.8x |
+| 500x | 14.61s | 2.58s | 5.7x | | 19.64s | 4.96s | 4.0x |
+
+### Descriptive Statistics Layers
+
+| Scale | Tplyr v1 | tplyr2 | Speedup | | Tplyr v1 (meta) | tplyr2 (meta) | Speedup |
+|---|---|---|---|---|---|---|---|
+| 1x | 0.07s | 0.01s | 5.9x | | 0.23s | 0.01s | 18.3x |
+| 10x | 0.18s | 0.02s | 7.2x | | 0.20s | 0.04s | 5.4x |
+| 50x | 0.70s | 0.08s | 8.5x | | 0.83s | 0.11s | 7.6x |
+| 100x | 1.43s | 0.14s | 10.1x | | 1.61s | 0.23s | 6.9x |
+| 250x | 3.23s | 0.35s | 9.3x | | 3.65s | 0.56s | 6.5x |
+| 500x | 6.27s | 1.54s | 4.1x | | 7.74s | 1.21s | 6.4x |
+
+### Shift Layers
+
+| Scale | Tplyr v1 | tplyr2 | Speedup | | Tplyr v1 (meta) | tplyr2 (meta) | Speedup |
+|---|---|---|---|---|---|---|---|
+| 1x | 0.06s | 0.01s | 6.4x | | 0.08s | 0.01s | 11.0x |
+| 10x | 0.29s | 0.01s | 34.4x | | 0.43s | 0.01s | 49.7x |
+| 50x | 1.20s | 0.01s | 110.4x | | 2.11s | 0.01s | 158.8x |
+| 100x | 2.63s | 0.01s | 216.4x | | 4.53s | 0.02s | 231.8x |
+| 250x | 6.69s | 0.03s | 265.9x | | 10.70s | 0.04s | 305.2x |
+| 500x | 13.87s | 0.04s | 388.5x | | 21.91s | 0.07s | 333.8x |
+
+The benchmark script (`benchmark_comparison.R`) is included in the package
+repository root for reproducibility.
+
 # Summary
 
 The migration from Tplyr v1 to tplyr2 involves three main shifts:
