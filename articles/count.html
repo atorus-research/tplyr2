@@ -885,8 +885,8 @@ by passing a vector of two variable names to
 outer level, and the second (<code>AEDECOD</code>) becomes the inner
 level. In the output, <code>rowlabel1</code> holds the body system name
 and <code>rowlabel2</code> holds the preferred term. Outer-level summary
-rows have an empty <code>rowlabel2</code>, while inner-level rows have
-their preferred term indented within <code>rowlabel2</code>.</p>
+rows have an empty <code>rowlabel2</code>, while inner-level rows show
+the preferred term in <code>rowlabel2</code>.</p>
 <p>The outer-level counts represent the number of distinct subjects with
 any event in that body system, and the inner-level counts represent
 subjects with each specific preferred term. A subject who experienced
@@ -898,8 +898,13 @@ inner level.</p>
 </h3>
 <p>For display purposes, you often want a single row label column with
 indentation indicating the hierarchy rather than two separate columns.
-The <code><a href="../reference/collapse_row_labels.html">collapse_row_labels()</a></code> function merges the
-<code>rowlabel</code> columns into one.</p>
+The <code><a href="../reference/collapse_row_labels.html">collapse_row_labels()</a></code> function provides two modes for
+this.</p>
+<div class="section level4">
+<h4 id="default-mode-stub-rows">Default Mode (Stub Rows)<a class="anchor" aria-label="anchor" href="#default-mode-stub-rows"></a>
+</h4>
+<p>The default mode inserts stub rows for outer-level labels. These stub
+rows have no numeric results – they serve purely as group headers:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="va">result</span>, <span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">collapsed</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -1009,38 +1014,26 @@ The <code><a href="../reference/collapse_row_labels.html">collapse_row_labels()<
 </tr>
 </tbody>
 </table>
-<p>The <code>indent</code> parameter controls the string used for each
-level of nesting. Here we use three spaces, but you can use any string
-that suits your output format.</p>
 </div>
-<div class="section level3">
-<h3 id="controlling-indentation-at-the-layer-level">Controlling Indentation at the Layer Level<a class="anchor" aria-label="anchor" href="#controlling-indentation-at-the-layer-level"></a>
-</h3>
-<p>You can also control the indentation of inner-level labels directly
-in the layer settings using the <code>indentation</code> parameter. This
-sets the prefix applied to <code>rowlabel2</code> values before any
-post-processing.</p>
+<div class="section level4">
+<h4 id="nest-mode">Nest Mode<a class="anchor" aria-label="anchor" href="#nest-mode"></a>
+</h4>
+<p>With <code>nest = TRUE</code>, the row labels are collapsed in place
+without adding new rows. Outer-level rows keep their results, and inner
+rows are indented. This matches the behavior of
+<code>set_nest_count(TRUE)</code> in Tplyr v1:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
-<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
-<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
-<span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>, <span class="st">"AEDECOD"</span><span class="op">)</span>,</span>
-<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
-<span>        indentation <span class="op">=</span> <span class="st">"    "</span>,</span>
-<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>          n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n"</span><span class="op">)</span></span>
-<span>        <span class="op">)</span></span>
-<span>      <span class="op">)</span></span>
-<span>    <span class="op">)</span></span>
-<span>  <span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
-<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">nested</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="va">result</span>, nest <span class="op">=</span> <span class="cn">TRUE</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nested</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
+<colgroup>
+<col width="58%">
+<col width="13%">
+<col width="13%">
+<col width="13%">
+</colgroup>
 <thead><tr class="header">
-<th align="left">rowlabel1</th>
-<th align="left">rowlabel2</th>
+<th align="left">row_label</th>
 <th align="left">res1</th>
 <th align="left">res2</th>
 <th align="left">res3</th>
@@ -1048,90 +1041,100 @@ post-processing.</p>
 <tbody>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
-<td align="left"></td>
-<td align="left">5</td>
-<td align="left">6</td>
-<td align="left">6</td>
+<td align="left">4 (12.5%)</td>
+<td align="left">6 (14.0%)</td>
+<td align="left">5 (10.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FIBRILLATION</td>
-<td align="left">0</td>
-<td align="left">0</td>
-<td align="left">1</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.0%)</td>
 </tr>
 <tr class="odd">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FLUTTER</td>
-<td align="left">0</td>
-<td align="left">1</td>
-<td align="left">0</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.3%)</td>
+<td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL HYPERTROPHY</td>
-<td align="left">1</td>
-<td align="left">0</td>
-<td align="left">0</td>
+<td align="left">1 ( 3.1%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
-<td align="left">1</td>
-<td align="left">0</td>
-<td align="left">0</td>
+<td align="left">1 ( 3.1%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">CARDIAC FAILURE CONGESTIVE</td>
-<td align="left">1</td>
-<td align="left">0</td>
-<td align="left">0</td>
+<td align="left">1 ( 3.1%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">MYOCARDIAL INFARCTION</td>
-<td align="left">0</td>
-<td align="left">1</td>
-<td align="left">2</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.3%)</td>
+<td align="left">2 ( 4.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">SINUS BRADYCARDIA</td>
-<td align="left">0</td>
-<td align="left">3</td>
-<td align="left">1</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">3 ( 7.0%)</td>
+<td align="left">1 ( 2.0%)</td>
 </tr>
 <tr class="odd">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
-<td align="left">1</td>
-<td align="left">0</td>
-<td align="left">1</td>
+<td align="left">1 ( 3.1%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
-<td align="left">0</td>
-<td align="left">0</td>
-<td align="left">1</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.0%)</td>
 </tr>
 <tr class="odd">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">TACHYCARDIA</td>
-<td align="left">1</td>
-<td align="left">0</td>
-<td align="left">0</td>
+<td align="left">1 ( 3.1%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
-<td align="left">CARDIAC DISORDERS</td>
 <td align="left">VENTRICULAR EXTRASYSTOLES</td>
-<td align="left">0</td>
-<td align="left">1</td>
-<td align="left">0</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.3%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+<tr class="odd">
+<td align="left">CONGENITAL, FAMILIAL AND GENETIC DISORDERS</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.3%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+<tr class="even">
+<td align="left">VENTRICULAR SEPTAL DEFECT</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 2.3%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+<tr class="odd">
+<td align="left">GASTROINTESTINAL DISORDERS</td>
+<td align="left">6 (18.8%)</td>
+<td align="left">4 ( 9.3%)</td>
+<td align="left">3 ( 6.0%)</td>
 </tr>
 </tbody>
 </table>
+<p>The <code>indent</code> parameter controls the string used for each
+level of nesting. Here we use three spaces, but you can use any string
+that suits your output format.</p>
+</div>
 </div>
 <div class="section level3">
 <h3 id="nested-counts-with-total-rows">Nested Counts with Total Rows<a class="anchor" aria-label="anchor" href="#nested-counts-with-total-rows"></a>

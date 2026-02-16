@@ -884,11 +884,12 @@ variable names to <code>target_var</code>:</p>
 </tbody>
 </table>
 <p>The outer level (body system) appears in <code>rowlabel1</code>, and
-the inner level (preferred term) appears indented in
-<code>rowlabel2</code>. Outer rows contain aggregate counts for the body
-system; inner rows contain per-term counts. Indentation defaults to two
-spaces and can be changed via the <code>indentation</code> parameter in
-<code><a href="../reference/layer_settings.html">layer_settings()</a></code>.</p>
+the inner level (preferred term) appears in <code>rowlabel2</code>.
+Outer rows contain aggregate counts for the body system; inner rows
+contain per-term counts. Use
+<code>collapse_row_labels(result, nest = TRUE)</code> to merge these
+into a single indented column (see the Count Layer vignette for
+details).</p>
 </div>
 </div>
 <div class="section level3">

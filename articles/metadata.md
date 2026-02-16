@@ -245,7 +245,7 @@ result <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
 meta <- tplyr_meta_result(result, result$row_id[1], "res1")
 meta
 #> tplyr_meta [layer 1]
-#>   Names: TRT01P, SEX, SAFFL
+#>   Names: TRT01P, SAFFL, SEX
 #>   Filters:
 #>     TRT01P == "Placebo"
 #>     SEX == "F"

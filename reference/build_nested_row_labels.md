@@ -11,7 +11,6 @@ build_nested_row_labels(
   by_data_vars,
   target_vars,
   level,
-  n_levels,
-  indentation
+  n_levels
 )
 ```

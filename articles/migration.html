@@ -848,6 +848,425 @@ unformatted numbers for validation:</p>
 </div>
 </div>
 <div class="section level2">
+<h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
+</h2>
+<p>Beyond the API improvements, tplyr2 delivers significant performance
+gains over Tplyr v1 thanks to a data.table backend replacing the
+tidyverse internals. The table below summarizes benchmarks run across
+five layer types at data scales from 1x to 500x the base dataset sizes,
+with and without metadata enabled.</p>
+<div class="section level3">
+<h3 id="overall-speedup-by-layer-type">Overall Speedup by Layer Type<a class="anchor" aria-label="anchor" href="#overall-speedup-by-layer-type"></a>
+</h3>
+<table class="table">
+<thead><tr class="header">
+<th>Layer Type</th>
+<th>Avg Speedup</th>
+<th>Median Speedup</th>
+<th>Min</th>
+<th>Max</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Shift</td>
+<td>176.0x</td>
+<td>187.6x</td>
+<td>6.4x</td>
+<td>388.5x</td>
+</tr>
+<tr class="even">
+<td>Desc</td>
+<td>8.0x</td>
+<td>7.1x</td>
+<td>4.1x</td>
+<td>18.3x</td>
+</tr>
+<tr class="odd">
+<td>Count</td>
+<td>4.0x</td>
+<td>3.1x</td>
+<td>2.5x</td>
+<td>12.6x</td>
+</tr>
+<tr class="even">
+<td>Nested Count</td>
+<td>3.8x</td>
+<td>3.1x</td>
+<td>2.8x</td>
+<td>7.3x</td>
+</tr>
+<tr class="odd">
+<td>Multi-Layer</td>
+<td>2.8x</td>
+<td>3.0x</td>
+<td>1.2x</td>
+<td>4.0x</td>
+</tr>
+</tbody>
+</table>
+<p>The grand median speedup across all scenarios is
+<strong>4.0x</strong>.</p>
+</div>
+<div class="section level3">
+<h3 id="detailed-results">Detailed Results<a class="anchor" aria-label="anchor" href="#detailed-results"></a>
+</h3>
+<div class="section level4">
+<h4 id="count-layers">Count Layers<a class="anchor" aria-label="anchor" href="#count-layers"></a>
+</h4>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Scale</th>
+<th>Tplyr v1</th>
+<th>tplyr2</th>
+<th>Speedup</th>
+<th></th>
+<th>Tplyr v1 (meta)</th>
+<th>tplyr2 (meta)</th>
+<th>Speedup</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>1x</td>
+<td>0.05s</td>
+<td>0.01s</td>
+<td>4.5x</td>
+<td></td>
+<td>0.17s</td>
+<td>0.01s</td>
+<td>12.6x</td>
+</tr>
+<tr class="even">
+<td>10x</td>
+<td>0.12s</td>
+<td>0.03s</td>
+<td>3.8x</td>
+<td></td>
+<td>0.20s</td>
+<td>0.06s</td>
+<td>3.2x</td>
+</tr>
+<tr class="odd">
+<td>50x</td>
+<td>0.47s</td>
+<td>0.16s</td>
+<td>3.0x</td>
+<td></td>
+<td>0.80s</td>
+<td>0.32s</td>
+<td>2.5x</td>
+</tr>
+<tr class="even">
+<td>100x</td>
+<td>0.99s</td>
+<td>0.32s</td>
+<td>3.1x</td>
+<td></td>
+<td>1.86s</td>
+<td>0.63s</td>
+<td>2.9x</td>
+</tr>
+<tr class="odd">
+<td>250x</td>
+<td>2.40s</td>
+<td>0.74s</td>
+<td>3.2x</td>
+<td></td>
+<td>4.28s</td>
+<td>1.50s</td>
+<td>2.9x</td>
+</tr>
+<tr class="even">
+<td>500x</td>
+<td>5.13s</td>
+<td>1.43s</td>
+<td>3.6x</td>
+<td></td>
+<td>8.92s</td>
+<td>3.29s</td>
+<td>2.7x</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level4">
+<h4 id="nested-count-layers">Nested Count Layers<a class="anchor" aria-label="anchor" href="#nested-count-layers"></a>
+</h4>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Scale</th>
+<th>Tplyr v1</th>
+<th>tplyr2</th>
+<th>Speedup</th>
+<th></th>
+<th>Tplyr v1 (meta)</th>
+<th>tplyr2 (meta)</th>
+<th>Speedup</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>1x</td>
+<td>0.21s</td>
+<td>0.05s</td>
+<td>4.0x</td>
+<td></td>
+<td>0.21s</td>
+<td>0.03s</td>
+<td>7.3x</td>
+</tr>
+<tr class="even">
+<td>10x</td>
+<td>0.34s</td>
+<td>0.11s</td>
+<td>3.2x</td>
+<td></td>
+<td>0.41s</td>
+<td>0.14s</td>
+<td>3.0x</td>
+</tr>
+<tr class="odd">
+<td>50x</td>
+<td>0.89s</td>
+<td>0.31s</td>
+<td>2.9x</td>
+<td></td>
+<td>1.40s</td>
+<td>0.50s</td>
+<td>2.8x</td>
+</tr>
+<tr class="even">
+<td>100x</td>
+<td>1.78s</td>
+<td>0.61s</td>
+<td>2.9x</td>
+<td></td>
+<td>2.86s</td>
+<td>0.95s</td>
+<td>3.0x</td>
+</tr>
+<tr class="odd">
+<td>250x</td>
+<td>5.24s</td>
+<td>1.23s</td>
+<td>4.3x</td>
+<td></td>
+<td>8.00s</td>
+<td>2.82s</td>
+<td>2.8x</td>
+</tr>
+<tr class="even">
+<td>500x</td>
+<td>14.61s</td>
+<td>2.58s</td>
+<td>5.7x</td>
+<td></td>
+<td>19.64s</td>
+<td>4.96s</td>
+<td>4.0x</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level4">
+<h4 id="descriptive-statistics-layers">Descriptive Statistics Layers<a class="anchor" aria-label="anchor" href="#descriptive-statistics-layers"></a>
+</h4>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Scale</th>
+<th>Tplyr v1</th>
+<th>tplyr2</th>
+<th>Speedup</th>
+<th></th>
+<th>Tplyr v1 (meta)</th>
+<th>tplyr2 (meta)</th>
+<th>Speedup</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>1x</td>
+<td>0.07s</td>
+<td>0.01s</td>
+<td>5.9x</td>
+<td></td>
+<td>0.23s</td>
+<td>0.01s</td>
+<td>18.3x</td>
+</tr>
+<tr class="even">
+<td>10x</td>
+<td>0.18s</td>
+<td>0.02s</td>
+<td>7.2x</td>
+<td></td>
+<td>0.20s</td>
+<td>0.04s</td>
+<td>5.4x</td>
+</tr>
+<tr class="odd">
+<td>50x</td>
+<td>0.70s</td>
+<td>0.08s</td>
+<td>8.5x</td>
+<td></td>
+<td>0.83s</td>
+<td>0.11s</td>
+<td>7.6x</td>
+</tr>
+<tr class="even">
+<td>100x</td>
+<td>1.43s</td>
+<td>0.14s</td>
+<td>10.1x</td>
+<td></td>
+<td>1.61s</td>
+<td>0.23s</td>
+<td>6.9x</td>
+</tr>
+<tr class="odd">
+<td>250x</td>
+<td>3.23s</td>
+<td>0.35s</td>
+<td>9.3x</td>
+<td></td>
+<td>3.65s</td>
+<td>0.56s</td>
+<td>6.5x</td>
+</tr>
+<tr class="even">
+<td>500x</td>
+<td>6.27s</td>
+<td>1.54s</td>
+<td>4.1x</td>
+<td></td>
+<td>7.74s</td>
+<td>1.21s</td>
+<td>6.4x</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level4">
+<h4 id="shift-layers">Shift Layers<a class="anchor" aria-label="anchor" href="#shift-layers"></a>
+</h4>
+<table class="table">
+<colgroup>
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
+</colgroup>
+<thead><tr class="header">
+<th>Scale</th>
+<th>Tplyr v1</th>
+<th>tplyr2</th>
+<th>Speedup</th>
+<th></th>
+<th>Tplyr v1 (meta)</th>
+<th>tplyr2 (meta)</th>
+<th>Speedup</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>1x</td>
+<td>0.06s</td>
+<td>0.01s</td>
+<td>6.4x</td>
+<td></td>
+<td>0.08s</td>
+<td>0.01s</td>
+<td>11.0x</td>
+</tr>
+<tr class="even">
+<td>10x</td>
+<td>0.29s</td>
+<td>0.01s</td>
+<td>34.4x</td>
+<td></td>
+<td>0.43s</td>
+<td>0.01s</td>
+<td>49.7x</td>
+</tr>
+<tr class="odd">
+<td>50x</td>
+<td>1.20s</td>
+<td>0.01s</td>
+<td>110.4x</td>
+<td></td>
+<td>2.11s</td>
+<td>0.01s</td>
+<td>158.8x</td>
+</tr>
+<tr class="even">
+<td>100x</td>
+<td>2.63s</td>
+<td>0.01s</td>
+<td>216.4x</td>
+<td></td>
+<td>4.53s</td>
+<td>0.02s</td>
+<td>231.8x</td>
+</tr>
+<tr class="odd">
+<td>250x</td>
+<td>6.69s</td>
+<td>0.03s</td>
+<td>265.9x</td>
+<td></td>
+<td>10.70s</td>
+<td>0.04s</td>
+<td>305.2x</td>
+</tr>
+<tr class="even">
+<td>500x</td>
+<td>13.87s</td>
+<td>0.04s</td>
+<td>388.5x</td>
+<td></td>
+<td>21.91s</td>
+<td>0.07s</td>
+<td>333.8x</td>
+</tr>
+</tbody>
+</table>
+<p>The benchmark script (<code>benchmark_comparison.R</code>) is
+included in the package repository root for reproducibility.</p>
+</div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
 <p>The migration from Tplyr v1 to tplyr2 involves three main shifts:</p>

@@ -427,11 +427,11 @@ kable(head(result[, !grepl("^ord", names(result))], 15))
 | GASTROINTESTINAL DISORDERS                 |                                | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 
 The outer level (body system) appears in `rowlabel1`, and the inner
-level (preferred term) appears indented in `rowlabel2`. Outer rows
-contain aggregate counts for the body system; inner rows contain
-per-term counts. Indentation defaults to two spaces and can be changed
-via the `indentation` parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+level (preferred term) appears in `rowlabel2`. Outer rows contain
+aggregate counts for the body system; inner rows contain per-term
+counts. Use `collapse_row_labels(result, nest = TRUE)` to merge these
+into a single indented column (see the Count Layer vignette for
+details).
 
 ### Shift Layers
 

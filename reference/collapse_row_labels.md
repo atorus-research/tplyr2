@@ -8,7 +8,13 @@ specified indentation level can be applied.
 ## Usage
 
 ``` r
-collapse_row_labels(x, ..., indent = "  ", target_col = "row_label")
+collapse_row_labels(
+  x,
+  ...,
+  indent = "  ",
+  target_col = "row_label",
+  nest = FALSE
+)
 ```
 
 ## Arguments
@@ -30,6 +36,12 @@ collapse_row_labels(x, ..., indent = "  ", target_col = "row_label")
 
   Character string naming the output column containing collapsed row
   labels
+
+- nest:
+
+  Logical. If TRUE, collapse row labels in-place without inserting stub
+  rows for repeating values. Allows a single column to be passed.
+  Default is FALSE.
 
 ## Value
 

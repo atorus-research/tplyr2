@@ -222,7 +222,6 @@ cat(json_content, sep = "\n")
 #>       "where": null,
 #>       "layer_type": "count",
 #>       "settings": {
-#>         "indentation": "  ",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,
@@ -259,7 +258,6 @@ cat(json_content, sep = "\n")
 #>             "_class": "tplyr_f_str"
 #>           }
 #>         },
-#>         "indentation": "  ",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,

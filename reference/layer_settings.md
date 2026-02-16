@@ -13,7 +13,6 @@ layer_settings(
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
-  indentation = "  ",
   total_row = FALSE,
   total_row_label = "Total",
   total_row_count_missings = TRUE,
@@ -58,10 +57,6 @@ layer_settings(
 - distinct_by:
 
   Character string naming the variable for distinct counting
-
-- indentation:
-
-  Character string for nested count indentation
 
 - total_row:
 
@@ -146,3 +141,39 @@ layer_settings(
 ## Value
 
 A tplyr_layer_settings object
+
+## Settings by Layer Type
+
+Not all settings apply to every layer type. The table below shows which
+settings are applicable for each of the four layer types:
+
+|                            |       |      |       |         |
+|----------------------------|-------|------|-------|---------|
+| Setting                    | Count | Desc | Shift | Analyze |
+| `format_strings`           | X     | X    | X     | X       |
+| `denoms_by`                | X     | X    | X     |         |
+| `denom_where`              | X     | X    | X     |         |
+| `denom_ignore`             | X     |      | X     |         |
+| `distinct_by`              | X     |      | X     |         |
+| `total_row`                | X     |      |       |         |
+| `total_row_label`          | X     |      |       |         |
+| `total_row_count_missings` | X     |      |       |         |
+| `missing_count`            | X     |      |       |         |
+| `missing_subjects`         | X     |      |       |         |
+| `missing_subjects_label`   | X     |      |       |         |
+| `keep_levels`              | X     |      |       |         |
+| `limit_data_by`            | X     |      |       |         |
+| `custom_summaries`         |       | X    |       |         |
+| `stats_as_columns`         |       | X    |       |         |
+| `precision_by`             |       | X    |       |         |
+| `precision_on`             |       | X    |       |         |
+| `precision_data`           |       | X    |       |         |
+| `precision_cap`            |       | X    |       |         |
+| `order_count_method`       | X     |      |       |         |
+| `ordering_cols`            | X     |      |       |         |
+| `result_order_var`         | X     |      |       |         |
+| `outer_sort_position`      | X     |      |       |         |
+| `risk_diff`                | X     |      |       |         |
+| `name`                     | X     | X    | X     | X       |
+
+Settings provided for an inapplicable layer type are silently ignored.

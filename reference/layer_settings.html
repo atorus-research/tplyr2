@@ -81,7 +81,6 @@ and are ignored during build. Type-specific validation happens at build time.</p
 <span>  denom_where <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  denom_ignore <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  distinct_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  indentation <span class="op">=</span> <span class="st">"  "</span>,</span>
 <span>  total_row <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  total_row_label <span class="op">=</span> <span class="st">"Total"</span>,</span>
 <span>  total_row_count_missings <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -127,10 +126,6 @@ and are ignored during build. Type-specific validation happens at build time.</p
 
 <dt id="arg-distinct-by">distinct_by<a class="anchor" aria-label="anchor" href="#arg-distinct-by"></a></dt>
 <dd><p>Character string naming the variable for distinct counting</p></dd>
-
-
-<dt id="arg-indentation">indentation<a class="anchor" aria-label="anchor" href="#arg-indentation"></a></dt>
-<dd><p>Character string for nested count indentation</p></dd>
 
 
 <dt id="arg-total-row">total_row<a class="anchor" aria-label="anchor" href="#arg-total-row"></a></dt>
@@ -216,6 +211,14 @@ and are ignored during build. Type-specific validation happens at build time.</p
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tplyr_layer_settings object</p>
+    </div>
+    <div class="section level2">
+    <h2 id="settings-by-layer-type">Settings by Layer Type<a class="anchor" aria-label="anchor" href="#settings-by-layer-type"></a></h2>
+
+
+
+<p>Not all settings apply to every layer type. The table below shows which
+settings are applicable for each of the four layer types:</p><table class="table table"><tr><td>Setting</td><td>Count</td><td>Desc</td><td>Shift</td><td>Analyze</td></tr><tr><td><code>format_strings</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr><tr><td><code>denoms_by</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>denom_where</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>denom_ignore</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>distinct_by</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>total_row</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_count_missings</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_count</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>keep_levels</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>limit_data_by</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>custom_summaries</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>stats_as_columns</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_by</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_on</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_data</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_cap</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>order_count_method</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>ordering_cols</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>result_order_var</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>outer_sort_position</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>risk_diff</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>name</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr></table><p>Settings provided for an inapplicable layer type are silently ignored.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

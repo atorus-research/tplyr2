@@ -335,8 +335,7 @@ The first variable in the vector (`AEBODSYS`) becomes the outer level,
 and the second (`AEDECOD`) becomes the inner level. In the output,
 `rowlabel1` holds the body system name and `rowlabel2` holds the
 preferred term. Outer-level summary rows have an empty `rowlabel2`,
-while inner-level rows have their preferred term indented within
-`rowlabel2`.
+while inner-level rows show the preferred term in `rowlabel2`.
 
 The outer-level counts represent the number of distinct subjects with
 any event in that body system, and the inner-level counts represent
@@ -351,7 +350,12 @@ For display purposes, you often want a single row label column with
 indentation indicating the hierarchy rather than two separate columns.
 The
 [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
-function merges the `rowlabel` columns into one.
+function provides two modes for this.
+
+#### Default Mode (Stub Rows)
+
+The default mode inserts stub rows for outer-level labels. These stub
+rows have no numeric results – they serve purely as group headers:
 
 ``` r
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
@@ -376,49 +380,39 @@ kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 | CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
 |                                            | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
 
+#### Nest Mode
+
+With `nest = TRUE`, the row labels are collapsed in place without adding
+new rows. Outer-level rows keep their results, and inner rows are
+indented. This matches the behavior of `set_nest_count(TRUE)` in Tplyr
+v1:
+
+``` r
+nested <- collapse_row_labels(result, nest = TRUE, indent = "   ")
+kable(head(nested[, c("row_label", "res1", "res2", "res3")], 15))
+```
+
+| row_label                                  | res1      | res2      | res3      |
+|:-------------------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS                          | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS                 | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+
 The `indent` parameter controls the string used for each level of
 nesting. Here we use three spaces, but you can use any string that suits
 your output format.
-
-### Controlling Indentation at the Layer Level
-
-You can also control the indentation of inner-level labels directly in
-the layer settings using the `indentation` parameter. This sets the
-prefix applied to `rowlabel2` values before any post-processing.
-
-``` r
-spec <- tplyr_spec(
-  cols = "TRTA",
-  layers = tplyr_layers(
-    group_count(c("AEBODSYS", "AEDECOD"),
-      settings = layer_settings(
-        indentation = "    ",
-        format_strings = list(
-          n_counts = f_str("xxx", "n")
-        )
-      )
-    )
-  )
-)
-
-result <- tplyr_build(spec, tplyr_adae)
-kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 12))
-```
-
-| rowlabel1         | rowlabel2                      | res1 | res2 | res3 |
-|:------------------|:-------------------------------|:-----|:-----|:-----|
-| CARDIAC DISORDERS |                                | 5    | 6    | 6    |
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION            | 0    | 0    | 1    |
-| CARDIAC DISORDERS | ATRIAL FLUTTER                 | 0    | 1    | 0    |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY             | 1    | 0    | 0    |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT      | 1    | 0    | 0    |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE     | 1    | 0    | 0    |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION          | 0    | 1    | 2    |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA              | 0    | 3    | 1    |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1    | 0    | 1    |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA   | 0    | 0    | 1    |
-| CARDIAC DISORDERS | TACHYCARDIA                    | 1    | 0    | 0    |
-| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES      | 0    | 1    | 0    |
 
 ### Nested Counts with Total Rows
 
