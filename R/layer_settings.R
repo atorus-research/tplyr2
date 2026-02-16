@@ -3,12 +3,46 @@
 #' Configuration object for all layer options. Unused parameters default to NULL
 #' and are ignored during build. Type-specific validation happens at build time.
 #'
+#' @section Settings by Layer Type:
+#'
+#' Not all settings apply to every layer type. The table below shows which
+#' settings are applicable for each of the four layer types:
+#'
+#' | Setting | Count | Desc | Shift | Analyze |
+#' | --- | --- | --- | --- | --- |
+#' | `format_strings` | X | X | X | X |
+#' | `denoms_by` | X | X | X | |
+#' | `denom_where` | X | X | X | |
+#' | `denom_ignore` | X | | X | |
+#' | `distinct_by` | X | | X | |
+#' | `total_row` | X | | | |
+#' | `total_row_label` | X | | | |
+#' | `total_row_count_missings` | X | | | |
+#' | `missing_count` | X | | | |
+#' | `missing_subjects` | X | | | |
+#' | `missing_subjects_label` | X | | | |
+#' | `keep_levels` | X | | | |
+#' | `limit_data_by` | X | | | |
+#' | `custom_summaries` | | X | | |
+#' | `stats_as_columns` | | X | | |
+#' | `precision_by` | | X | | |
+#' | `precision_on` | | X | | |
+#' | `precision_data` | | X | | |
+#' | `precision_cap` | | X | | |
+#' | `order_count_method` | X | | | |
+#' | `ordering_cols` | X | | | |
+#' | `result_order_var` | X | | | |
+#' | `outer_sort_position` | X | | | |
+#' | `risk_diff` | X | | | |
+#' | `name` | X | X | X | X |
+#'
+#' Settings provided for an inapplicable layer type are silently ignored.
+#'
 #' @param format_strings Named list of f_str objects
 #' @param denoms_by Character vector of variable names for denominator grouping
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting
-#' @param indentation Character string for nested count indentation
 #' @param total_row Logical, whether to add a total row
 #' @param total_row_label Character string for total row label
 #' @param total_row_count_missings Logical, include missing in total
@@ -38,7 +72,6 @@ layer_settings <- function(
     denom_where = NULL,
     denom_ignore = NULL,
     distinct_by = NULL,
-    indentation = "  ",
     total_row = FALSE,
     total_row_label = "Total",
     total_row_count_missings = TRUE,
@@ -67,7 +100,6 @@ layer_settings <- function(
       denom_where = denom_where,
       denom_ignore = denom_ignore,
       distinct_by = distinct_by,
-      indentation = indentation,
       total_row = total_row,
       total_row_label = total_row_label,
       total_row_count_missings = total_row_count_missings,

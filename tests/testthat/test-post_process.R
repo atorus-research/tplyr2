@@ -140,6 +140,95 @@ test_that("collapse_row_labels preserves data columns", {
   expect_equal(result$val[3], 20)
 })
 
+# --- collapse_row_labels nest=TRUE tests ---
+
+test_that("collapse_row_labels with nest=TRUE collapses without adding rows", {
+  df <- data.frame(
+    rowlabel1 = c("CARDIAC", "CARDIAC", "CARDIAC", "GI", "GI"),
+    rowlabel2 = c("", "AFIB", "TACHY", "", "NAUSEA"),
+    res1 = c("  2", "  1", "  1", "  1", "  1"),
+    stringsAsFactors = FALSE
+  )
+  result <- collapse_row_labels(df, "rowlabel1", "rowlabel2", nest = TRUE)
+
+  # Same row count — no stub rows inserted
+
+  expect_equal(nrow(result), 5)
+  expect_true("row_label" %in% names(result))
+  expect_false("rowlabel1" %in% names(result))
+  expect_false("rowlabel2" %in% names(result))
+
+  # Outer rows: no indent
+  expect_equal(result$row_label[1], "CARDIAC")
+  expect_equal(result$row_label[4], "GI")
+
+  # Inner rows: indented
+  expect_equal(result$row_label[2], "  AFIB")
+  expect_equal(result$row_label[3], "  TACHY")
+  expect_equal(result$row_label[5], "  NAUSEA")
+
+  # Data preserved
+  expect_equal(result$res1, c("  2", "  1", "  1", "  1", "  1"))
+})
+
+test_that("collapse_row_labels with nest=TRUE custom indent", {
+  df <- data.frame(
+    rowlabel1 = c("SOC", "SOC"),
+    rowlabel2 = c("", "PT1"),
+    val = c(10, 5),
+    stringsAsFactors = FALSE
+  )
+  result <- collapse_row_labels(df, "rowlabel1", "rowlabel2",
+                                indent = "----", nest = TRUE)
+  expect_equal(result$row_label[1], "SOC")
+  expect_equal(result$row_label[2], "----PT1")
+})
+
+test_that("collapse_row_labels with nest=TRUE three columns", {
+  df <- data.frame(
+    rowlabel1 = c("A", "A", "A", "A"),
+    rowlabel2 = c("", "B", "B", "B"),
+    rowlabel3 = c("", "", "C", "D"),
+    val = 1:4,
+    stringsAsFactors = FALSE
+  )
+  result <- collapse_row_labels(df, nest = TRUE)
+
+  expect_equal(nrow(result), 4)
+  expect_equal(result$row_label[1], "A")        # depth 1, no indent
+  expect_equal(result$row_label[2], "  B")      # depth 2, 1x indent
+  expect_equal(result$row_label[3], "    C")    # depth 3, 2x indent
+  expect_equal(result$row_label[4], "    D")    # depth 3, 2x indent
+})
+
+test_that("collapse_row_labels with nest=TRUE single column", {
+  df <- data.frame(
+    rowlabel1 = c("A", "B", "C"),
+    val = 1:3,
+    stringsAsFactors = FALSE
+  )
+  result <- collapse_row_labels(df, "rowlabel1", nest = TRUE)
+
+  expect_equal(nrow(result), 3)
+  expect_true("row_label" %in% names(result))
+  expect_false("rowlabel1" %in% names(result))
+  expect_equal(result$row_label, c("A", "B", "C"))
+})
+
+test_that("collapse_row_labels with nest=TRUE auto-detects rowlabel columns", {
+  df <- data.frame(
+    rowlabel1 = c("SOC", "SOC"),
+    rowlabel2 = c("", "PT1"),
+    res1 = c("10", "5"),
+    stringsAsFactors = FALSE
+  )
+  result <- collapse_row_labels(df, nest = TRUE)
+
+  expect_equal(nrow(result), 2)
+  expect_equal(result$row_label[1], "SOC")
+  expect_equal(result$row_label[2], "  PT1")
+})
+
 # --- str_indent_wrap tests ---
 
 test_that("str_indent_wrap errors properly", {

@@ -249,7 +249,6 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_labels,
                                       settings, layer_index, col_n = NULL, pop_dt = NULL) {
   n_levels <- length(target_vars)
-  indentation <- settings$indentation %||% "  "
   distinct_by <- settings$distinct_by
   denom_where <- settings$denom_where
   denom_ignore <- settings$denom_ignore
@@ -325,7 +324,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
     # Build row labels for this level
     build_nested_row_labels(counts, by_labels, by_data_vars, target_vars,
-                            level, n_levels, indentation)
+                            level, n_levels)
 
     # Track nesting level for ordering
     counts[, .nest_level := level]
@@ -448,7 +447,7 @@ get_nested_denom_group <- function(denoms_by, level, cols) {
 #' Build row labels for a nested count level
 #' @keywords internal
 build_nested_row_labels <- function(counts, by_labels, by_data_vars, target_vars,
-                                     level, n_levels, indentation) {
+                                     level, n_levels) {
   col_idx <- 1L
 
   # by_labels (constant text)
@@ -471,13 +470,7 @@ build_nested_row_labels <- function(counts, by_labels, by_data_vars, target_vars
 
     if (tv_idx <= level) {
       # This target var is in the grouping — populate with its value
-      val <- as.character(counts[[target_vars[tv_idx]]])
-      if (tv_idx == level && level > 1) {
-        # Apply indentation to the current level (not the outermost)
-        indent_str <- strrep(indentation, level - 1)
-        val <- str_c(indent_str, val)
-      }
-      counts[, (col_name) := val]
+      counts[, (col_name) := as.character(get(target_vars[tv_idx]))]
     } else {
       # Deeper than current level — blank
       counts[, (col_name) := ""]
