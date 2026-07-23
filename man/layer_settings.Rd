@@ -101,7 +101,7 @@ shows \code{1 ( <1\%)} instead of \code{1 (  0\%)}). NULL disables.}
 \item{pct_gt}{Numeric greater-than threshold for count-layer percents. A cell
 whose percent is below 100 but would display above this value renders the
 percent as \code{">"} followed by the threshold (e.g. \code{pct_gt = 99}
-shows \code{>99} for 99.6\\%). NULL disables.}
+shows \code{>99} for \code{99.6\%}). NULL disables.}
 
 \item{zero_count_display}{How to display count-layer cells whose count is
 zero: \code{"full"} (default) keeps the usual \code{"0 (  0\%)"};

@@ -80,7 +80,7 @@
 #' @param pct_gt Numeric greater-than threshold for count-layer percents. A cell
 #'   whose percent is below 100 but would display above this value renders the
 #'   percent as \code{">"} followed by the threshold (e.g. \code{pct_gt = 99}
-#'   shows \code{>99} for 99.6\%). NULL disables.
+#'   shows \code{>99} for \code{99.6\%}). NULL disables.
 #' @param zero_count_display How to display count-layer cells whose count is
 #'   zero: \code{"full"} (default) keeps the usual \code{"0 (  0\%)"};
 #'   \code{"count_only"} shows only the count field (e.g. \code{" 0"});
