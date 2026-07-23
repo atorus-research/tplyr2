@@ -195,6 +195,16 @@ apply_overrides <- function(spec, overrides) {
   spec
 }
 
+#' Sort column names by their numeric suffix
+#'
+#' Lexicographic sorting places "res10" before "res2"; ordering by the
+#' numeric suffix keeps columns in build order once a family has more
+#' than 9 members.
+#' @keywords internal
+sort_by_numeric_suffix <- function(x) {
+  x[order(as.integer(str_extract(x, "\\d+")))]
+}
+
 #' Harmonize column sets across layers and row-bind
 #' @keywords internal
 harmonize_and_bind <- function(layer_results) {
@@ -206,9 +216,9 @@ harmonize_and_bind <- function(layer_results) {
   all_names <- unique(unlist(map(layer_results, names)))
 
   # Separate by type: rowlabel*, res*, rdiff*, ord*
-  label_cols <- sort(str_subset(all_names, "^rowlabel"))
-  res_cols <- sort(str_subset(all_names, "^res\\d"))
-  rdiff_cols <- sort(str_subset(all_names, "^rdiff"))
+  label_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rowlabel"))
+  res_cols <- sort_by_numeric_suffix(str_subset(all_names, "^res\\d"))
+  rdiff_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rdiff"))
   ord_cols <- sort(str_subset(all_names, "^ord"))
 
   target_cols <- c(label_cols, res_cols, rdiff_cols, ord_cols)

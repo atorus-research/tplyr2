@@ -585,7 +585,7 @@ build_cell_filter_exprs <- function(output, row_idx, rc, layer, layer_idx,
 #' @keywords internal
 build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   cols <- spec$cols
-  res_cols <- sort(str_subset(names(output), "^res\\d+$"))
+  res_cols <- sort_by_numeric_suffix(str_subset(names(output), "^res\\d+$"))
   n_rows <- nrow(output)
   n_res <- length(res_cols)
 
