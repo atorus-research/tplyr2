@@ -10,12 +10,17 @@ cast_to_wide(
   cols,
   layer_index,
   col_n = NULL,
-  stat_labels = NULL
+  stat_labels = NULL,
+  col_levels = NULL
 )
 }
 \arguments{
 \item{stat_labels}{Character vector of stat column labels (the names of
 the \code{stat_columns} setting), or NULL for the standard single-format cast}
+
+\item{col_levels}{Named list mapping factor column variables to their level
+order (from \code{get_col_levels()}); orders the resulting \verb{res*} columns by
+factor levels instead of alphabetically. NULL preserves legacy behavior.}
 }
 \description{
 When \code{stat_labels} is provided (stat_columns mode), the long data carries

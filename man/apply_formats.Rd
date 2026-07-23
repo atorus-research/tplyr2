@@ -4,7 +4,14 @@
 \alias{apply_formats}
 \title{Apply format strings to numeric values}
 \usage{
-apply_formats(fmt, ..., precision = NULL)
+apply_formats(
+  fmt,
+  ...,
+  precision = NULL,
+  lt = NULL,
+  gt = NULL,
+  lt_gt_group = NULL
+)
 }
 \arguments{
 \item{fmt}{An f_str object or character format string}
@@ -12,6 +19,15 @@ apply_formats(fmt, ..., precision = NULL)
 \item{...}{Numeric vectors, one per variable in the f_str (positional matching)}
 
 \item{precision}{Optional list of resolved precision per group (for auto-precision)}
+
+\item{lt}{Optional numeric less-than threshold applied to the group named by
+\code{lt_gt_group}: values in \verb{(0, lt)} render as \verb{"<" lt} (see \code{\link[=format_number_vec]{format_number_vec()}}).}
+
+\item{gt}{Optional numeric greater-than threshold applied to the group named by
+\code{lt_gt_group}: values in \verb{(gt, 100)} render as \verb{">" gt}.}
+
+\item{lt_gt_group}{Optional integer index of the format group to which \code{lt}/\code{gt}
+apply (used by count layers to target the percent statistic). NULL disables.}
 }
 \value{
 Character vector of formatted values

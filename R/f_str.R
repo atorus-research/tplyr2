@@ -33,10 +33,17 @@ f_str <- function(format_string, ..., empty = NULL) {
 #' @param fmt An f_str object or character format string
 #' @param ... Numeric vectors, one per variable in the f_str (positional matching)
 #' @param precision Optional list of resolved precision per group (for auto-precision)
+#' @param lt Optional numeric less-than threshold applied to the group named by
+#'   `lt_gt_group`: values in `(0, lt)` render as `"<" lt` (see [format_number_vec()]).
+#' @param gt Optional numeric greater-than threshold applied to the group named by
+#'   `lt_gt_group`: values in `(gt, 100)` render as `">" gt`.
+#' @param lt_gt_group Optional integer index of the format group to which `lt`/`gt`
+#'   apply (used by count layers to target the percent statistic). NULL disables.
 #'
 #' @return Character vector of formatted values
 #' @export
-apply_formats <- function(fmt, ..., precision = NULL) {
+apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
+                          lt_gt_group = NULL) {
   if (is.character(fmt)) {
     # Parse on the fly for standalone use
     fmt <- f_str(fmt, ...)
@@ -58,7 +65,10 @@ apply_formats <- function(fmt, ..., precision = NULL) {
   formatted_parts <- vector("list", length(groups))
   for (i in seq_along(groups)) {
     prec_i <- if (!is.null(precision)) precision[[i]] else NULL
-    formatted_parts[[i]] <- format_number_vec(args[[i]], groups[[i]], precision = prec_i)
+    lt_i <- if (!is.null(lt_gt_group) && i == lt_gt_group) lt else NULL
+    gt_i <- if (!is.null(lt_gt_group) && i == lt_gt_group) gt else NULL
+    formatted_parts[[i]] <- format_number_vec(args[[i]], groups[[i]],
+                                              precision = prec_i, lt = lt_i, gt = gt_i)
   }
 
   # Paste together with literals, applying parenthesis hugging where needed
@@ -104,8 +114,21 @@ tplyr_round <- function(x, digits = 0) {
   }
 }
 
+#' Format a numeric vector to a fixed-width field
+#'
+#' @param values Numeric vector to format
+#' @param group A parsed format group (from [parse_format_group()])
+#' @param precision Optional resolved precision (int_width/dec_width) overriding
+#'   the group's static widths
+#' @param lt Optional numeric less-than threshold. Values strictly greater than 0
+#'   whose rounded display would fall below `lt` render as `"<" lt` (e.g. a
+#'   percent of 0.4 renders as `<1`), right-justified to the field width. Used
+#'   for the regulatory "<1%" convention on count-layer percents.
+#' @param gt Optional numeric greater-than threshold. Values strictly less than
+#'   100 whose rounded display would exceed `gt` render as `">" gt` (e.g. 99.6
+#'   renders as `>99`).
 #' @keywords internal
-format_number_vec <- function(values, group, precision = NULL) {
+format_number_vec <- function(values, group, precision = NULL, lt = NULL, gt = NULL) {
   if (!is.null(precision)) {
     int_width <- precision$int_width
     dec_width <- precision$dec_width
@@ -134,6 +157,31 @@ format_number_vec <- function(values, group, precision = NULL) {
 
   if (any(na_mask)) {
     result[na_mask] <- strrep(" ", total_width)
+  }
+
+  # Less-than / greater-than thresholds (e.g. "<1", ">99" percent display).
+  # Compare against the rounded display value so a value that rounds up to the
+  # threshold (0.6% -> 1%) still shows its number rather than the "<" token.
+  fmt_threshold <- function(x) {
+    if (dec_width > 0) {
+      str_trim(formatC(x, format = "f", digits = dec_width))
+    } else {
+      str_trim(formatC(as.integer(tplyr_round(x, 0)), format = "d"))
+    }
+  }
+  if (!is.null(lt)) {
+    disp <- tplyr_round(values, dec_width)
+    m <- !na_mask & values > 0 & disp < lt
+    if (any(m)) {
+      result[m] <- formatC(str_c("<", fmt_threshold(lt)), width = total_width)
+    }
+  }
+  if (!is.null(gt)) {
+    disp <- tplyr_round(values, dec_width)
+    m <- !na_mask & values < 100 & disp > gt
+    if (any(m)) {
+      result[m] <- formatC(str_c(">", fmt_threshold(gt)), width = total_width)
+    }
   }
 
   result

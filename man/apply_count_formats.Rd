@@ -4,12 +4,26 @@
 \alias{apply_count_formats}
 \title{Apply count format(s) to a long counts table}
 \usage{
-apply_count_formats(dt, fmts)
+apply_count_formats(
+  dt,
+  fmts,
+  pct_lt = NULL,
+  pct_gt = NULL,
+  zero_count_display = "full"
+)
 }
 \arguments{
 \item{dt}{data.table with computed count statistics (or NULL, a no-op)}
 
 \item{fmts}{List of f_str objects from \code{get_count_formats()}}
+
+\item{pct_lt}{Optional numeric less-than threshold for percents (see \code{\link[=f_str]{f_str()}})}
+
+\item{pct_gt}{Optional numeric greater-than threshold for percents}
+
+\item{zero_count_display}{One of "full" (default, unchanged), "count_only"
+(zero cells show just the count field, e.g. " 0"), or "blank" (zero cells
+render as "")}
 }
 \description{
 Legacy mode (single unnamed format) writes a single \code{formatted} column,
@@ -18,5 +32,11 @@ formats) writes one \verb{formatted_<i>} column per format; \code{cast_to_wide()
 spreads these into separate res columns per column group. All count
 statistics are already present on \code{dt} (including the special total and
 missing row tables), so every format can be applied to every row.
+}
+\details{
+The \code{pct_lt}/\code{pct_gt} and \code{zero_count_display} arguments implement the
+regulatory display conventions from issue #14. \code{pct_lt}/\code{pct_gt} retarget
+the percent statistic (the \code{pct}/\code{distinct_pct} format group) to the
+"<1"/">99" tokens. \code{zero_count_display} rewrites cells whose count is zero.
 }
 \keyword{internal}

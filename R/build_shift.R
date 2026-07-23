@@ -125,7 +125,8 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   # Include .row_order in row labels for dcast, then remove after
   order_cols <- str_subset(names(counts), "^\\.row_order$|^\\.by_order_")
   row_label_cols_with_order <- c(order_cols, row_label_cols)
-  wide <- cast_to_wide(counts, row_label_cols_with_order, all_cols, layer_index, col_n = col_n)
+  wide <- cast_to_wide(counts, row_label_cols_with_order, all_cols, layer_index,
+                       col_n = col_n, col_levels = get_col_levels(dt, all_cols))
 
   # Remove order columns
   for (col in order_cols) {

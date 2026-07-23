@@ -395,3 +395,98 @@ test_that("Phase 2 checkpoint: AE table with distinct counts", {
     expect_true(!is.null(attr(result[[col]], "label")))
   }
 })
+
+# Issue #13: count layer respects cols factor levels for res-column order
+test_that("count layer orders res columns by cols factor levels", {
+  data(tplyr_adsl, package = "tplyr2")
+  d <- tplyr_adsl
+  d$TRT01P <- factor(d$TRT01P,
+                     levels = c("Xanomeline High Dose", "Xanomeline Low Dose", "Placebo"))
+
+  labels_of <- function(b) {
+    res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+    vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  }
+
+  bc <- tplyr_build(tplyr_spec(cols = "TRT01P",
+                               layers = tplyr_layers(group_count("SEX"))), d)
+  bd <- tplyr_build(tplyr_spec(cols = "TRT01P",
+                               layers = tplyr_layers(group_desc("AGE"))), d)
+
+  # Count must follow factor levels, and match desc on the same spec
+  expect_equal(unname(labels_of(bc)),
+               c("Xanomeline High Dose (N=84)",
+                 "Xanomeline Low Dose (N=84)",
+                 "Placebo (N=86)"))
+  expect_equal(unname(labels_of(bc)), unname(labels_of(bd)))
+})
+
+test_that("count layer falls back to alphabetical when cols is not a factor", {
+  data(tplyr_adsl, package = "tplyr2")
+  d <- tplyr_adsl
+  d$TRT01P <- as.character(d$TRT01P)
+
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P",
+                              layers = tplyr_layers(group_count("SEX"))), d)
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  expect_equal(unname(labs),
+               c("Placebo (N=86)",
+                 "Xanomeline High Dose (N=84)",
+                 "Xanomeline Low Dose (N=84)"))
+})
+
+# Issue #14: '<1%' / '>99%' percent display and zero-count display
+test_that("pct_lt renders nonzero percents that round to 0 as '<1'", {
+  data(tplyr_adsl, package = "tplyr2")
+  d <- tplyr_adsl
+  d$FLG <- "Common"
+  d$FLG[1] <- "Rare"  # 1 of 254 = 0.39%
+
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_count("FLG", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xxx (xx%)", "n", "pct")),
+      pct_lt = 1, pct_gt = 99))))
+  b <- tplyr_build(spec, d)
+
+  rare <- trimws(b$res1[b$rowlabel1 == "Rare"])
+  common <- trimws(b$res1[b$rowlabel1 == "Common"])
+  expect_equal(rare, "1 (<1%)")
+  expect_equal(common, "253 (>99%)")
+})
+
+test_that("pct_lt leaves percents that round up to the threshold alone", {
+  # 0.6 rounds to 1 at integer precision, so it should NOT become '<1'
+  fmt <- f_str("xx (xx%)", "n", "pct")
+  out <- apply_formats(fmt, c(1L, 1L), c(0.4, 0.6), lt = 1, lt_gt_group = 2)
+  expect_true(grepl("<1", out[1]))
+  expect_false(grepl("<", out[2]))
+  expect_true(grepl("1%", out[2]))
+})
+
+test_that("zero_count_display controls how zero cells render", {
+  data(tplyr_adsl, package = "tplyr2")
+
+  mk <- function(mode) {
+    spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+      group_count("RACE", settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")),
+        zero_count_display = mode))))
+    tplyr_build(spec, tplyr_adsl)
+  }
+
+  full <- mk("full")
+  count_only <- mk("count_only")
+  blank <- mk("blank")
+
+  # AMERICAN INDIAN OR ALASKA NATIVE has a zero cell under Placebo
+  row <- "AMERICAN INDIAN OR ALASKA NATIVE"
+  zc_full <- full$res1[full$rowlabel1 == row]
+  zc_count <- count_only$res1[count_only$rowlabel1 == row]
+  zc_blank <- blank$res1[blank$rowlabel1 == row]
+
+  expect_true(grepl("%", zc_full))
+  expect_false(grepl("%", zc_count))
+  expect_equal(trimws(zc_count), "0")
+  expect_equal(trimws(zc_blank), "")
+})

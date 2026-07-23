@@ -278,3 +278,25 @@ test_that("shift integrates with multiple layers", {
   expect_true(any(result$ord_layer_index == 1))  # Count layer
   expect_true(any(result$ord_layer_index == 2))  # Shift layer
 })
+
+# Issue #13: shift layer orders res columns by the shift column's factor levels
+test_that("shift res columns follow the column variable's factor levels", {
+  shift_data <- data.frame(
+    TRT = rep("A", 9),
+    BNRIND = factor(rep(c("L", "N", "H"), each = 3), levels = c("L", "N", "H")),
+    # Non-alphabetical factor order for the shift (column) variable
+    ANRIND = factor(rep(c("H", "N", "L"), times = 3), levels = c("H", "N", "L"))
+  )
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(group_shift(c(row = "BNRIND", column = "ANRIND")))
+  )
+  result <- tplyr_build(spec, shift_data)
+
+  res_cols <- grep("^res\\d+$", names(result), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(result[[c]], "label"), character(1))
+  # Column labels should be ordered H, N, L (the ANRIND factor levels)
+  expect_true(grepl("H", labs[1]))
+  expect_true(grepl("N", labs[2]))
+  expect_true(grepl("L", labs[3]))
+})
