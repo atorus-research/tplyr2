@@ -27,8 +27,20 @@ compute_var_order <- function(values, var_name = NULL, data_dt = NULL,
     if (is.factor(values)) {
       return(match(values, levels(values)))
     }
-    if (!is.null(method) && method == "byfactor") {
-      # Explicitly requested but not a factor, fall through to alphabetical
+    # `values` is often a character vector here (the target column is rebuilt
+    # from CJ levels in complete_counts, and row-label columns are stored as
+    # character), so recover the factor levels from the source data. Without
+    # this, byfactor falls back to alphabetical ordering (issue #16), the
+    # row-ordering analogue of the column-ordering fix in issue #13.
+    if (!is.null(var_name) && !is.null(data_dt) &&
+        var_name %in% names(data_dt) && is.factor(data_dt[[var_name]])) {
+      lv <- levels(data_dt[[var_name]])
+      keys <- match(as.character(values), lv)
+      # Only use factor ordering if the values actually correspond to levels;
+      # otherwise (e.g. special rows) fall through to the remaining methods.
+      if (!all(is.na(keys))) {
+        return(keys)
+      }
     }
   }
 

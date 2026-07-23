@@ -35,3 +35,9 @@
   and desc layers (or any renderer assuming `res1` is the first `cols` level)
   could get inconsistent column order. Shift layers likewise order their
   column dimension by the shift variable's factor levels.
+- `order_count_method = "byfactor"` now orders category **rows** by the
+  target's factor levels instead of alphabetically (#16, the row-ordering
+  analogue of #13). The target column is coerced to character while counts are
+  built, so the level order is now recovered from the source data. Nested count
+  layers likewise order their outer and inner categories by factor levels
+  (they previously fell back to the dcast's alphabetical row order).

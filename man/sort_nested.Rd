@@ -4,7 +4,14 @@
 \alias{sort_nested}
 \title{Sort nested count data for correct interleaving}
 \usage{
-sort_nested(combined, target_vars, by_data_vars)
+sort_nested(combined, target_vars, by_data_vars, dt = NULL)
+}
+\arguments{
+\item{dt}{Source input data.table (for factor-level / VARN lookup). The
+target columns on \code{combined} are character (rebuilt from CJ levels), so
+the ordering keys are resolved against the original factor variable via
+\code{compute_var_order()} — respecting factor levels, then a VARN companion,
+then alphabetical (issue #16).}
 }
 \description{
 Sort nested count data for correct interleaving

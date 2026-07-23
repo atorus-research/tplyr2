@@ -87,25 +87,65 @@ test_that("nested output has ord_layer_2", {
 # --- Order count method integration tests ---
 
 test_that("order_count_method = byfactor respects factor levels", {
+  # Levels are deliberately NON-alphabetical so factor order != alphabetical
+  # order (issue #16 — the target column is coerced to character upstream, so
+  # the byfactor branch must recover levels from the source data).
   data <- data.frame(
     TRT = c("A", "A", "A", "B", "B", "B"),
-    VAL = factor(c("Z", "Y", "X", "Z", "Y", "X"), levels = c("X", "Y", "Z"))
+    VAL = factor(c("mid", "lo", "hi", "mid", "lo", "hi"),
+                 levels = c("lo", "mid", "hi"))
   )
   spec <- tplyr_spec(
     cols = "TRT",
     layers = tplyr_layers(
       group_count("VAL",
-        settings = layer_settings(
-          order_count_method = "byfactor"
-        )
-      )
+        settings = layer_settings(order_count_method = "byfactor"))
     )
   )
   result <- tplyr_build(spec, data)
-  # Factor levels are X, Y, Z so ord_layer_1 should be 1, 2, 3
-  expect_equal(result$ord_layer_1, c(1, 2, 3))
-  # Row order should follow factor: X, Y, Z
-  expect_equal(result$rowlabel1, c("X", "Y", "Z"))
+  result <- result[order(result$ord_layer_1), ]
+  # Row order should follow factor levels lo, mid, hi (not alphabetical hi/lo/mid)
+  expect_equal(result$rowlabel1, c("lo", "mid", "hi"))
+})
+
+test_that("byfactor places special rows after factor-ordered categories", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), each = 6),
+    VAL = factor(rep(c("mid", "lo", "hi", NA, "lo", "hi"), 2),
+                 levels = c("lo", "mid", "hi"))
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("VAL", settings = layer_settings(
+      order_count_method = "byfactor",
+      total_row = TRUE, missing_count = list(label = "Missing")))))
+  result <- tplyr_build(spec, data)
+  result <- result[order(result$ord_layer_1), ]
+  expect_equal(result$rowlabel1, c("lo", "mid", "hi", "Missing", "Total"))
+})
+
+test_that("nested count outer/inner order follows factor levels", {
+  data <- data.frame(
+    TRT = rep("A", 6),
+    SEV = factor(c("severe", "mild", "moderate", "severe", "mild", "moderate"),
+                 levels = c("severe", "mild", "moderate")),
+    PT  = c("b", "a", "c", "a", "c", "b")
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count(c("SEV", "PT"))))
+  result <- tplyr_build(spec, data)
+  result <- result[order(result$ord_layer_1, result$ord_layer_2), ]
+  # Outer follows factor levels severe/mild/moderate, not alphabetical
+  outer <- result$rowlabel1[result$rowlabel2 == ""]
+  expect_equal(outer, c("severe", "mild", "moderate"))
+})
+
+test_that("compute_var_order recovers factor levels from data_dt for character input", {
+  dt <- data.table::data.table(
+    G = factor(c("hi", "lo", "mid"), levels = c("lo", "mid", "hi"))
+  )
+  # values are character (as they arrive from CJ / row-label columns)
+  keys <- tplyr2:::compute_var_order(c("hi", "lo", "mid"), var_name = "G",
+                                     data_dt = dt, method = "byfactor")
+  expect_equal(keys, c(3, 1, 2))
 })
 
 test_that("default ordering preserves existing behavior", {
