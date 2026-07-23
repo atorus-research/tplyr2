@@ -219,3 +219,25 @@ test_that("tplyr_build gives informative error for non-spec", {
     "must be a tplyr_spec object"
   )
 })
+
+# Issue #14: pct threshold and zero-count display validation
+test_that("validate_layer rejects invalid pct_lt / pct_gt / zero_count_display", {
+  bad_lt <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("X", settings = layer_settings(pct_lt = -1))))
+  expect_error(tplyr2:::validate_spec(bad_lt), "pct_lt")
+
+  bad_gt <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("X", settings = layer_settings(pct_gt = 150))))
+  expect_error(tplyr2:::validate_spec(bad_gt), "pct_gt")
+})
+
+test_that("layer_settings rejects an unknown zero_count_display value", {
+  expect_error(layer_settings(zero_count_display = "nope"))
+})
+
+test_that("valid pct thresholds and zero_count_display pass validation", {
+  ok <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("X", settings = layer_settings(
+      pct_lt = 1, pct_gt = 99, zero_count_display = "count_only"))))
+  expect_true(tplyr2:::validate_spec(ok))
+})

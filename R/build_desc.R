@@ -217,14 +217,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     data.table::setnames(wide, "formatted", "res1")
   } else {
     lhs <- paste(c(all_label_cols, "stat_order"), collapse = " + ")
-
-    if (length(cols) == 1) {
-      rhs <- cols[1]
-    } else {
-      long[, .col_combo := do.call(paste, c(.SD, sep = " | ")), .SDcols = cols]
-      rhs <- ".col_combo"
-    }
-
+    rhs <- prepare_cast_column(long, cols, get_col_levels(dt, cols))
     formula_str <- paste(lhs, "~", rhs)
     wide <- data.table::dcast(
       long,

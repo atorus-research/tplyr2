@@ -150,10 +150,13 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- Format (main counts + special rows all carry the full stat set) ---
   fmts <- get_count_formats(settings)
-  apply_count_formats(counts, fmts)
-  apply_count_formats(missing_row, fmts)
-  apply_count_formats(missing_subjects_row, fmts)
-  apply_count_formats(total_result, fmts)
+  pct_lt <- settings$pct_lt
+  pct_gt <- settings$pct_gt
+  zero_count_display <- settings$zero_count_display %||% "full"
+  apply_count_formats(counts, fmts, pct_lt, pct_gt, zero_count_display)
+  apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
+  apply_count_formats(missing_subjects_row, fmts, pct_lt, pct_gt, zero_count_display)
+  apply_count_formats(total_result, fmts, pct_lt, pct_gt, zero_count_display)
 
   # --- Build row label columns ---
   row_labels <- build_row_labels_count(counts, by_labels, by_data_vars, tv)
@@ -187,7 +190,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- dcast to wide format ---
   wide <- cast_to_wide(counts, row_labels, cols, layer_index, col_n = col_n,
-                       stat_labels = names(fmts))
+                       stat_labels = names(fmts),
+                       col_levels = get_col_levels(dt, cols))
 
   # --- Override ord1 with computed sort keys ---
   method <- settings$order_count_method
@@ -244,6 +248,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   keep_levels <- settings$keep_levels
   limit_data_by <- settings$limit_data_by
   fmts <- get_count_formats(settings)
+  pct_lt <- settings$pct_lt
+  pct_gt <- settings$pct_gt
+  zero_count_display <- settings$zero_count_display %||% "full"
 
   # Prepare denominator dataset (shared across levels)
   denom_dt <- data.table::copy(pop_dt %||% dt)
@@ -304,7 +311,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
                                      limit_data_by, denom_group)
 
     # Format
-    apply_count_formats(counts, fmts)
+    apply_count_formats(counts, fmts, pct_lt, pct_gt, zero_count_display)
 
     # Build row labels for this level
     build_nested_row_labels(counts, by_labels, by_data_vars, target_vars,
@@ -343,7 +350,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       total_missings, distinct_by, missing_count,
       get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt
     )
-    apply_count_formats(total_result, fmts)
+    apply_count_formats(total_result, fmts, pct_lt, pct_gt, zero_count_display)
 
     # Build row labels for total row
     build_nested_row_labels_special(total_result, by_labels, by_data_vars,
@@ -367,7 +374,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     )
     missing_row <- missing_result$missing_row
 
-    apply_count_formats(missing_row, fmts)
+    apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
 
     build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
                                      target_vars, outer_tv, n_label_cols)
@@ -392,7 +399,8 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   # Cast to wide
   row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
   wide <- cast_to_wide(combined, row_label_cols, cols, layer_index, col_n = col_n,
-                       stat_labels = names(fmts))
+                       stat_labels = names(fmts),
+                       col_levels = get_col_levels(dt, cols))
 
   # Add ord2 for nesting depth
   if (".nest_level" %in% names(combined)) {
@@ -1003,24 +1011,59 @@ get_count_formats <- function(settings) {
 #' statistics are already present on `dt` (including the special total and
 #' missing row tables), so every format can be applied to every row.
 #'
+#' The `pct_lt`/`pct_gt` and `zero_count_display` arguments implement the
+#' regulatory display conventions from issue #14. `pct_lt`/`pct_gt` retarget
+#' the percent statistic (the `pct`/`distinct_pct` format group) to the
+#' "<1"/">99" tokens. `zero_count_display` rewrites cells whose count is zero.
+#'
 #' @param dt data.table with computed count statistics (or NULL, a no-op)
 #' @param fmts List of f_str objects from `get_count_formats()`
+#' @param pct_lt Optional numeric less-than threshold for percents (see [f_str()])
+#' @param pct_gt Optional numeric greater-than threshold for percents
+#' @param zero_count_display One of "full" (default, unchanged), "count_only"
+#'   (zero cells show just the count field, e.g. " 0"), or "blank" (zero cells
+#'   render as "")
 #' @keywords internal
-apply_count_formats <- function(dt, fmts) {
+apply_count_formats <- function(dt, fmts, pct_lt = NULL, pct_gt = NULL,
+                                zero_count_display = "full") {
   if (is.null(dt)) return(invisible(NULL))
 
-  if (is.null(names(fmts))) {
-    fmt <- fmts[[1]]
+  single <- is.null(names(fmts))
+
+  walk(seq_along(fmts), function(i) {
+    fmt <- fmts[[i]]
+    out_col <- if (single) "formatted" else str_c("formatted_", i)
+
+    # Percent group (pct / distinct_pct) receives the "<1" / ">99" thresholds
+    pct_idx <- which(fmt$vars %in% c("pct", "distinct_pct"))
+    pct_idx <- if (length(pct_idx) > 0) pct_idx[1] else NULL
+
     fmt_args <- map(fmt$vars, function(v) dt[[v]])
-    dt[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
-  } else {
-    walk(seq_along(fmts), function(i) {
-      fmt <- fmts[[i]]
-      fmt_args <- map(fmt$vars, function(v) dt[[v]])
-      col_name <- str_c("formatted_", i)
-      dt[, (col_name) := do.call(apply_formats, c(list(fmt), fmt_args))]
-    })
-  }
+    vals <- do.call(apply_formats, c(
+      list(fmt), fmt_args,
+      list(lt = pct_lt, gt = pct_gt, lt_gt_group = pct_idx)
+    ))
+
+    # Zero-count display: rewrite cells whose count statistic is zero
+    if (!identical(zero_count_display, "full")) {
+      cnt_idx <- which(fmt$vars %in% c("n", "distinct_n"))
+      if (length(cnt_idx) > 0) {
+        cnt_idx <- cnt_idx[1]
+        cnt_var <- fmt$vars[cnt_idx]
+        zero_mask <- !is.na(dt[[cnt_var]]) & dt[[cnt_var]] == 0
+        if (any(zero_mask)) {
+          if (zero_count_display == "blank") {
+            vals[zero_mask] <- ""
+          } else if (zero_count_display == "count_only") {
+            cnt_only <- format_number_vec(dt[[cnt_var]], fmt$parsed$groups[[cnt_idx]])
+            vals[zero_mask] <- cnt_only[zero_mask]
+          }
+        }
+      }
+    }
+
+    dt[, (out_col) := vals]
+  })
 
   invisible(dt)
 }
@@ -1089,6 +1132,71 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
   names(label_cols)
 }
 
+#' Ordered factor levels for the column variable(s)
+#'
+#' Returns a named list mapping each `cols` variable that is a factor in
+#' `source_dt` to its level order. Non-factor column variables are omitted.
+#' Used to preserve the column variable's factor-level order through the
+#' `dcast()` in `cast_to_wide()` (issue #13), so count/shift/desc layers all
+#' order their `res*` columns by factor levels rather than alphabetically.
+#'
+#' @param source_dt data.table with the original (factor-typed) input data
+#' @param cols Character vector of column variable names
+#' @keywords internal
+get_col_levels <- function(source_dt, cols) {
+  factor_cols <- keep(cols, function(col) {
+    col %in% names(source_dt) && is.factor(source_dt[[col]])
+  })
+  setNames(map(factor_cols, function(col) levels(source_dt[[col]])), factor_cols)
+}
+
+#' Prepare the dcast column variable, respecting factor-level order
+#'
+#' For a single column variable, converts it to a factor ordered by
+#' `col_levels` so `dcast()` spreads columns in level order. For multiple
+#' column variables, builds the `" | "`-joined interaction column and, when
+#' any component is a factor, orders it by the cross-product of each
+#' variable's level order (outermost variable varies slowest). When no
+#' component is a factor the interaction is left as a character vector, so
+#' `dcast()` falls back to alphabetical order exactly as before.
+#'
+#' @param dt Long data.table about to be cast (mutated in place)
+#' @param cols Character vector of column variable names
+#' @param col_levels Named list from `get_col_levels()` (may be NULL/empty)
+#' @return The name of the variable to use on the RHS of the dcast formula
+#' @keywords internal
+prepare_cast_column <- function(dt, cols, col_levels = NULL) {
+  if (length(cols) == 1) {
+    col <- cols[1]
+    lv <- col_levels[[col]]
+    if (!is.null(lv)) {
+      dt[, (col) := factor(as.character(get(col)), levels = lv)]
+    }
+    return(col)
+  }
+
+  # Multiple column variables: build the interaction column
+  dt[, .col_combo := do.call(str_c, c(.SD, sep = " | ")), .SDcols = cols]
+
+  has_levels <- length(intersect(cols, names(col_levels))) > 0
+  if (has_levels) {
+    # Order each component by factor levels (observed only), else alphabetically
+    per_col_order <- map(cols, function(col) {
+      observed <- unique(as.character(dt[[col]]))
+      lv <- col_levels[[col]]
+      if (!is.null(lv)) lv[lv %in% observed] else sort(observed)
+    })
+    # Cross-product with the first (outermost) variable varying slowest
+    grid <- expand.grid(rev(per_col_order), stringsAsFactors = FALSE,
+                        KEEP.OUT.ATTRS = FALSE)
+    grid <- grid[, rev(seq_along(grid)), drop = FALSE]
+    combo_levels <- do.call(str_c, c(grid, sep = " | "))
+    dt[, .col_combo := factor(.col_combo, levels = combo_levels)]
+  }
+
+  ".col_combo"
+}
+
 #' Cast long data to wide output format
 #'
 #' When `stat_labels` is provided (stat_columns mode), the long data carries
@@ -1099,9 +1207,12 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
 #'
 #' @param stat_labels Character vector of stat column labels (the names of
 #'   the `stat_columns` setting), or NULL for the standard single-format cast
+#' @param col_levels Named list mapping factor column variables to their level
+#'   order (from `get_col_levels()`); orders the resulting `res*` columns by
+#'   factor levels instead of alphabetically. NULL preserves legacy behavior.
 #' @keywords internal
 cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
-                         stat_labels = NULL) {
+                         stat_labels = NULL, col_levels = NULL) {
   # Track column value labels for metadata
   col_labels <- NULL
   n_stats <- length(stat_labels)
@@ -1132,15 +1243,7 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
   } else {
     # Build dcast formula: row_labels ~ cols
     lhs <- str_c(row_label_cols, collapse = " + ")
-
-    if (length(cols) == 1) {
-      rhs <- cols[1]
-    } else {
-      # For multiple cols, create interaction column
-      dt[, .col_combo := do.call(str_c, c(.SD, sep = " | ")), .SDcols = cols]
-      rhs <- ".col_combo"
-    }
-
+    rhs <- prepare_cast_column(dt, cols, col_levels)
     formula_str <- str_c(lhs, " ~ ", rhs)
     wide <- data.table::dcast(
       dt,

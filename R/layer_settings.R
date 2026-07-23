@@ -35,6 +35,9 @@
 #' | `result_order_var` | X | | | |
 #' | `outer_sort_position` | X | | | |
 #' | `risk_diff` | X | | | |
+#' | `pct_lt` | X | | | |
+#' | `pct_gt` | X | | | |
+#' | `zero_count_display` | X | | | |
 #' | `name` | X | X | X | X |
 #'
 #' Settings provided for an inapplicable layer type are silently ignored.
@@ -70,6 +73,18 @@
 #' @param result_order_var Character, which result variable for ordering
 #' @param outer_sort_position Character, outer sort direction
 #' @param risk_diff List with risk difference configuration
+#' @param pct_lt Numeric less-than threshold for count-layer percents. A cell
+#'   with a nonzero count whose percent would display below this value renders
+#'   the percent as \code{"<"} followed by the threshold (e.g. \code{pct_lt = 1}
+#'   shows \code{1 ( <1\%)} instead of \code{1 (  0\%)}). NULL disables.
+#' @param pct_gt Numeric greater-than threshold for count-layer percents. A cell
+#'   whose percent is below 100 but would display above this value renders the
+#'   percent as \code{">"} followed by the threshold (e.g. \code{pct_gt = 99}
+#'   shows \code{>99} for \code{99.6\%}). NULL disables.
+#' @param zero_count_display How to display count-layer cells whose count is
+#'   zero: \code{"full"} (default) keeps the usual \code{"0 (  0\%)"};
+#'   \code{"count_only"} shows only the count field (e.g. \code{" 0"});
+#'   \code{"blank"} shows an empty string.
 #' @param name Character string, layer name for identification
 #'
 #' @return A tplyr_layer_settings object
@@ -100,8 +115,13 @@ layer_settings <- function(
     result_order_var = NULL,
     outer_sort_position = NULL,
     risk_diff = NULL,
+    pct_lt = NULL,
+    pct_gt = NULL,
+    zero_count_display = "full",
     name = NULL
 ) {
+  zero_count_display <- match.arg(zero_count_display,
+                                  c("full", "count_only", "blank"))
   structure(
     list(
       format_strings = format_strings,
@@ -129,6 +149,9 @@ layer_settings <- function(
       result_order_var = result_order_var,
       outer_sort_position = outer_sort_position,
       risk_diff = risk_diff,
+      pct_lt = pct_lt,
+      pct_gt = pct_gt,
+      zero_count_display = zero_count_display,
       name = name
     ),
     class = "tplyr_layer_settings"

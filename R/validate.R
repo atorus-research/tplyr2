@@ -110,6 +110,25 @@ validate_layer <- function(layer, index) {
     }
   }
 
+  # Validate percent-threshold and zero-count display settings (count layers)
+  pct_lt <- layer$settings$pct_lt
+  if (!is.null(pct_lt) && (!is.numeric(pct_lt) || length(pct_lt) != 1 || pct_lt <= 0)) {
+    stop(str_glue("Layer {index}: pct_lt must be a single positive number"),
+         call. = FALSE)
+  }
+  pct_gt <- layer$settings$pct_gt
+  if (!is.null(pct_gt) && (!is.numeric(pct_gt) || length(pct_gt) != 1 || pct_gt >= 100)) {
+    stop(str_glue("Layer {index}: pct_gt must be a single number below 100"),
+         call. = FALSE)
+  }
+  zcd <- layer$settings$zero_count_display
+  if (!is.null(zcd) && (!is.character(zcd) || length(zcd) != 1 ||
+                        !zcd %in% c("full", "count_only", "blank"))) {
+    stop(str_glue("Layer {index}: zero_count_display must be one of ",
+                  "\"full\", \"count_only\", or \"blank\""),
+         call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 

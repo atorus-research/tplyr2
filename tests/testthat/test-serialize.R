@@ -425,3 +425,20 @@ test_that("multi-layer spec roundtrip works", {
 
 # Cleanup
 withr::defer(unlink(scratch_dir, recursive = TRUE), teardown_env())
+
+# Issue #14: pct thresholds and zero-count display survive serialization
+test_that("JSON roundtrip preserves pct_lt/pct_gt/zero_count_display", {
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(group_count("VAL", settings = layer_settings(
+      pct_lt = 1, pct_gt = 99, zero_count_display = "count_only")))
+  )
+  path <- file.path(scratch_dir, "count_pct.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+
+  s <- spec2$layers[[1]]$settings
+  expect_equal(s$pct_lt, 1)
+  expect_equal(s$pct_gt, 99)
+  expect_equal(s$zero_count_display, "count_only")
+})

@@ -30,6 +30,9 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  pct_lt = NULL,
+  pct_gt = NULL,
+  zero_count_display = "full",
   name = NULL
 )
 }
@@ -90,6 +93,21 @@ precedence over \code{format_strings}. Names may not contain
 
 \item{risk_diff}{List with risk difference configuration}
 
+\item{pct_lt}{Numeric less-than threshold for count-layer percents. A cell
+with a nonzero count whose percent would display below this value renders
+the percent as \code{"<"} followed by the threshold (e.g. \code{pct_lt = 1}
+shows \code{1 ( <1\%)} instead of \code{1 (  0\%)}). NULL disables.}
+
+\item{pct_gt}{Numeric greater-than threshold for count-layer percents. A cell
+whose percent is below 100 but would display above this value renders the
+percent as \code{">"} followed by the threshold (e.g. \code{pct_gt = 99}
+shows \code{>99} for \code{99.6\%}). NULL disables.}
+
+\item{zero_count_display}{How to display count-layer cells whose count is
+zero: \code{"full"} (default) keeps the usual \code{"0 (  0\%)"};
+\code{"count_only"} shows only the count field (e.g. \code{" 0"});
+\code{"blank"} shows an empty string.}
+
 \item{name}{Character string, layer name for identification}
 }
 \value{
@@ -130,6 +148,9 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{result_order_var} \tab X \tab  \tab  \tab  \cr
    \code{outer_sort_position} \tab X \tab  \tab  \tab  \cr
    \code{risk_diff} \tab X \tab  \tab  \tab  \cr
+   \code{pct_lt} \tab X \tab  \tab  \tab  \cr
+   \code{pct_gt} \tab X \tab  \tab  \tab  \cr
+   \code{zero_count_display} \tab X \tab  \tab  \tab  \cr
    \code{name} \tab X \tab X \tab X \tab X \cr
 }
 
