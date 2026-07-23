@@ -243,6 +243,28 @@ modifiers become arguments in `layer_settings()`, and data is supplied at build.
 
 Beyond the API redesign, tplyr2 introduces several entirely new capabilities.
 
+## Multi-Column Count Layouts
+
+Count layers can display each statistic in its own column per treatment group
+-- a layout Tplyr v1 could not produce. The `stat_columns` setting takes a
+named list of format strings; each entry becomes a separate result column
+(e.g. a distinct-subject "n (%)" column beside an event-count "E" column
+under every arm):
+
+```{r, eval = FALSE}
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    stat_columns = list(
+      "n (%)" = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct"),
+      "E"     = f_str("xxx", "n")
+    )
+  )
+)
+```
+
+See `vignette("count")` for details.
+
 ## Spec Serialization
 
 Specs can be saved to disk as JSON or YAML and loaded later, enabling

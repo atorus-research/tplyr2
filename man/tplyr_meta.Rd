@@ -8,7 +8,8 @@ tplyr_meta(
   names = character(0),
   filters = list(),
   layer_index = integer(0),
-  anti_join = NULL
+  anti_join = NULL,
+  statistic = NULL
 )
 }
 \arguments{
@@ -21,6 +22,10 @@ filter conditions}
 
 \item{anti_join}{NULL or a \code{tplyr_meta_anti_join} object for missing
 subjects rows}
+
+\item{statistic}{NULL or a character string naming which statistic the
+cell displays (set for \code{stat_columns} layers, where the stat
+sub-columns of a column group share the same source-data filters)}
 }
 \value{
 A tplyr_meta object

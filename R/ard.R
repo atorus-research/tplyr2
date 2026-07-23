@@ -45,6 +45,8 @@ tplyr_to_ard <- function(result) {
       if (col %in% internal_cols) next
       if (str_detect(col, "^\\.")) next
       if (str_detect(col, "^rowlabel")) next
+      # stat_columns snapshots carry one formatted column per statistic
+      if (str_detect(col, "^formatted_\\d+$")) next
 
       if (is.numeric(dt[[col]])) {
         stat_cols <- c(stat_cols, col)
@@ -175,14 +177,27 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
   by_data_vars <- by_info$data_vars
   by_labels <- by_info$labels
 
+  stat_labels <- NULL
+
   if (inherits(layer, "tplyr_count_layer") ||
       inherits(layer, "tplyr_shift_layer")) {
-    # Apply count format
-    fmt <- get_count_format(settings)
-    fmt_args <- map(fmt$vars, function(v) {
-      if (v %in% names(wide_stats)) wide_stats[[v]] else NA_real_
+    # Apply count format(s); stat_columns reconstructs the multi-column
+    # layout by writing one formatted_<i> column per statistic (count only —
+    # shift layers ignore stat_columns, matching tplyr_build)
+    if (inherits(layer, "tplyr_count_layer")) {
+      fmts <- get_count_formats(settings)
+    } else {
+      fmts <- list(get_count_format(settings))
+    }
+    stat_labels <- names(fmts)
+    walk(seq_along(fmts), function(i) {
+      fmt <- fmts[[i]]
+      fmt_args <- map(fmt$vars, function(v) {
+        if (v %in% names(wide_stats)) wide_stats[[v]] else NA_real_
+      })
+      col_name <- if (is.null(stat_labels)) "formatted" else str_c("formatted_", i)
+      wide_stats[, (col_name) := do.call(apply_formats, c(list(fmt), fmt_args))]
     })
-    wide_stats[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
 
     # Determine target variable for row labels
     if (inherits(layer, "tplyr_shift_layer")) {
@@ -256,7 +271,8 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
     return(NULL)
   }
 
-  cast_to_wide(wide_stats, row_label_cols, cast_cols, layer_index)
+  cast_to_wide(wide_stats, row_label_cols, cast_cols, layer_index,
+               stat_labels = stat_labels)
 }
 
 #' Create formatted rows for desc layer from pivoted ARD stats

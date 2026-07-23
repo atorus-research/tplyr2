@@ -11,6 +11,7 @@
 #' | Setting | Count | Desc | Shift | Analyze |
 #' | --- | --- | --- | --- | --- |
 #' | `format_strings` | X | X | X | X |
+#' | `stat_columns` | X | | | |
 #' | `denoms_by` | X | X | X | |
 #' | `denom_where` | X | X | X | |
 #' | `denom_ignore` | X | | X | |
@@ -39,6 +40,13 @@
 #' Settings provided for an inapplicable layer type are silently ignored.
 #'
 #' @param format_strings Named list of f_str objects
+#' @param stat_columns Named list of f_str objects for count layers. Each
+#'   entry produces its own result column per column group (e.g. one
+#'   "n (\%)" column and one "E" column per treatment arm), with the entry
+#'   name used as the column sub-label. Column label attributes follow the
+#'   pattern \code{"<column group> (N=n) | <stat name>"}. When set, it takes
+#'   precedence over \code{format_strings}. Names may not contain
+#'   \code{" | "} or \code{"(N="}, which are reserved by the label grammar.
 #' @param denoms_by Character vector of variable names for denominator grouping
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
@@ -68,6 +76,7 @@
 #' @export
 layer_settings <- function(
     format_strings = NULL,
+    stat_columns = NULL,
     denoms_by = NULL,
     denom_where = NULL,
     denom_ignore = NULL,
@@ -96,6 +105,7 @@ layer_settings <- function(
   structure(
     list(
       format_strings = format_strings,
+      stat_columns = stat_columns,
       denoms_by = denoms_by,
       denom_where = denom_where,
       denom_ignore = denom_ignore,
