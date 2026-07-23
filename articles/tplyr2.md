@@ -47,6 +47,7 @@ At minimum, you need the column variable (typically the treatment arm)
 and at least one layer.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -105,6 +106,7 @@ Multiple layers are collected with
 [`tplyr_layers()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_layers.md):
 
 ``` r
+
 layers <- tplyr_layers(
   group_count("SEX", by = "Sex n (%)"),
   group_count("RACE", by = "Race n (%)"),
@@ -121,6 +123,7 @@ Let’s look at a demographics-style table with both count and descriptive
 layers:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -181,6 +184,7 @@ sequence of `x` characters (with optional decimal point) that determines
 width and precision.
 
 ``` r
+
 # Two decimal places for mean, two for SD, with parentheses
 f_str("xx.xx (xx.xx)", "mean", "sd")
 #> tplyr format string: "xx.xx (xx.xx)"Variables: mean, sd
@@ -208,6 +212,7 @@ For **count layers**, the format string uses `n`, `pct`, `distinct_n`,
 and `distinct_pct`:
 
 ``` r
+
 # n (pct%) -- the default
 f_str("xx (xx.x%)", "n", "pct")
 
@@ -228,6 +233,7 @@ custom format strings, the default produces six rows: n, Mean (SD),
 Median, Q1/Q3, Min/Max, and Missing.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -256,6 +262,7 @@ for example, Age and Average Daily Dose – pass a vector of names to
 variable name as an additional row label.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -292,6 +299,7 @@ default, they produce counts and percentages formatted as
 `"xx (xx.x%)"`:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -316,6 +324,7 @@ A total row sums the counts across all levels. Enable it with
 [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md):
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -344,6 +353,7 @@ In adverse event tables, you often need to count the number of
 Use `distinct_by` to specify the subject identifier:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -363,24 +373,24 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
-| rowlabel1                                            | res1      | res2       | res3       |
-|:-----------------------------------------------------|:----------|:-----------|:-----------|
-| CARDIAC DISORDERS                                    | 4 (12.5%) | 6 (14.0%)  | 5 (10.0%)  |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS           | 0 ( 0.0%) | 1 ( 2.3%)  | 0 ( 0.0%)  |
-| GASTROINTESTINAL DISORDERS                           | 6 (18.8%) | 4 ( 9.3%)  | 3 ( 6.0%)  |
+| rowlabel1 | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| CARDIAC DISORDERS | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 | GENERAL DISORDERS AND ADMINISTRATION SITE CONDITIONS | 9 (28.1%) | 15 (34.9%) | 18 (36.0%) |
-| IMMUNE SYSTEM DISORDERS                              | 0 ( 0.0%) | 0 ( 0.0%)  | 1 ( 2.0%)  |
-| INFECTIONS AND INFESTATIONS                          | 5 (15.6%) | 4 ( 9.3%)  | 3 ( 6.0%)  |
-| INJURY, POISONING AND PROCEDURAL COMPLICATIONS       | 2 ( 6.2%) | 1 ( 2.3%)  | 2 ( 4.0%)  |
-| INVESTIGATIONS                                       | 3 ( 9.4%) | 1 ( 2.3%)  | 1 ( 2.0%)  |
-| METABOLISM AND NUTRITION DISORDERS                   | 2 ( 6.2%) | 2 ( 4.7%)  | 0 ( 0.0%)  |
-| MUSCULOSKELETAL AND CONNECTIVE TISSUE DISORDERS      | 1 ( 3.1%) | 2 ( 4.7%)  | 0 ( 0.0%)  |
-| NERVOUS SYSTEM DISORDERS                             | 1 ( 3.1%) | 5 (11.6%)  | 6 (12.0%)  |
-| PSYCHIATRIC DISORDERS                                | 3 ( 9.4%) | 2 ( 4.7%)  | 3 ( 6.0%)  |
-| RENAL AND URINARY DISORDERS                          | 1 ( 3.1%) | 0 ( 0.0%)  | 0 ( 0.0%)  |
-| RESPIRATORY, THORACIC AND MEDIASTINAL DISORDERS      | 0 ( 0.0%) | 3 ( 7.0%)  | 1 ( 2.0%)  |
-| SKIN AND SUBCUTANEOUS TISSUE DISORDERS               | 5 (15.6%) | 18 (41.9%) | 19 (38.0%) |
-| VASCULAR DISORDERS                                   | 0 ( 0.0%) | 0 ( 0.0%)  | 1 ( 2.0%)  |
+| IMMUNE SYSTEM DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| INFECTIONS AND INFESTATIONS | 5 (15.6%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| INJURY, POISONING AND PROCEDURAL COMPLICATIONS | 2 ( 6.2%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| INVESTIGATIONS | 3 ( 9.4%) | 1 ( 2.3%) | 1 ( 2.0%) |
+| METABOLISM AND NUTRITION DISORDERS | 2 ( 6.2%) | 2 ( 4.7%) | 0 ( 0.0%) |
+| MUSCULOSKELETAL AND CONNECTIVE TISSUE DISORDERS | 1 ( 3.1%) | 2 ( 4.7%) | 0 ( 0.0%) |
+| NERVOUS SYSTEM DISORDERS | 1 ( 3.1%) | 5 (11.6%) | 6 (12.0%) |
+| PSYCHIATRIC DISORDERS | 3 ( 9.4%) | 2 ( 4.7%) | 3 ( 6.0%) |
+| RENAL AND URINARY DISORDERS | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| RESPIRATORY, THORACIC AND MEDIASTINAL DISORDERS | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | 5 (15.6%) | 18 (41.9%) | 19 (38.0%) |
+| VASCULAR DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
 
 #### Nested Counts
 
@@ -389,6 +399,7 @@ events by body system and preferred term. Pass a vector of variable
 names to `target_var`:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -408,23 +419,23 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, !grepl("^ord", names(result))], 15))
 ```
 
-| rowlabel1                                  | rowlabel2                      | res1      | res2      | res3      |
-|:-------------------------------------------|:-------------------------------|:----------|:----------|:----------|
-| CARDIAC DISORDERS                          |                                | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FIBRILLATION            | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | ATRIAL HYPERTROPHY             | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS                          | SINUS BRADYCARDIA              | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | TACHYCARDIA                    | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | VENTRICULAR EXTRASYSTOLES      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |                                | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS                 |                                | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 
 The outer level (body system) appears in `rowlabel1`, and the inner
 level (preferred term) appears in `rowlabel2`. Outer rows contain
@@ -442,6 +453,7 @@ function requires a named character vector with `row` and `column`
 elements:
 
 ``` r
+
 set.seed(12345)
 shift_data <- data.frame(
   USUBJID = paste0("SUBJ", 1:30),
@@ -493,6 +505,7 @@ tplyr2 build retains unformatted numeric data as an attribute. Use
 to retrieve it:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -525,15 +538,16 @@ kable(tplyr_numeric_data(result, layer = 1))
 | Xanomeline Low Dose  | M   |  34 | 40.47619 |    84 |
 
 ``` r
+
 # Raw numeric data for the desc layer (layer 2)
 kable(tplyr_numeric_data(result, layer = 2))
 ```
 
-| TRT01P               |   n |     mean |       sd | median |      var | min | max |   iqr |    q1 |    q3 | missing | total | pct |
-|:---------------------|----:|---------:|---------:|-------:|---------:|----:|----:|------:|------:|------:|--------:|------:|----:|
-| Placebo              |  86 | 75.20930 | 8.590167 |   76.0 | 73.79097 |  52 |  89 | 12.50 | 69.25 | 81.75 |       0 |    86 | 100 |
-| Xanomeline High Dose |  84 | 74.38095 | 7.886094 |   76.0 | 62.19048 |  56 |  88 |  9.25 | 70.75 | 80.00 |       0 |    84 | 100 |
-| Xanomeline Low Dose  |  84 | 75.66667 | 8.286051 |   77.5 | 68.65863 |  51 |  88 | 11.00 | 71.00 | 82.00 |       0 |    84 | 100 |
+| TRT01P | n | mean | sd | median | var | min | max | iqr | q1 | q3 | missing | total | pct |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Placebo | 86 | 75.20930 | 8.590167 | 76.0 | 73.79097 | 52 | 89 | 12.50 | 69.25 | 81.75 | 0 | 86 | 100 |
+| Xanomeline High Dose | 84 | 74.38095 | 7.886094 | 76.0 | 62.19048 | 56 | 88 | 9.25 | 70.75 | 80.00 | 0 | 84 | 100 |
+| Xanomeline Low Dose | 84 | 75.66667 | 8.286051 | 77.5 | 68.65863 | 51 | 88 | 11.00 | 71.00 | 82.00 | 0 | 84 | 100 |
 
 This gives you the exact counts, percentages, means, and every other
 computed statistic in raw numeric form, keyed by the same grouping

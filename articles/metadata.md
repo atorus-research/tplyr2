@@ -22,6 +22,7 @@ Enabling metadata is a single argument to
 [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md):
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -55,6 +56,7 @@ count layer with `target_var = "SEX"` in layer 1, the IDs are `1_F` and
 `2_Mean (SD)`.
 
 ``` r
+
 result$row_id
 #> [1] "1_F"         "1_M"         "2_n"         "2_Mean (SD)"
 ```
@@ -72,6 +74,7 @@ Once you have a row ID and a column name,
 returns the metadata object for that cell:
 
 ``` r
+
 meta <- tplyr_meta_result(result, "1_F", "res1")
 meta
 #> tplyr_meta [layer 1]
@@ -94,6 +97,7 @@ If the cell does not exist, the function returns `NULL`. If you try to
 access metadata on a result built without it, you get a clear error:
 
 ``` r
+
 result_no_meta <- tplyr_build(spec, tplyr_adsl, metadata = FALSE)
 tplyr_meta_result(result_no_meta, "1_F", "res1")
 #> Error:
@@ -108,6 +112,7 @@ It evaluates the stored filters against the original data, returning the
 rows that produced a cell:
 
 ``` r
+
 source_rows <- tplyr_meta_subset(result, "1_F", "res1", tplyr_adsl)
 nrow(source_rows)
 #> [1] 53
@@ -126,6 +131,7 @@ and the target variable level. When a `by` variable is present, it adds
 an additional filter:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -147,6 +153,7 @@ kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")]))
 | COMPLETED | PHYSICIAN DECISION | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%)  |
 
 ``` r
+
 rid <- result$row_id[1]
 meta <- tplyr_meta_result(result, rid, "res1")
 meta
@@ -164,6 +171,7 @@ When `total_row = TRUE`, the total row’s metadata omits the target
 variable filter, leaving only the column variable and any by-variables:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -182,6 +190,7 @@ meta
 ```
 
 ``` r
+
 source_rows <- tplyr_meta_subset(result, total_row$row_id, "res1", tplyr_adsl)
 nrow(source_rows)
 #> [1] 86
@@ -194,6 +203,7 @@ data category. All stat rows within the same column point to the same
 source data – the observations on which those statistics were computed:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -221,6 +231,7 @@ The `names` field includes the target variable (`AGE`). You can verify
 the statistics by subsetting and computing them directly:
 
 ``` r
+
 source_rows <- tplyr_meta_subset(result, "1_n", "res1", tplyr_adsl)
 c(n = nrow(source_rows), mean = mean(source_rows$AGE), sd = sd(source_rows$AGE))
 #>         n      mean        sd 
@@ -233,6 +244,7 @@ Both spec-level and layer-level `where` filters are captured in the
 metadata, so you can always see the full filtering chain:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -263,6 +275,7 @@ the analysis data. The metadata for these rows uses a special
 `anti_join` field:
 
 ``` r
+
 target <- data.frame(
   TRT = c("A", "A", "B"),
   USUBJID = c("S1", "S2", "S3"),
@@ -299,6 +312,7 @@ kable(result[, c("rowlabel1", "res1", "res2")])
 | Y             | 1 (33.3%) | 0 ( 0.0%) |
 
 ``` r
+
 ms_row <- result[result$rowlabel1 == "Not in Target", ]
 meta <- tplyr_meta_result(result, ms_row$row_id, "res1")
 meta
@@ -318,6 +332,7 @@ and `on` (the join key, typically `"USUBJID"`). When calling
 on such a row, you must supply `pop_data`:
 
 ``` r
+
 missing_a <- tplyr_meta_subset(result, ms_row$row_id, "res1",
                                 target, pop_data = pop)
 missing_a
@@ -330,6 +345,7 @@ target, so the anti-join returns that one row. Omitting `pop_data`
 produces a warning:
 
 ``` r
+
 tplyr_meta_subset(result, ms_row$row_id, "res1", target)
 #> Warning: pop_data is required for anti-join metadata but was not provided
 #>   TRT USUBJID VAL
@@ -342,6 +358,7 @@ tplyr_meta_subset(result, ms_row$row_id, "res1", target)
 The most common use of metadata is cell verification during QC:
 
 ``` r
+
 result <- tplyr_build(spec, data, metadata = TRUE)
 source <- tplyr_meta_subset(result, row_id = "1_F", column = "res2", data = data)
 nrow(source)
@@ -353,6 +370,7 @@ clicking a cell triggers
 displaying the source records in a detail panel:
 
 ``` r
+
 observeEvent(input$table_cell_click, {
   click <- input$table_cell_click
   row_id <- result$row_id[click$row]
@@ -364,12 +382,12 @@ observeEvent(input$table_cell_click, {
 
 ## Summary
 
-| Function                                          | Purpose                               |
-|---------------------------------------------------|---------------------------------------|
-| `tplyr_build(..., metadata = TRUE)`               | Build with metadata enabled           |
-| `generate_row_ids(result)`                        | Create row identifiers                |
-| `tplyr_meta_result(result, row_id, column)`       | Inspect filter expressions for a cell |
-| `tplyr_meta_subset(result, row_id, column, data)` | Retrieve source data rows             |
+| Function | Purpose |
+|----|----|
+| `tplyr_build(..., metadata = TRUE)` | Build with metadata enabled |
+| `generate_row_ids(result)` | Create row identifiers |
+| `tplyr_meta_result(result, row_id, column)` | Inspect filter expressions for a cell |
+| `tplyr_meta_subset(result, row_id, column, data)` | Retrieve source data rows |
 
 Every cell carries its own filter expressions – column variable, target
 variable, by-variable, where clauses, and anti-join logic for missing

@@ -21,21 +21,21 @@ This vignette covers the key differences with side-by-side examples.
 
 The table below maps v1 functions to their tplyr2 equivalents.
 
-| Tplyr v1                                                              | tplyr2                                                                                                                                                                     | Notes                                 |
-|-----------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|
-| `tplyr_table(data, treat_var)`                                        | `tplyr_spec(cols = "treat_var")`                                                                                                                                           | Data at build time, not in the spec   |
-| `add_layer()`                                                         | [`tplyr_layers()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_layers.md) inside [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md) | Declarative layer collection          |
-| `group_count(target_var)`                                             | `group_count("target_var")`                                                                                                                                                | Variable names are quoted strings     |
-| `group_desc(target_var)`                                              | `group_desc("target_var")`                                                                                                                                                 | Variable names are quoted strings     |
-| `group_shift(vars)`                                                   | `group_shift(c(row = "v1", column = "v2"))`                                                                                                                                | Named character vector                |
-| `set_format_strings()`                                                | `format_strings` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)                                                                | Nested in settings object             |
-| `set_distinct_by()`                                                   | `distinct_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)                                                                   | Character string                      |
-| `set_denoms_by()`                                                     | `denoms_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)                                                                     | Character vector                      |
-| `set_where()`                                                         | `where` parameter in layer or spec                                                                                                                                         | Bare expression (unquoted)            |
-| `add_total_group()`                                                   | [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md) in spec’s `total_groups`                                                                 | Spec-level config                     |
-| `set_pop_data()`                                                      | [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) in spec + [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)    | Config in spec, data at build         |
-| `build()`                                                             | `tplyr_build(spec, data)`                                                                                                                                                  | Data supplied at build time           |
-| [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)                                                                                                      | Variable names are now quoted strings |
+| Tplyr v1 | tplyr2 | Notes |
+|----|----|----|
+| `tplyr_table(data, treat_var)` | `tplyr_spec(cols = "treat_var")` | Data at build time, not in the spec |
+| `add_layer()` | [`tplyr_layers()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_layers.md) inside [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md) | Declarative layer collection |
+| `group_count(target_var)` | `group_count("target_var")` | Variable names are quoted strings |
+| `group_desc(target_var)` | `group_desc("target_var")` | Variable names are quoted strings |
+| `group_shift(vars)` | `group_shift(c(row = "v1", column = "v2"))` | Named character vector |
+| `set_format_strings()` | `format_strings` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Nested in settings object |
+| `set_distinct_by()` | `distinct_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character string |
+| `set_denoms_by()` | `denoms_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character vector |
+| `set_where()` | `where` parameter in layer or spec | Bare expression (unquoted) |
+| `add_total_group()` | [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md) in spec’s `total_groups` | Spec-level config |
+| `set_pop_data()` | [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) in spec + [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md) | Config in spec, data at build |
+| `build()` | `tplyr_build(spec, data)` | Data supplied at build time |
+| [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | Variable names are now quoted strings |
 
 ## Key Differences in Detail
 
@@ -44,6 +44,7 @@ The table below maps v1 functions to their tplyr2 equivalents.
 In v1, data lives inside the table object from the moment you create it:
 
 ``` r
+
 # Tplyr v1: data bound at table creation
 t <- tplyr_table(adsl, TRT01P)
 ```
@@ -52,6 +53,7 @@ In tplyr2, the spec knows nothing about data. You supply data only when
 you are ready to build:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -80,6 +82,7 @@ group_desc(AGE)                        group_desc("AGE")
 ```
 
 ``` r
+
 group_count("SEX", where = SAFFL == "Y")
 ```
 
@@ -88,6 +91,7 @@ group_count("SEX", where = SAFFL == "Y")
 In v1, you configure layers by piping modifier functions:
 
 ``` r
+
 # Tplyr v1: piped modifiers
 group_count(RACE) %>%
   set_format_strings(f_str("xx (xx.x%)", n, pct)) %>%
@@ -100,6 +104,7 @@ In tplyr2, all configuration lives in a single
 object:
 
 ``` r
+
 # tplyr2: declarative settings
 group_count("RACE",
   settings = layer_settings(
@@ -124,6 +129,7 @@ f_str("xx (xx.x%)", n, pct)            f_str("xx (xx.x%)", "n", "pct")
 ```
 
 ``` r
+
 # Desc layer: named list of format strings
 format_strings = list(
   "n"         = f_str("xxx", "n"),
@@ -140,6 +146,7 @@ format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))
 #### Tplyr v1
 
 ``` r
+
 # Tplyr v1 approach (not evaluated)
 tplyr_table(adsl, TRT01P, where = SAFFL == "Y") %>%
   add_layer(
@@ -160,6 +167,7 @@ tplyr_table(adsl, TRT01P, where = SAFFL == "Y") %>%
 #### tplyr2
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -197,6 +205,7 @@ kable(result[, !grepl("^ord", names(result))])
 #### Tplyr v1
 
 ``` r
+
 # Tplyr v1 approach (not evaluated)
 tplyr_table(adae, TRTA) %>%
   add_layer(
@@ -212,6 +221,7 @@ tplyr_table(adae, TRTA) %>%
 #### tplyr2
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -232,23 +242,23 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, !grepl("^ord", names(result))], 15))
 ```
 
-| rowlabel1                                  | rowlabel2                      | res1      | res2      | res3      |
-|:-------------------------------------------|:-------------------------------|:----------|:----------|:----------|
-| CARDIAC DISORDERS                          |                                | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FIBRILLATION            | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | ATRIAL HYPERTROPHY             | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS                          | SINUS BRADYCARDIA              | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | TACHYCARDIA                    | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | VENTRICULAR EXTRASYSTOLES      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |                                | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS                 |                                | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 
 Note how `vars(AEBODSYS, AEDECOD)` becomes `c("AEBODSYS", "AEDECOD")`,
 piped modifiers become arguments in
@@ -260,12 +270,38 @@ and data is supplied at build.
 Beyond the API redesign, tplyr2 introduces several entirely new
 capabilities.
 
+### Multi-Column Count Layouts
+
+Count layers can display each statistic in its own column per treatment
+group – a layout Tplyr v1 could not produce. The `stat_columns` setting
+takes a named list of format strings; each entry becomes a separate
+result column (e.g. a distinct-subject “n (%)” column beside an
+event-count “E” column under every arm):
+
+``` r
+
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    stat_columns = list(
+      "n (%)" = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct"),
+      "E"     = f_str("xxx", "n")
+    )
+  )
+)
+```
+
+See
+[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+for details.
+
 ### Spec Serialization
 
 Specs can be saved to disk as JSON or YAML and loaded later, enabling
 centralized spec authoring with distributed execution:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -290,6 +326,7 @@ receives each group’s data subset and returns a data.frame of numeric
 results:
 
 ``` r
+
 custom_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   data.frame(
@@ -325,6 +362,7 @@ every cell carries metadata tracing back to source data rows for
 auditability:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(group_count("SEX"))
@@ -360,6 +398,7 @@ converts results into long-format Analysis Results Data.
 provides raw unformatted numbers for validation:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(group_count("SEX"))
@@ -383,6 +422,7 @@ kable(head(tplyr_to_ard(result), 10))
 |           1 | Xanomeline High Dose | M   | pct       |   52.38095 |
 
 ``` r
+
 kable(tplyr_numeric_data(result, layer = 1))
 ```
 

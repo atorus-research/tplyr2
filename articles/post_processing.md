@@ -21,6 +21,7 @@ effect of each post-processing step is visible. The spec combines a
 demographics count layer with a descriptive statistics layer on age.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -77,6 +78,7 @@ boundaries, so a label that appears at the end of one layer and the
 beginning of another is never accidentally blanked.
 
 ``` r
+
 masked <- apply_row_masks(result)
 kable(head(masked[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 12))
 ```
@@ -103,6 +105,7 @@ boundary. Combined with masking, this gives the table a clean, sectioned
 appearance.
 
 ``` r
+
 masked_breaks <- apply_row_masks(result, row_breaks = TRUE)
 kable(head(masked_breaks[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 14))
 ```
@@ -134,6 +137,7 @@ Repeating parent values are split into their own rows, and each nesting
 level receives progressively more indentation.
 
 ``` r
+
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 12))
 ```
@@ -167,6 +171,7 @@ sorting, or conditional formatting.
 pulls out the Nth numeric value from each string.
 
 ``` r
+
 # Extract the count (first number) from the first result column
 counts <- str_extract_num(result$res1, index = 1)
 head(counts, 8)
@@ -193,6 +198,7 @@ Either the replacement can replace the entire string, or it can refill
 just the format group while preserving the original width and alignment.
 
 ``` r
+
 string <- c(" 0  (0.0%)", " 8  (9.3%)", "78 (90.7%)")
 
 # Replace the full string when the percentage (2nd format group) is 0
@@ -220,6 +226,7 @@ swaps each leading space for a non-breaking space (`\u00a0`), preserving
 alignment in web-based output.
 
 ``` r
+
 original <- c("  5 ( 6.1%)", " 12 (14.6%)", "  3 ( 3.7%)")
 replaced <- replace_leading_whitespace(original)
 
@@ -242,6 +249,7 @@ can also be used on its own. Given an `f_str` object and matching
 numeric vectors, it returns formatted character strings.
 
 ``` r
+
 fmt <- f_str("xxx.x (xxx.xx)", "mean", "sd")
 apply_formats(fmt, c(75.3, 68.1, 80.5), c(8.21, 7.55, 9.03))
 #> [1] " 75.3 (  8.21)" " 68.1 (  7.55)" " 80.5 (  9.03)"
@@ -260,6 +268,7 @@ preserving any existing indentation and applying hyphenation to words
 that exceed the column width.
 
 ``` r
+
 ex_text <- c("RENAL AND URINARY DISORDERS", "   NEPHROLITHIASIS")
 cat(paste(str_indent_wrap(ex_text, width = 8), collapse = "\n\n"), "\n")
 #> RENAL
@@ -285,6 +294,7 @@ is a complete pipeline that takes raw build output and produces a
 display-ready table.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -310,28 +320,28 @@ display <- output |>
 kable(head(display[, c("row_label", "res1", "res2", "res3")], 20))
 ```
 
-| row_label                                  | res1        | res2        | res3        |
-|:-------------------------------------------|:------------|:------------|:------------|
-| Any adverse event                          |             |             |             |
-|                                            | 32 (100.0%) | 43 (100.0%) | 50 (100.0%) |
-| CARDIAC DISORDERS                          |             |             |             |
-|                                            | 4 (12.5%)   | 6 (14.0%)   | 5 (10.0%)   |
-| ATRIAL FIBRILLATION                        | 0 ( 0.0%)   | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| ATRIAL FLUTTER                             | 0 ( 0.0%)   | 1 ( 2.3%)   | 0 ( 0.0%)   |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| MYOCARDIAL INFARCTION                      | 0 ( 0.0%)   | 1 ( 2.3%)   | 2 ( 4.0%)   |
-| SINUS BRADYCARDIA                          | 0 ( 0.0%)   | 3 ( 7.0%)   | 1 ( 2.0%)   |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%)   | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%)   | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| TACHYCARDIA                                | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%)   | 1 ( 2.3%)   | 0 ( 0.0%)   |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |             |             |             |
-|                                            | 0 ( 0.0%)   | 1 ( 2.3%)   | 0 ( 0.0%)   |
-| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%)   | 1 ( 2.3%)   | 0 ( 0.0%)   |
-| GASTROINTESTINAL DISORDERS                 |             |             |             |
-|                                            | 6 (18.8%)   | 4 ( 9.3%)   | 3 ( 6.0%)   |
+| row_label | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| Any adverse event |  |  |  |
+|  | 32 (100.0%) | 43 (100.0%) | 50 (100.0%) |
+| CARDIAC DISORDERS |  |  |  |
+|  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  |  |  |
+|  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  |  |  |
+|  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 
 When combining
 [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
@@ -353,6 +363,7 @@ collapsing labels. Here we replace the percentage with `(<1%)` in the
 placebo arm when the percentage rounds to 0 but the count is non-zero.
 
 ``` r
+
 # Apply conditional formatting before collapsing labels
 output$res1 <- apply_conditional_format(
   output$res1, 2, x == 0, "(<1%)"
@@ -387,15 +398,15 @@ kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 The post-processing functions in tplyr2 serve distinct purposes but are
 designed to work together:
 
-| Function                                                                                                        | Purpose                                                            |
-|:----------------------------------------------------------------------------------------------------------------|:-------------------------------------------------------------------|
-| [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)                       | Blank repeated row labels, optionally insert row breaks            |
-| [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)               | Merge label columns into one with indentation                      |
-| [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)                       | Pull numeric values from formatted strings                         |
-| [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)     | Conditionally reformat strings based on numeric values within them |
-| [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces                        |
-| [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)                           | Format numeric vectors using f_str objects                         |
-| [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)                       | Wrap long text with hyphenation and indentation preservation       |
+| Function | Purpose |
+|:---|:---|
+| [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md) | Blank repeated row labels, optionally insert row breaks |
+| [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md) | Merge label columns into one with indentation |
+| [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md) | Pull numeric values from formatted strings |
+| [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md) | Conditionally reformat strings based on numeric values within them |
+| [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces |
+| [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md) | Format numeric vectors using f_str objects |
+| [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md) | Wrap long text with hyphenation and indentation preservation |
 
 A typical pipeline runs
 [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)

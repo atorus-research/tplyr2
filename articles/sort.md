@@ -36,6 +36,7 @@ may produce further ordering columns.
 Let’s see this in a simple example.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -70,6 +71,7 @@ them in the right order. Consider a table that combines a count layer
 with a descriptive statistics layer.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -91,14 +93,14 @@ result <- tplyr_build(spec, tplyr_adsl)
 kable(result[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index", "ord_layer_1")])
 ```
 
-| rowlabel1                        | rowlabel2 | res1         | ord_layer_index | ord_layer_1 |
-|:---------------------------------|:----------|:-------------|----------------:|------------:|
-| AMERICAN INDIAN OR ALASKA NATIVE |           | 0 ( 0.0%)    |               1 |           1 |
-| BLACK OR AFRICAN AMERICAN        |           | 8 ( 9.3%)    |               1 |           2 |
-| WHITE                            |           | 78 (90.7%)   |               1 |           3 |
-| Age (years)                      | n         | 86           |               2 |           1 |
-| Age (years)                      | Mean (SD) | 75.2 ( 8.59) |               2 |           2 |
-| Age (years)                      | Median    | 76.0         |               2 |           3 |
+| rowlabel1 | rowlabel2 | res1 | ord_layer_index | ord_layer_1 |
+|:---|:---|:---|---:|---:|
+| AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 1 |
+| BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 1 | 2 |
+| WHITE |  | 78 (90.7%) | 1 | 3 |
+| Age (years) | n | 86 | 2 | 1 |
+| Age (years) | Mean (SD) | 75.2 ( 8.59) | 2 | 2 |
+| Age (years) | Median | 76.0 | 2 | 3 |
 
 The count layer rows have `ord_layer_index = 1` and the desc layer rows
 have `ord_layer_index = 2`. If you wanted to flip the layers so that the
@@ -106,20 +108,21 @@ descriptive statistics appear first, you can sort by `ord_layer_index`
 in a custom order:
 
 ``` r
+
 # Swap layer order: desc first, then counts
 result$sort_key <- ifelse(result$ord_layer_index == 2, 1, 2)
 reordered <- result[order(result$sort_key, result$ord_layer_1), ]
 kable(reordered[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index", "ord_layer_1")])
 ```
 
-|     | rowlabel1                        | rowlabel2 | res1         | ord_layer_index | ord_layer_1 |
-|:----|:---------------------------------|:----------|:-------------|----------------:|------------:|
-| 4   | Age (years)                      | n         | 86           |               2 |           1 |
-| 5   | Age (years)                      | Mean (SD) | 75.2 ( 8.59) |               2 |           2 |
-| 6   | Age (years)                      | Median    | 76.0         |               2 |           3 |
-| 1   | AMERICAN INDIAN OR ALASKA NATIVE |           | 0 ( 0.0%)    |               1 |           1 |
-| 2   | BLACK OR AFRICAN AMERICAN        |           | 8 ( 9.3%)    |               1 |           2 |
-| 3   | WHITE                            |           | 78 (90.7%)   |               1 |           3 |
+|  | rowlabel1 | rowlabel2 | res1 | ord_layer_index | ord_layer_1 |
+|:---|:---|:---|:---|---:|---:|
+| 4 | Age (years) | n | 86 | 2 | 1 |
+| 5 | Age (years) | Mean (SD) | 75.2 ( 8.59) | 2 | 2 |
+| 6 | Age (years) | Median | 76.0 | 2 | 3 |
+| 1 | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 1 |
+| 2 | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 1 | 2 |
+| 3 | WHITE |  | 78 (90.7%) | 1 | 3 |
 
 ## Sorting by Variable Values
 
@@ -142,6 +145,7 @@ When the target variable is a factor, tplyr2 uses its level order. This
 gives you direct control over the row sequence.
 
 ``` r
+
 adsl <- tplyr_adsl
 adsl$DCDECOD <- factor(adsl$DCDECOD, levels = c(
   "COMPLETED",
@@ -195,6 +199,7 @@ preferred sort order. For example, `RACEN` provides a numeric key for
 those values automatically.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -211,11 +216,11 @@ sorted <- result[order(result$ord_layer_1), ]
 kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
 ```
 
-| rowlabel1                        | res1       | res2       | res3       | ord_layer_1 |
-|:---------------------------------|:-----------|:-----------|:-----------|------------:|
-| WHITE                            | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) |           1 |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |           2 |
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           6 |
+| rowlabel1 | res1 | res2 | res3 | ord_layer_1 |
+|:---|:---|:---|:---|---:|
+| WHITE | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) | 1 |
+| BLACK OR AFRICAN AMERICAN | 8 ( 9.3%) | 9 (10.7%) | 6 ( 7.1%) | 2 |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 6 |
 
 Here, `RACEN` values of 1 (WHITE), 2 (BLACK OR AFRICAN AMERICAN), and 6
 (AMERICAN INDIAN OR ALASKA NATIVE) drive the sort keys in `ord_layer_1`.
@@ -230,6 +235,7 @@ forth. There is no additional setting needed – the order you write your
 format strings in is the order your rows appear.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -286,6 +292,7 @@ order, which is common for adverse event tables where the most frequent
 events should appear first.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -326,6 +333,7 @@ and `result_order_var` specifies which statistic to sort by (defaulting
 to `"n"`).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -365,6 +373,7 @@ system) alternate with their inner-level rows (e.g., preferred term).
 The ordering system handles both levels.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -384,20 +393,20 @@ kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index",
                        "ord_layer_1", "ord_layer_2")], 12))
 ```
 
-| rowlabel1         | rowlabel2                      | res1      | ord_layer_index | ord_layer_1 | ord_layer_2 |
-|:------------------|:-------------------------------|:----------|----------------:|------------:|------------:|
-| CARDIAC DISORDERS |                                | 4 (12.5%) |               1 |           1 |           1 |
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION            | 0 ( 0.0%) |               1 |           2 |           2 |
-| CARDIAC DISORDERS | ATRIAL FLUTTER                 | 0 ( 0.0%) |               1 |           3 |           2 |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY             | 1 ( 3.1%) |               1 |           4 |           2 |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%) |               1 |           5 |           2 |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%) |               1 |           6 |           2 |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION          | 0 ( 0.0%) |               1 |           7 |           2 |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA              | 0 ( 0.0%) |               1 |           8 |           2 |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) |               1 |           9 |           2 |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) |               1 |          10 |           2 |
-| CARDIAC DISORDERS | TACHYCARDIA                    | 1 ( 3.1%) |               1 |          11 |           2 |
-| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES      | 0 ( 0.0%) |               1 |          12 |           2 |
+| rowlabel1 | rowlabel2 | res1 | ord_layer_index | ord_layer_1 | ord_layer_2 |
+|:---|:---|:---|---:|---:|---:|
+| CARDIAC DISORDERS |  | 4 (12.5%) | 1 | 1 | 1 |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 1 | 2 | 2 |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 | 3 | 2 |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 1 | 4 | 2 |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 1 | 5 | 2 |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 1 | 6 | 2 |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 | 7 | 2 |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 1 | 8 | 2 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 1 | 9 | 2 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 1 | 10 | 2 |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 1 | 11 | 2 |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 | 12 | 2 |
 
 In nested output:
 
@@ -420,6 +429,7 @@ you will typically sort your data using the `ord_layer_*` columns and
 then drop them before rendering.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -453,15 +463,15 @@ display_cols <- !grepl("^ord_", names(result))
 kable(result[, display_cols])
 ```
 
-| rowlabel1   | rowlabel2                        | res1         | res2         | res3         |
-|:------------|:---------------------------------|:-------------|:-------------|:-------------|
-| Race        | WHITE                            | 78 (90.7%)   | 74 (88.1%)   | 78 (92.9%)   |
-| Race        | BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)    | 9 (10.7%)    | 6 ( 7.1%)    |
-| Race        | AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)    | 1 ( 1.2%)    | 0 ( 0.0%)    |
-| Age (years) | n                                | 86           | 84           | 84           |
-| Age (years) | Mean (SD)                        | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
-| Age (years) | Median                           | 76.0         | 76.0         | 77.5         |
-| Age (years) | Min, Max                         | 52, 89       | 56, 88       | 51, 88       |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| Race | WHITE | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) |
+| Race | BLACK OR AFRICAN AMERICAN | 8 ( 9.3%) | 9 (10.7%) | 6 ( 7.1%) |
+| Race | AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| Age (years) | n | 86 | 84 | 84 |
+| Age (years) | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
+| Age (years) | Median | 76.0 | 76.0 | 77.5 |
+| Age (years) | Min, Max | 52, 89 | 56, 88 | 51, 88 |
 
 The ordering columns gave us full control over the row sequence. After
 sorting, we strip them away so the final table shows only the content

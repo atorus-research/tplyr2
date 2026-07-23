@@ -9,6 +9,7 @@ build time.
 ``` r
 layer_settings(
   format_strings = NULL,
+  stat_columns = NULL,
   denoms_by = NULL,
   denom_where = NULL,
   denom_ignore = NULL,
@@ -41,6 +42,15 @@ layer_settings(
 - format_strings:
 
   Named list of f_str objects
+
+- stat_columns:
+
+  Named list of f_str objects for count layers. Each entry produces its
+  own result column per column group (e.g. one "n (\\ name used as the
+  column sub-label. Column label attributes follow the pattern
+  `"<column group> (N=n) | <stat name>"`. When set, it takes precedence
+  over `format_strings`. Names may not contain `" | "` or `"(N="`, which
+  are reserved by the label grammar.
 
 - denoms_by:
 
@@ -151,6 +161,7 @@ settings are applicable for each of the four layer types:
 |----------------------------|-------|------|-------|---------|
 | Setting                    | Count | Desc | Shift | Analyze |
 | `format_strings`           | X     | X    | X     | X       |
+| `stat_columns`             | X     |      |       |         |
 | `denoms_by`                | X     | X    | X     |         |
 | `denom_where`              | X     | X    | X     |         |
 | `denom_ignore`             | X     |      | X     |         |

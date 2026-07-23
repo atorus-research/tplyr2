@@ -24,6 +24,7 @@ To see what every option is currently set to, call
 with no arguments:
 
 ``` r
+
 tplyr2_options()
 #> $tplyr2.IBMRounding
 #> [1] FALSE
@@ -60,12 +61,15 @@ to -3. tplyr2 supports this through the `IBMRounding` option.
 
 The formula used when IBM rounding is enabled is:
 
-$$\text{round}(x) = \text{sign}(x) \cdot \left\lfloor |x| \cdot 10^{d} + 0.5 \right\rfloor/10^{d}$$
+``` math
+\text{round}(x) = \text{sign}(x) \cdot \left\lfloor |x| \cdot 10^d + 0.5 \right\rfloor / 10^d
+```
 
 Let’s see the difference in practice. We will build a simple descriptive
 statistics table and compare the mean under both rounding methods.
 
 ``` r
+
 # Create data where rounding makes a visible difference
 demo_data <- data.frame(
   TRT = rep(c("Drug", "Placebo"), each = 4),
@@ -95,9 +99,10 @@ kable(result_bankers[, !grepl("^ord", names(result_bankers))],
 |:----------|:-----|:-----|
 | Mean      | 4.0  | 3.0  |
 
-Banker’s rounding (default)
+Banker’s rounding (default) {.table}
 
 ``` r
+
 # IBM rounding
 tplyr2_options(IBMRounding = TRUE)
 
@@ -110,9 +115,10 @@ kable(result_ibm[, !grepl("^ord", names(result_ibm))],
 |:----------|:-----|:-----|
 | Mean      | 4.0  | 3.0  |
 
-IBM rounding (round-half-away-from-zero)
+IBM rounding (round-half-away-from-zero) {.table}
 
 ``` r
+
 
 # Reset to default
 tplyr2_options(IBMRounding = FALSE)
@@ -137,6 +143,7 @@ In tplyr2, the `quantile_type` option controls which algorithm is used
 for `q1`, `q3`, and `iqr` in descriptive statistics layers.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -162,9 +169,10 @@ kable(result_t7[, !grepl("^ord", names(result_t7))],
 | Q1, Q3    | 69.25, 81.75 | 70.75, 80.00 | 71.00, 82.00 |
 | IQR       | 12.50        | 9.25         | 11.00        |
 
-Quantile Type 7 (R default)
+Quantile Type 7 (R default) {.table}
 
 ``` r
+
 # Type 3 (SAS-compatible)
 tplyr2_options(quantile_type = 3)
 
@@ -178,9 +186,10 @@ kable(result_t3[, !grepl("^ord", names(result_t3))],
 | Q1, Q3    | 69.00, 81.00 | 70.00, 80.00 | 71.00, 82.00 |
 | IQR       | 12.00        | 10.00        | 11.00        |
 
-Quantile Type 3 (SAS-compatible)
+Quantile Type 3 (SAS-compatible) {.table}
 
 ``` r
+
 
 # Reset to default
 tplyr2_options(quantile_type = 7)
@@ -206,6 +215,7 @@ auto-precision widths. It takes a named numeric vector with `int` and/or
 `dec` components.
 
 ``` r
+
 # Without a cap, precision is driven entirely by the data
 spec <- tplyr_spec(
   cols = "TRT01P",
@@ -230,9 +240,10 @@ kable(result_nocap[, !grepl("^ord", names(result_nocap))],
 |:------------|:----------|:----------------|:----------------|:----------------|
 | Weight (kg) | Mean (SD) | 62.76 ( 12.772) | 70.00 ( 14.653) | 67.28 ( 14.124) |
 
-Auto-precision, no cap
+Auto-precision, no cap {.table style="width:100%;"}
 
 ``` r
+
 # Apply a global cap: max 3 integer digits, max 1 decimal digit
 tplyr2_options(precision_cap = c(int = 3, dec = 1))
 
@@ -245,9 +256,10 @@ kable(result_capped[, !grepl("^ord", names(result_capped))],
 |:------------|:----------|:----------------|:----------------|:----------------|
 | Weight (kg) | Mean (SD) | 62.76 ( 12.772) | 70.00 ( 14.653) | 67.28 ( 14.124) |
 
-Auto-precision, capped at int=3, dec=1
+Auto-precision, capped at int=3, dec=1 {.table style="width:100%;"}
 
 ``` r
+
 
 # Reset to default
 tplyr2_options(precision_cap = NULL)
@@ -269,6 +281,7 @@ other derived measure – you can register them at the session level so
 they are available everywhere.
 
 ``` r
+
 # Register session-level custom summaries
 tplyr2_options(
   custom_summaries = list(
@@ -325,6 +338,7 @@ A few things to keep in mind about custom summaries:
   (e.g., `mean`), in which case it replaces the built-in calculation.
 
 ``` r
+
 # Reset to default
 tplyr2_options(custom_summaries = NULL)
 ```
@@ -346,6 +360,7 @@ scientific notation (or if you are debugging formatting), you can adjust
 it:
 
 ``` r
+
 # Check the current value
 tplyr2_options()$tplyr2.scipen
 #> [1] 9999
@@ -361,6 +376,7 @@ completes. This means it will not affect other code in your session.
 To return all options to their defaults, set each one explicitly:
 
 ``` r
+
 tplyr2_options(
   IBMRounding     = FALSE,
   quantile_type   = 7L,

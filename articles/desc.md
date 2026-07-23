@@ -21,6 +21,7 @@ Let’s start with a typical example. Using the built-in `tplyr_adsl`
 dataset, we will summarize age by treatment group.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -117,6 +118,7 @@ You can change the quantile algorithm globally using
 [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md):
 
 ``` r
+
 # Default Type 7 (R default)
 spec <- tplyr_spec(
   cols = "TRT01P",
@@ -140,9 +142,10 @@ kable(result_type7[, !grepl("^ord", names(result_type7))],
 |:----------|:-----------|:-----------|:-----------|
 | Q1, Q3    | 69.2, 81.8 | 70.8, 80.0 | 71.0, 82.0 |
 
-Type 7 (R default)
+Type 7 (R default) {.table}
 
 ``` r
+
 # Type 3 (matches SAS PROC UNIVARIATE default)
 tplyr2_options(quantile_type = 3)
 
@@ -155,9 +158,10 @@ kable(result_type3[, !grepl("^ord", names(result_type3))],
 |:----------|:-----------|:-----------|:-----------|
 | Q1, Q3    | 69.0, 81.0 | 70.0, 80.0 | 71.0, 82.0 |
 
-Type 3 (SAS-like)
+Type 3 (SAS-like) {.table}
 
 ``` r
+
 
 # Reset to default
 tplyr2_options(quantile_type = 7)
@@ -187,6 +191,7 @@ Here is an example computing a geometric mean alongside the standard
 mean:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -236,6 +241,7 @@ Once registered, the custom statistic is available by name in any
 `format_strings` specification, just like the built-in summaries.
 
 ``` r
+
 # Register a coefficient of variation summary for the session
 tplyr2_options(
   custom_summaries = list(
@@ -270,6 +276,7 @@ kable(result[, !grepl("^ord", names(result))])
 
 ``` r
 
+
 # Clean up
 tplyr2_options(custom_summaries = NULL)
 ```
@@ -283,6 +290,7 @@ standard statistic, such as using a trimmed mean instead of the
 arithmetic mean.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -321,6 +329,7 @@ pass a character vector of variable names to
 [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -382,6 +391,7 @@ outermost row label, followed by the variable name, then the statistic
 label.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(

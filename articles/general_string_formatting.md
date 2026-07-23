@@ -23,6 +23,7 @@ groups** separated by **literal text**. Each format group corresponds to
 one statistic.
 
 ``` r
+
 # Two format groups separated by the literal " ("  and closing ")"
 fmt <- f_str("xx.x (xx.xx)", "mean", "sd")
 fmt
@@ -48,29 +49,29 @@ alignment across rows.
 Each layer type computes a specific set of statistics that you can
 reference in format strings.
 
-| Layer Type | Variable         | Description                                          |
-|:-----------|:-----------------|:-----------------------------------------------------|
-| Count      | `n`              | Number of observations                               |
-| Count      | `pct`            | Percentage of observations                           |
-| Count      | `total`          | Denominator for percentage                           |
-| Count      | `distinct_n`     | Number of distinct subjects (requires `distinct_by`) |
-| Count      | `distinct_pct`   | Percentage of distinct subjects                      |
-| Count      | `distinct_total` | Distinct denominator                                 |
-| Desc       | `n`              | Non-missing observation count                        |
-| Desc       | `mean`           | Arithmetic mean                                      |
-| Desc       | `sd`             | Standard deviation                                   |
-| Desc       | `median`         | Median                                               |
-| Desc       | `var`            | Variance                                             |
-| Desc       | `min`            | Minimum                                              |
-| Desc       | `max`            | Maximum                                              |
-| Desc       | `iqr`            | Interquartile range                                  |
-| Desc       | `q1`             | First quartile                                       |
-| Desc       | `q3`             | Third quartile                                       |
-| Desc       | `missing`        | Count of missing values                              |
-| Shift      | `n`              | Number of observations                               |
-| Shift      | `pct`            | Percentage of observations                           |
-| Shift      | `total`          | Denominator for percentage                           |
-| Analyze    | *(user-defined)* | Names returned by `analyze_fn`                       |
+| Layer Type | Variable | Description |
+|:---|:---|:---|
+| Count | `n` | Number of observations |
+| Count | `pct` | Percentage of observations |
+| Count | `total` | Denominator for percentage |
+| Count | `distinct_n` | Number of distinct subjects (requires `distinct_by`) |
+| Count | `distinct_pct` | Percentage of distinct subjects |
+| Count | `distinct_total` | Distinct denominator |
+| Desc | `n` | Non-missing observation count |
+| Desc | `mean` | Arithmetic mean |
+| Desc | `sd` | Standard deviation |
+| Desc | `median` | Median |
+| Desc | `var` | Variance |
+| Desc | `min` | Minimum |
+| Desc | `max` | Maximum |
+| Desc | `iqr` | Interquartile range |
+| Desc | `q1` | First quartile |
+| Desc | `q3` | Third quartile |
+| Desc | `missing` | Count of missing values |
+| Shift | `n` | Number of observations |
+| Shift | `pct` | Percentage of observations |
+| Shift | `total` | Denominator for percentage |
+| Analyze | *(user-defined)* | Names returned by `analyze_fn` |
 
 For count layers, format strings are provided as a named list with the
 key `n_counts`. For descriptive statistics layers, each named entry in
@@ -86,6 +87,7 @@ more digits than available positions, the number prints in full (it is
 never truncated).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -139,6 +141,7 @@ The result is that the opening parenthesis (or bracket) always sits
 immediately next to the first significant digit.
 
 ``` r
+
 # Standard formatting: spaces inside parentheses
 spec_standard <- tplyr_spec(
   cols = "TRT01P",
@@ -176,6 +179,7 @@ Here is the standard formatting, where padding sits between the
 parenthesis and the number:
 
 ``` r
+
 kable(result_standard[1:6, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
@@ -193,6 +197,7 @@ percentage group. The opening parenthesis now hugs the number, and the
 displaced spaces move to the left of the parenthesis:
 
 ``` r
+
 kable(result_hugged[1:6, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
@@ -243,6 +248,7 @@ Auto-precision is controlled by three settings in
   maximum widths
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -267,13 +273,13 @@ result <- tplyr_build(spec, tplyr_adlb)
 kable(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")])
 ```
 
-| rowlabel1      | rowlabel2 | res1                 | res2                 | res3                 |
-|:---------------|:----------|:---------------------|:---------------------|:---------------------|
-| Urate (umol/L) | n         | 20                   | 21                   | 11                   |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| Urate (umol/L) | n | 20 | 21 | 11 |
 | Urate (umol/L) | Mean (SD) | 324.7608 ( 74.75026) | 298.8162 ( 50.36185) | 282.2596 ( 77.20328) |
-| Urate (umol/L) | Median    | 306.3220             | 297.4000             | 273.6080             |
-| Urate (umol/L) | Q1, Q3    | 266.1730, 394.0550   | 273.6080, 315.2440   | 240.8940, 297.4000   |
-| Urate (umol/L) | Min, Max  | 226.024, 469.892     | 231.972, 469.892     | 178.440, 428.256     |
+| Urate (umol/L) | Median | 306.3220 | 297.4000 | 273.6080 |
+| Urate (umol/L) | Q1, Q3 | 266.1730, 394.0550 | 273.6080, 315.2440 | 240.8940, 297.4000 |
+| Urate (umol/L) | Min, Max | 226.024, 469.892 | 231.972, 469.892 | 178.440, 428.256 |
 
 In this example, `precision_on = "AVAL"` tells tplyr2 to scan the `AVAL`
 column to determine the number of decimal places present in the data.
@@ -302,6 +308,7 @@ which specifies a replacement string when all values in a format group
 are missing.
 
 ``` r
+
 fmt_with_empty <- f_str(
   "xx.x (xx.xx)",
   "mean", "sd",
@@ -322,6 +329,7 @@ combines parenthesis hugging with fixed-width fields, similar to what
 you would see in a clinical study report.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(

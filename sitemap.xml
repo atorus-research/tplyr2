@@ -22,7 +22,9 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/articles/tplyr2.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/authors.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/index.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/news/index.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_count_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_custom_groups.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_overrides.html</loc></url>
@@ -77,6 +79,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/format_with_precision.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_count_format.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/get_count_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_data_labels.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_desc_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_nested_denom_group.html</loc></url>
@@ -115,6 +118,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/serialize_function.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/serialize_layer.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/serialize_settings.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/sort_by_numeric_suffix.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/sort_nested.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/spec_to_serializable.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/str_extract_num.html</loc></url>
@@ -147,5 +151,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_layer.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_layer_stats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_spec.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_stat_columns.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_stat_columns_alignment.html</loc></url>
 </urlset>
 

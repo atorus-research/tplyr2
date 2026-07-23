@@ -24,6 +24,7 @@ your spec uses `cols = "TRT01P"`, then the denominator for each cell is
 the total number of rows in that treatment group.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -62,6 +63,7 @@ denominator, each cell percentage is based on the total treatment arm
 count:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -93,6 +95,7 @@ if you want each sex subgroup to sum to 100% independently, set
 `denoms_by` to include both the column variable and the `by` variable:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -142,6 +145,7 @@ For example, suppose you want to show all disposition categories but
 compute percentages relative to subjects who did not complete the study:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -192,6 +196,7 @@ Here we exclude “AMERICAN INDIAN OR ALASKA NATIVE” from the denominator
 when counting race categories:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -237,6 +242,7 @@ Both denominators respect `denoms_by`, `denom_where`, and
 `denom_ignore`.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -255,16 +261,16 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 8))
 ```
 
-| rowlabel1                   | res1             | res2             | res3             |
-|:----------------------------|:-----------------|:-----------------|:-----------------|
-| ABDOMINAL PAIN              | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| AGITATION                   | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| ANXIETY                     | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| rowlabel1 | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| AGITATION | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| ANXIETY | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
 | APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 3\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] |
 | APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 4\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] |
+| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
+| APPLICATION SITE PRURITUS | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] |
 
 The first number is the count of distinct subjects, the percentage is
 the proportion of distinct subjects, and the bracketed number is the
@@ -288,6 +294,7 @@ denominator for each treatment arm comes from the population dataset
 rather than the analysis data.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
@@ -332,6 +339,7 @@ You can also retrieve the population-level N values used in column
 headers:
 
 ``` r
+
 kable(tplyr_header_n(result))
 ```
 
@@ -348,6 +356,7 @@ appear in the analysis data at all. The `missing_subjects` parameter
 adds a row that counts these absent subjects.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
@@ -397,6 +406,7 @@ population-based denominators, distinct subject counts, and a missing
 subjects row:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
@@ -450,14 +460,14 @@ proportion of all randomized subjects in each arm.
 The table below summarizes the denominator controls available in
 [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md):
 
-| Parameter                                                                   | Purpose                                             | Default                  |
-|-----------------------------------------------------------------------------|-----------------------------------------------------|--------------------------|
-| `denoms_by`                                                                 | Variables defining denominator groups               | Column variable(s)       |
-| `denom_where`                                                               | Expression to filter denominator data               | No filter                |
-| `denom_ignore`                                                              | Target variable values to exclude from denominators | None                     |
-| `distinct_by`                                                               | Variable for distinct subject counting              | NULL (event-level only)  |
-| `missing_subjects`                                                          | Add row for subjects absent from analysis data      | FALSE                    |
-| [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) | Separate population dataset for denominators        | None (use analysis data) |
+| Parameter | Purpose | Default |
+|----|----|----|
+| `denoms_by` | Variables defining denominator groups | Column variable(s) |
+| `denom_where` | Expression to filter denominator data | No filter |
+| `denom_ignore` | Target variable values to exclude from denominators | None |
+| `distinct_by` | Variable for distinct subject counting | NULL (event-level only) |
+| `missing_subjects` | Add row for subjects absent from analysis data | FALSE |
+| [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) | Separate population dataset for denominators | None (use analysis data) |
 
 Each of these can be used independently or combined as needed. The key
 principle is that the numerator (what you are counting) and the

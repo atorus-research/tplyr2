@@ -15,6 +15,7 @@ whitespace by default. The `empty` parameter of
 overrides this. Use `.overall` to replace the entire formatted string:
 
 ``` r
+
 test_data <- data.frame(
   TRT = c(rep("A", 5), rep("B", 5), rep("C", 3)),
   VAL = c(1.5, 2.3, 3.1, 4.0, 2.7,
@@ -88,6 +89,7 @@ The `+N` suffix is standard clinical practice – typically the mean gets
 `+1` and the SD gets `+2` beyond the raw data’s precision.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -112,13 +114,13 @@ result <- tplyr_build(spec, tplyr_adlb)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
-| rowlabel1 | rowlabel2 | res1                 | res2                 | res3                 |
-|:----------|:----------|:---------------------|:---------------------|:---------------------|
-| URATE     | n         | 75                   | 78                   | 47                   |
-| URATE     | Mean (SD) | 322.2230 ( 64.96877) | 298.8489 ( 55.54287) | 287.1492 ( 76.82208) |
-| URATE     | Median    | 303.3480             | 300.3740             | 267.6600             |
-| URATE     | Min, Max  | 226.024, 469.892     | 178.440, 481.788     | 178.440, 463.944     |
-| URATE     | Missing   | 0                    | 0                    | 0                    |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| URATE | n | 75 | 78 | 47 |
+| URATE | Mean (SD) | 322.2230 ( 64.96877) | 298.8489 ( 55.54287) | 287.1492 ( 76.82208) |
+| URATE | Median | 303.3480 | 300.3740 | 267.6600 |
+| URATE | Min, Max | 226.024, 469.892 | 178.440, 481.788 | 178.440, 463.944 |
+| URATE | Missing | 0 | 0 | 0 |
 
 Since `AVAL` in `tplyr_adlb` has three decimal places, `a.a` resolves to
 three decimals. The mean (`a.a+1`) displays four, and the SD (`a.a+2`)
@@ -136,6 +138,7 @@ Set `precision_cap` in
 as a named vector with `int` and/or `dec` components:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -174,6 +177,7 @@ Use
 to set a session-wide cap:
 
 ``` r
+
 tplyr2_options(precision_cap = c(int = 3, dec = 1))
 
 result <- tplyr_build(spec, tplyr_adlb)
@@ -186,6 +190,7 @@ kable(result[, !grepl("^ord", names(result))])
 | URATE     | Min, Max  | 226.02, 469.89     | 178.44, 481.79     | 178.44, 463.94     |
 
 ``` r
+
 
 tplyr2_options(precision_cap = NULL)
 ```
@@ -200,6 +205,7 @@ it directly via `precision_data` – a data.frame with `max_int` and
 `max_dec` columns, plus any `precision_by` grouping columns:
 
 ``` r
+
 ext_precision <- data.frame(
   PARAMCD = "URATE",
   max_int = 3L,
@@ -251,6 +257,7 @@ Uppercase characters activate hugging:
 - `A` – auto-precision with hugging (uppercase `a`)
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -283,6 +290,7 @@ parenthesis sits flush against the first digit.
 Uppercase `A` combines auto-precision with hugging:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -304,10 +312,10 @@ result <- tplyr_build(spec, tplyr_adlb)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
-| rowlabel1 | rowlabel2   | res1                 | res2                 | res3                 |
-|:----------|:------------|:---------------------|:---------------------|:---------------------|
-| URATE     | Mean (SD)   | 322.2230 (64.96877 ) | 298.8489 (55.54287 ) | 287.1492 (76.82208 ) |
-| URATE     | Min \[Max\] | 226.024 \[469.892\]  | 178.440 \[481.788\]  | 178.440 \[463.944\]  |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| URATE | Mean (SD) | 322.2230 (64.96877 ) | 298.8489 (55.54287 ) | 287.1492 (76.82208 ) |
+| URATE | Min \[Max\] | 226.024 \[469.892\] | 178.440 \[481.788\] | 178.440 \[463.944\] |
 
 The mean uses lowercase `a` (standard padding) while the SD uses
 uppercase `A` (hugged). The combination of auto-precision for
@@ -320,6 +328,7 @@ A complete specification combining all the formatting features covered
 here:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -348,14 +357,14 @@ result <- tplyr_build(spec, tplyr_adlb)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
-| rowlabel1 | rowlabel2 | res1                 | res2                 | res3                 |
-|:----------|:----------|:---------------------|:---------------------|:---------------------|
-| URATE     | n         | 75                   | 78                   | 47                   |
-| URATE     | Mean (SD) | 322.2230 (64.96877 ) | 298.8489 (55.54287 ) | 287.1492 (76.82208 ) |
-| URATE     | Median    | 303.3480             | 300.3740             | 267.6600             |
-| URATE     | Q1, Q3    | 267.6600, 383.6460   | 255.7640, 321.1920   | 237.9200, 303.3480   |
-| URATE     | Min, Max  | 226.024, 469.892     | 178.440, 481.788     | 178.440, 463.944     |
-| URATE     | Missing   | 0                    | 0                    | 0                    |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| URATE | n | 75 | 78 | 47 |
+| URATE | Mean (SD) | 322.2230 (64.96877 ) | 298.8489 (55.54287 ) | 287.1492 (76.82208 ) |
+| URATE | Median | 303.3480 | 300.3740 | 267.6600 |
+| URATE | Q1, Q3 | 267.6600, 383.6460 | 255.7640, 321.1920 | 237.9200, 303.3480 |
+| URATE | Min, Max | 226.024, 469.892 | 178.440, 481.788 | 178.440, 463.944 |
+| URATE | Missing | 0 | 0 | 0 |
 
 This specification adapts decimal places to the data, caps precision at
 three decimals, hugs the SD against its opening parenthesis, and

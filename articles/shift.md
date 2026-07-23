@@ -44,6 +44,7 @@ mimics a typical laboratory analysis dataset with baseline and
 post-baseline normal range indicators.
 
 ``` r
+
 set.seed(42)
 
 # Create example shift data
@@ -68,6 +69,7 @@ defines the row categories (the “from” state), and `"column"` identifies
 the variable that produces additional column groups (the “to” state).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   where = PARAMCD == "CK",
@@ -83,10 +85,10 @@ result <- tplyr_build(spec, adlb)
 kable(result[, !grepl("^ord_", names(result))])
 ```
 
-| rowlabel1       | rowlabel2 | rowlabel3 | res1      | res2      | res3      | res4      | res5      | res6      |
-|:----------------|:----------|:----------|:----------|:----------|:----------|:----------|:----------|:----------|
-| Creatine Kinase | WEEK 24   | H         | 3 (30.0%) | 1 (10.0%) | 1 (10.0%) | 3 (30.0%) | 0 ( 0.0%) | 2 (20.0%) |
-| Creatine Kinase | WEEK 24   | N         | 2 (20.0%) | 4 (40.0%) | 4 (40.0%) | 2 (20.0%) | 2 (20.0%) | 6 (60.0%) |
+| rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Creatine Kinase | WEEK 24 | H | 3 (30.0%) | 1 (10.0%) | 1 (10.0%) | 3 (30.0%) | 0 ( 0.0%) | 2 (20.0%) |
+| Creatine Kinase | WEEK 24 | N | 2 (20.0%) | 4 (40.0%) | 4 (40.0%) | 2 (20.0%) | 2 (20.0%) | 6 (60.0%) |
 
 A few things to notice in this output:
 
@@ -122,6 +124,7 @@ This is especially important for shift tables, where the standard
 presentation order is typically Low, Normal, High.
 
 ``` r
+
 # Convert to factors with the desired level order
 adlb$BNRIND <- factor(adlb$BNRIND, levels = c("L", "N", "H"))
 adlb$ANRIND <- factor(adlb$ANRIND, levels = c("L", "N", "H"))
@@ -146,11 +149,11 @@ result <- tplyr_build(spec, adlb)
 kable(result[, !grepl("^ord_", names(result))])
 ```
 
-| rowlabel1       | rowlabel2 | rowlabel3 | res1       | res2      | res3       | res4       | res5      | res6       | res7       | res8      | res9       |
-|:----------------|:----------|:----------|:-----------|:----------|:-----------|:-----------|:----------|:-----------|:-----------|:----------|:-----------|
-| Creatine Kinase | WEEK 24   | L         | 0 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%)  | 0 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%)  |
-| Creatine Kinase | WEEK 24   | N         | 2 ( 20.0%) | 0 ( 0.0%) | 4 ( 40.0%) | 4 ( 40.0%) | 0 ( 0.0%) | 2 ( 20.0%) | 2 ( 20.0%) | 0 ( 0.0%) | 6 ( 60.0%) |
-| Creatine Kinase | WEEK 24   | H         | 3 ( 30.0%) | 0 ( 0.0%) | 1 ( 10.0%) | 1 ( 10.0%) | 0 ( 0.0%) | 3 ( 30.0%) | 0 ( 0.0%)  | 0 ( 0.0%) | 2 ( 20.0%) |
+| rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | N | 2 ( 20.0%) | 0 ( 0.0%) | 4 ( 40.0%) | 4 ( 40.0%) | 0 ( 0.0%) | 2 ( 20.0%) | 2 ( 20.0%) | 0 ( 0.0%) | 6 ( 60.0%) |
+| Creatine Kinase | WEEK 24 | H | 3 ( 30.0%) | 0 ( 0.0%) | 1 ( 10.0%) | 1 ( 10.0%) | 0 ( 0.0%) | 3 ( 30.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 2 ( 20.0%) |
 
 Now the table includes all three levels – L, N, and H – in both the rows
 and the column groups, regardless of whether any subjects actually fell
@@ -172,6 +175,7 @@ You can display just counts, just percentages, or any combination. The
 format string system is the same one used across all of tplyr2.
 
 ``` r
+
 # Counts only
 spec_counts <- tplyr_spec(
   cols = "TRTA",

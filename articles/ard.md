@@ -34,6 +34,7 @@ Here is a complete example using a demographics table with both count
 and descriptive statistics layers:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -58,6 +59,7 @@ result <- tplyr_build(spec, tplyr_adsl)
 The formatted output looks like a typical clinical table:
 
 ``` r
+
 kable(result[, !grepl("^ord", names(result))])
 ```
 
@@ -73,6 +75,7 @@ kable(result[, !grepl("^ord", names(result))])
 Converting to ARD is a single function call:
 
 ``` r
+
 ard <- tplyr_to_ard(result)
 kable(head(ard, 15))
 ```
@@ -119,6 +122,7 @@ The count layer produces statistics like `n`, `pct`, and `total` for
 each combination of treatment arm and target variable level:
 
 ``` r
+
 count_ard <- ard[ard$analysis_id == 1, ]
 kable(count_ard)
 ```
@@ -154,6 +158,7 @@ format strings only reference `n`, `mean`, `sd`, `median`, `min`, and
 `max`, the numeric data snapshot captures all computed statistics:
 
 ``` r
+
 desc_ard <- ard[ard$analysis_id == 2, ]
 kable(head(desc_ard, 20))
 ```
@@ -192,6 +197,7 @@ applies the spec’s formatting rules to rebuild the display table. This
 completes the round-trip:
 
 ``` r
+
 rebuilt <- tplyr_from_ard(ard, spec)
 kable(rebuilt[, !grepl("^ord", names(rebuilt))])
 ```
@@ -217,6 +223,7 @@ We can confirm that the formatted values match between the original
 build and the ARD reconstruction:
 
 ``` r
+
 original_sorted <- result[order(result$rowlabel1), ]
 rebuilt_sorted  <- rebuilt[order(rebuilt$rowlabel1), ]
 
@@ -245,6 +252,7 @@ different audiences. The spec defines the presentation; the ARD holds
 the numbers.
 
 ``` r
+
 # Same ARD, different formatting
 compact_spec <- tplyr_spec(
   cols = "TRT01P",

@@ -29,6 +29,7 @@ each combination of column and `by` variables. The function signature
 is:
 
 ``` r
+
 function(.data, .target_var) { ... }
 ```
 
@@ -51,6 +52,7 @@ Here is an example computing a geometric mean and geometric standard
 deviation for urate lab values by treatment group:
 
 ``` r
+
 geo_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   pos_vals <- vals[!is.na(vals) & vals > 0]
@@ -111,6 +113,7 @@ Here we compute a mean and standard deviation in one row, and a median
 in another:
 
 ``` r
+
 summary_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   vals <- vals[!is.na(vals)]
@@ -165,6 +168,7 @@ with two columns: `row_label` (character) and `formatted` (character).
 No `format_strings` are needed in this case.
 
 ``` r
+
 range_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   vals <- vals[!is.na(vals)]
@@ -215,6 +219,7 @@ each unique combination of column variables and `by` data variables.
 Here we compute statistics separately for each visit:
 
 ``` r
+
 mean_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   vals <- vals[!is.na(vals)]
@@ -264,6 +269,7 @@ Each layer gets its own `ord_layer_index` value in the output, so layers
 stack in the order they are specified.
 
 ``` r
+
 geo_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   pos_vals <- vals[!is.na(vals) & vals > 0]
@@ -321,6 +327,7 @@ To handle edge cases gracefully, build the error handling into your
 function:
 
 ``` r
+
 safe_geo_fn <- function(.data, .target_var) {
   vals <- .data[[.target_var]]
   pos_vals <- vals[!is.na(vals) & vals > 0]

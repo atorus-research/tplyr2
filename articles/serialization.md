@@ -33,6 +33,7 @@ function takes a spec object and a file path. The format is determined
 by the file extension: use `.json` for JSON output.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -69,6 +70,7 @@ function reads a spec from a JSON or YAML file and reconstructs the full
 layer configurations.
 
 ``` r
+
 loaded_spec <- tplyr_read_spec(json_path)
 loaded_spec
 #> tplyr2 table specification
@@ -79,6 +81,7 @@ The loaded spec is functionally identical to the original. You can build
 it against any dataset that has the required columns.
 
 ``` r
+
 result <- tplyr_build(loaded_spec, tplyr_adsl)
 kable(result[, !grepl("^ord", names(result))])
 ```
@@ -102,6 +105,7 @@ If you prefer YAML over JSON, simply use a `.yaml` or `.yml` file
 extension. The API is identical.
 
 ``` r
+
 yaml_path <- tempfile(fileext = ".yaml")
 tplyr_write_spec(spec, yaml_path)
 
@@ -208,6 +212,7 @@ Let’s look at the actual JSON content produced by our earlier spec to
 see these conventions in practice.
 
 ``` r
+
 json_content <- readLines(json_path)
 cat(json_content, sep = "\n")
 #> {
@@ -281,6 +286,7 @@ Let’s serialize a spec that exercises more of the system: nested counts
 with distinct counting, a `where` clause, and a total row.
 
 ``` r
+
 complex_spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -315,23 +321,24 @@ tplyr_write_spec(complex_spec, complex_path)
 Now read it back and build.
 
 ``` r
+
 reloaded <- tplyr_read_spec(complex_path)
 complex_result <- tplyr_build(reloaded, tplyr_adsl)
 kable(complex_result[, !grepl("^ord", names(complex_result))])
 ```
 
-| rowlabel1             | rowlabel2                        | rowlabel3 | res1         | res2         | res3         | res4         |
-|:----------------------|:---------------------------------|:----------|:-------------|:-------------|:-------------|:-------------|
-| Race n (%)            | AMERICAN INDIAN OR ALASKA NATIVE |           | 0 ( 0.0%)    | 1 ( 0.4%)    | 1 ( 1.2%)    | 0 ( 0.0%)    |
-| Race n (%)            | BLACK OR AFRICAN AMERICAN        |           | 8 ( 9.3%)    | 23 ( 9.1%)   | 9 (10.7%)    | 6 ( 7.1%)    |
-| Race n (%)            | Total                            |           | 86 (100.0%)  | 254 (100.0%) | 84 (100.0%)  | 84 (100.0%)  |
-| Race n (%)            | WHITE                            |           | 78 (90.7%)   | 230 (90.6%)  | 74 (88.1%)   | 78 (92.9%)   |
-| Baseline Measurements | AGE                              | n         | 86           | 254          | 84           | 84           |
-| Baseline Measurements | AGE                              | Mean (SD) | 75.2 ( 8.59) | 75.1 ( 8.25) | 74.4 ( 7.89) | 75.7 ( 8.29) |
-| Baseline Measurements | AGE                              | Min, Max  | 52.0, 89.0   | 51.0, 89.0   | 56.0, 88.0   | 51.0, 88.0   |
-| Baseline Measurements | WEIGHTBL                         | n         | 86           | 253          | 84           | 83           |
-| Baseline Measurements | WEIGHTBL                         | Mean (SD) | 62.8 (12.77) | 66.6 (14.13) | 70.0 (14.65) | 67.3 (14.12) |
-| Baseline Measurements | WEIGHTBL                         | Min, Max  | 34.0, 86.2   | 34.0, 108.0  | 41.7, 108.0  | 45.4, 106.1  |
+| rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 |
+|:---|:---|:---|:---|:---|:---|:---|
+| Race n (%) | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 ( 0.4%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| Race n (%) | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 23 ( 9.1%) | 9 (10.7%) | 6 ( 7.1%) |
+| Race n (%) | Total |  | 86 (100.0%) | 254 (100.0%) | 84 (100.0%) | 84 (100.0%) |
+| Race n (%) | WHITE |  | 78 (90.7%) | 230 (90.6%) | 74 (88.1%) | 78 (92.9%) |
+| Baseline Measurements | AGE | n | 86 | 254 | 84 | 84 |
+| Baseline Measurements | AGE | Mean (SD) | 75.2 ( 8.59) | 75.1 ( 8.25) | 74.4 ( 7.89) | 75.7 ( 8.29) |
+| Baseline Measurements | AGE | Min, Max | 52.0, 89.0 | 51.0, 89.0 | 56.0, 88.0 | 51.0, 88.0 |
+| Baseline Measurements | WEIGHTBL | n | 86 | 253 | 84 | 83 |
+| Baseline Measurements | WEIGHTBL | Mean (SD) | 62.8 (12.77) | 66.6 (14.13) | 70.0 (14.65) | 67.3 (14.12) |
+| Baseline Measurements | WEIGHTBL | Min, Max | 34.0, 86.2 | 34.0, 108.0 | 41.7, 108.0 | 45.4, 106.1 |
 
 The total group, total row, multi-target descriptive layer, and all
 formatting survive the round-trip.
@@ -346,6 +353,7 @@ that every change to a table definition is tracked. If a reviewer asks
 can answer that question with a `git diff` of the spec file.
 
 ``` r
+
 # In your analysis script
 spec <- tplyr_read_spec("specs/table_14_1.json")
 result <- tplyr_build(spec, adsl)
@@ -368,6 +376,7 @@ from different studies, time points, or populations. This is useful for
 standardized tables that appear across multiple studies.
 
 ``` r
+
 # Same spec, different data subsets
 saffl_result <- tplyr_build(loaded_spec, tplyr_adsl[tplyr_adsl$SAFFL == "Y", ])
 ittfl_result <- tplyr_build(loaded_spec, tplyr_adsl[tplyr_adsl$ITTFL == "Y", ])

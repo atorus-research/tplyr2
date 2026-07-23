@@ -34,6 +34,7 @@ At minimum, you need to specify which two treatment levels to compare
 via the `comparisons` parameter.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -73,6 +74,7 @@ you specify produces one `rdiff` column, numbered sequentially. The
 column carries a label attribute indicating which groups were compared.
 
 ``` r
+
 attr(result$rdiff1, "label")
 #> [1] "Xanomeline High Dose vs Placebo"
 ```
@@ -89,6 +91,7 @@ active dose groups, you often want to compare each one against placebo.
 Pass multiple pairs in the `comparisons` list.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -114,22 +117,23 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1", "rdiff2")], 8))
 ```
 
-| rowlabel1                   | res1      | res2      | res3      | rdiff1           | rdiff2            |
-|:----------------------------|:----------|:----------|:----------|:-----------------|:------------------|
-| ABDOMINAL PAIN              | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0)  | 1.3 (-1.2, 3.9)   |
-| AGITATION                   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0)  | 1.3 (-1.2, 3.9)   |
-| ANXIETY                     | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0)  | 1.3 (-1.2, 3.9)   |
-| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 1.8 (-4.2, 7.7)  | 0.5 (-5.0, 6.0)   |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) | 3 ( 7.0%) | 4 ( 8.0%) | 3.9 (-0.4, 8.2)  | 5.3 ( 0.2, 10.3)  |
-| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 3.1 (-3.4, 9.5)  | 0.5 (-5.0, 6.0)   |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8)  | 0.0 ( 0.0, 0.0)   |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) | 0.6 (-9.7, 10.8) | -1.9 (-11.7, 7.8) |
+| rowlabel1 | res1 | res2 | res3 | rdiff1 | rdiff2 |
+|:---|:---|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) | 1.3 (-1.2, 3.9) |
+| AGITATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) | 1.3 (-1.2, 3.9) |
+| ANXIETY | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) | 1.3 (-1.2, 3.9) |
+| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 1.8 (-4.2, 7.7) | 0.5 (-5.0, 6.0) |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) | 3 ( 7.0%) | 4 ( 8.0%) | 3.9 (-0.4, 8.2) | 5.3 ( 0.2, 10.3) |
+| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 3.1 (-3.4, 9.5) | 0.5 (-5.0, 6.0) |
+| APPLICATION SITE PAIN | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) | 0.0 ( 0.0, 0.0) |
+| APPLICATION SITE PRURITUS | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) | 0.6 (-9.7, 10.8) | -1.9 (-11.7, 7.8) |
 
 The first comparison (`Xanomeline High Dose` vs `Placebo`) goes into
 `rdiff1`, and the second (`Xanomeline Low Dose` vs `Placebo`) goes into
 `rdiff2`. Each column gets its own label.
 
 ``` r
+
 attr(result$rdiff1, "label")
 #> [1] "Xanomeline High Dose vs Placebo"
 attr(result$rdiff2, "label")
@@ -157,6 +161,7 @@ You can include the p-value in the formatted string if your table
 requires it.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -179,16 +184,16 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 8))
 ```
 
-| rowlabel1                   | res1      | res2      | res3      | rdiff1                      |
-|:----------------------------|:----------|:----------|:----------|:----------------------------|
-| ABDOMINAL PAIN              | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \]       |
-| AGITATION                   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \]       |
-| ANXIETY                     | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \]       |
-| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 1.8 (-4.2, 7.7) \[0.5887\]  |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) | 3 ( 7.0%) | 4 ( 8.0%) | 3.9 (-0.4, 8.2) \[0.1707\]  |
-| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 3.1 (-3.4, 9.5) \[0.3996\]  |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) \[0.4328\]  |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) | 0.6 (-9.7, 10.8) \[0.9122\] |
+| rowlabel1 | res1 | res2 | res3 | rdiff1 |
+|:---|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \] |
+| AGITATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \] |
+| ANXIETY | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) \[ \] |
+| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 1.8 (-4.2, 7.7) \[0.5887\] |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) | 3 ( 7.0%) | 4 ( 8.0%) | 3.9 (-0.4, 8.2) \[0.1707\] |
+| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 3 ( 7.0%) | 2 ( 4.0%) | 3.1 (-3.4, 9.5) \[0.3996\] |
+| APPLICATION SITE PAIN | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) \[0.4328\] |
+| APPLICATION SITE PRURITUS | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) | 0.6 (-9.7, 10.8) \[0.9122\] |
 
 The `x` characters in the format string control field width, just as
 they do for count format strings. Each `x` reserves one character
@@ -202,6 +207,7 @@ By default, tplyr2 computes a 95% confidence interval. You can change
 this with the `ci` parameter.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -249,6 +255,7 @@ counts. This is almost always what you want for adverse event tables,
 where a single subject can contribute multiple events.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -271,16 +278,16 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 8))
 ```
 
-| rowlabel1                   | res1             | res2             | res3             | rdiff1           |
-|:----------------------------|:-----------------|:-----------------|:-----------------|:-----------------|
-| ABDOMINAL PAIN              | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0)  |
-| AGITATION                   | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0)  |
-| ANXIETY                     | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0)  |
-| APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 3\] | 2 ( 4.0%) \[ 2\] | 1.8 (-4.2, 7.7)  |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] | 3.9 (-0.4, 8.2)  |
-| APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 4\] | 2 ( 4.0%) \[ 2\] | 3.1 (-3.4, 9.5)  |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] | 1.3 (-1.2, 3.8)  |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] | 0.6 (-9.7, 10.8) |
+| rowlabel1 | res1 | res2 | res3 | rdiff1 |
+|:---|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0) |
+| AGITATION | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0) |
+| ANXIETY | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] | 0.0 ( 0.0, 0.0) |
+| APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 3\] | 2 ( 4.0%) \[ 2\] | 1.8 (-4.2, 7.7) |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] | 3.9 (-0.4, 8.2) |
+| APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 4\] | 2 ( 4.0%) \[ 2\] | 3.1 (-3.4, 9.5) |
+| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] | 1.3 (-1.2, 3.8) |
+| APPLICATION SITE PRURITUS | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] | 0.6 (-9.7, 10.8) |
 
 In this output, the count columns show distinct subjects, their
 percentage, and the total event count in brackets. The risk difference
@@ -295,6 +302,7 @@ rows will have empty risk difference values, which is the expected
 behavior – a risk difference on a total row is not meaningful.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -342,6 +350,7 @@ function gives you access to the raw counts that were used to compute
 the risk differences.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -365,18 +374,18 @@ nd <- tplyr_numeric_data(result, layer = 1)
 kable(head(nd, 10))
 ```
 
-| TRTA    | AEDECOD                     |   n | distinct_n |      pct | distinct_pct | total | distinct_total |
-|:--------|:----------------------------|----:|-----------:|---------:|-------------:|------:|---------------:|
-| Placebo | ABDOMINAL PAIN              |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
-| Placebo | AGITATION                   |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
-| Placebo | ANXIETY                     |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
-| Placebo | APPLICATION SITE DERMATITIS |   1 |          1 | 2.127660 |        3.125 |    47 |             32 |
-| Placebo | APPLICATION SITE ERYTHEMA   |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
-| Placebo | APPLICATION SITE IRRITATION |   1 |          1 | 2.127660 |        3.125 |    47 |             32 |
-| Placebo | APPLICATION SITE PAIN       |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
-| Placebo | APPLICATION SITE PRURITUS   |   4 |          4 | 8.510638 |       12.500 |    47 |             32 |
-| Placebo | APPLICATION SITE REACTION   |   1 |          1 | 2.127660 |        3.125 |    47 |             32 |
-| Placebo | APPLICATION SITE URTICARIA  |   0 |          0 | 0.000000 |        0.000 |    47 |             32 |
+| TRTA | AEDECOD | n | distinct_n | pct | distinct_pct | total | distinct_total |
+|:---|:---|---:|---:|---:|---:|---:|---:|
+| Placebo | ABDOMINAL PAIN | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
+| Placebo | AGITATION | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
+| Placebo | ANXIETY | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
+| Placebo | APPLICATION SITE DERMATITIS | 1 | 1 | 2.127660 | 3.125 | 47 | 32 |
+| Placebo | APPLICATION SITE ERYTHEMA | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
+| Placebo | APPLICATION SITE IRRITATION | 1 | 1 | 2.127660 | 3.125 | 47 | 32 |
+| Placebo | APPLICATION SITE PAIN | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
+| Placebo | APPLICATION SITE PRURITUS | 4 | 4 | 8.510638 | 12.500 | 47 | 32 |
+| Placebo | APPLICATION SITE REACTION | 1 | 1 | 2.127660 | 3.125 | 47 | 32 |
+| Placebo | APPLICATION SITE URTICARIA | 0 | 0 | 0.000000 | 0.000 | 47 | 32 |
 
 This data.frame contains the raw counts, percentages, and denominators
 per treatment group and preferred term. These are the values that feed
@@ -388,6 +397,7 @@ difference strings using
 This function pulls the nth number from a formatted string.
 
 ``` r
+
 # Extract the risk difference value (1st number)
 result$rdiff_value <- str_extract_num(result$rdiff1, 1)
 
@@ -400,16 +410,16 @@ result$rdiff_upper <- str_extract_num(result$rdiff1, 3)
 kable(head(result[, c("rowlabel1", "rdiff1", "rdiff_value", "rdiff_lower", "rdiff_upper")], 8))
 ```
 
-| rowlabel1                   | rdiff1           | rdiff_value | rdiff_lower | rdiff_upper |
-|:----------------------------|:-----------------|------------:|------------:|------------:|
-| ABDOMINAL PAIN              | 0.0 ( 0.0, 0.0)  |         0.0 |         0.0 |         0.0 |
-| AGITATION                   | 0.0 ( 0.0, 0.0)  |         0.0 |         0.0 |         0.0 |
-| ANXIETY                     | 0.0 ( 0.0, 0.0)  |         0.0 |         0.0 |         0.0 |
-| APPLICATION SITE DERMATITIS | 1.8 (-4.2, 7.7)  |         1.8 |        -4.2 |         7.7 |
-| APPLICATION SITE ERYTHEMA   | 3.9 (-0.4, 8.2)  |         3.9 |        -0.4 |         8.2 |
-| APPLICATION SITE IRRITATION | 3.1 (-3.4, 9.5)  |         3.1 |        -3.4 |         9.5 |
-| APPLICATION SITE PAIN       | 1.3 (-1.2, 3.8)  |         1.3 |        -1.2 |         3.8 |
-| APPLICATION SITE PRURITUS   | 0.6 (-9.7, 10.8) |         0.6 |        -9.7 |        10.8 |
+| rowlabel1 | rdiff1 | rdiff_value | rdiff_lower | rdiff_upper |
+|:---|:---|---:|---:|---:|
+| ABDOMINAL PAIN | 0.0 ( 0.0, 0.0) | 0.0 | 0.0 | 0.0 |
+| AGITATION | 0.0 ( 0.0, 0.0) | 0.0 | 0.0 | 0.0 |
+| ANXIETY | 0.0 ( 0.0, 0.0) | 0.0 | 0.0 | 0.0 |
+| APPLICATION SITE DERMATITIS | 1.8 (-4.2, 7.7) | 1.8 | -4.2 | 7.7 |
+| APPLICATION SITE ERYTHEMA | 3.9 (-0.4, 8.2) | 3.9 | -0.4 | 8.2 |
+| APPLICATION SITE IRRITATION | 3.1 (-3.4, 9.5) | 3.1 | -3.4 | 9.5 |
+| APPLICATION SITE PAIN | 1.3 (-1.2, 3.8) | 1.3 | -1.2 | 3.8 |
+| APPLICATION SITE PRURITUS | 0.6 (-9.7, 10.8) | 0.6 | -9.7 | 10.8 |
 
 This approach is useful when you need numeric risk difference values for
 downstream tasks like sorting, filtering, or creating forest plots.

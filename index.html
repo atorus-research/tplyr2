@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>A Grammar of Clinical Summary Tables • tplyr2</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><link href="extra.css" rel="stylesheet">
 <meta property="og:title" content="A Grammar of Clinical Summary Tables">
@@ -70,6 +70,7 @@
     <li><a class="dropdown-item" href="articles/index.html">More articles...</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -126,7 +127,7 @@
 <span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<thead><tr class="header">
+<thead><tr>
 <th align="left">rowlabel1</th>
 <th align="left">rowlabel2</th>
 <th align="left">res1</th>
@@ -134,42 +135,42 @@
 <th align="left">res3</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td align="left">Sex n (%)</td>
 <td align="left">F</td>
 <td align="left">53 (61.6%)</td>
 <td align="left">40 (47.6%)</td>
 <td align="left">50 (59.5%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">Sex n (%)</td>
 <td align="left">M</td>
 <td align="left">33 (38.4%)</td>
 <td align="left">44 (52.4%)</td>
 <td align="left">34 (40.5%)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">Age (Years)</td>
 <td align="left">n</td>
 <td align="left">86</td>
 <td align="left">84</td>
 <td align="left">84</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">Age (Years)</td>
 <td align="left">Mean (SD)</td>
 <td align="left">75.2 ( 8.59)</td>
 <td align="left">74.4 ( 7.89)</td>
 <td align="left">75.7 ( 8.29)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">Age (Years)</td>
 <td align="left">Median</td>
 <td align="left">76.0</td>
 <td align="left">76.0</td>
 <td align="left">77.5</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">Age (Years)</td>
 <td align="left">Min, Max</td>
 <td align="left">52, 89</td>
@@ -226,7 +227,7 @@
 <col width="20%">
 <col width="20%">
 </colgroup>
-<thead><tr class="header">
+<thead><tr>
 <th align="left">rowlabel1</th>
 <th align="left">rowlabel2</th>
 <th align="left">res1</th>
@@ -234,70 +235,70 @@
 <th align="left">res3</th>
 </tr></thead>
 <tbody>
-<tr class="odd">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left"></td>
 <td align="left">4 (12.5%)</td>
 <td align="left">6 (14.0%)</td>
 <td align="left">5 (10.0%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FIBRILLATION</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 2.0%)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FLUTTER</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 2.3%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL HYPERTROPHY</td>
 <td align="left">1 ( 3.1%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
 <td align="left">1 ( 3.1%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">CARDIAC FAILURE CONGESTIVE</td>
 <td align="left">1 ( 3.1%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">MYOCARDIAL INFARCTION</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 2.3%)</td>
 <td align="left">2 ( 4.0%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SINUS BRADYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">3 ( 7.0%)</td>
 <td align="left">1 ( 2.0%)</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
 <td align="left">1 ( 3.1%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 2.0%)</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
@@ -422,7 +423,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer>

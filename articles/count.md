@@ -25,6 +25,7 @@ basic disposition table showing the reasons subjects discontinued from
 the study, broken out by planned treatment group.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -60,6 +61,7 @@ groups. You can add one at the spec level with
 [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   total_groups = list(total_group("TRT01P", label = "Total")),
@@ -100,6 +102,7 @@ dose groups. The
 function handles this.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   custom_groups = list(
@@ -143,6 +146,7 @@ function. Format strings use `x` characters to define field widths: each
 `x` reserves one character position.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -194,6 +198,7 @@ Many tables require a “Total” row at the bottom of each count block. Set
 to add one.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -238,6 +243,7 @@ tells tplyr2 which variable identifies unique subjects. Once set, the
 format strings.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -256,24 +262,98 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 10))
 ```
 
-| rowlabel1                   | res1             | res2             | res3             |
-|:----------------------------|:-----------------|:-----------------|:-----------------|
-| ABDOMINAL PAIN              | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| AGITATION                   | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| ANXIETY                     | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| rowlabel1 | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| AGITATION | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| ANXIETY | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
 | APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 3\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] |
 | APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 4\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] |
-| APPLICATION SITE REACTION   | 1 ( 3.1%) \[ 1\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
-| APPLICATION SITE URTICARIA  | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
+| APPLICATION SITE PRURITUS | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] |
+| APPLICATION SITE REACTION | 1 ( 3.1%) \[ 1\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
+| APPLICATION SITE URTICARIA | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
 
 In this output, the first number is the count of distinct subjects, the
 percentage is based on distinct subjects, and the number in brackets is
 the total event count. This pattern – `xxx (xx.x%) [xxx]` for distinct
 subjects, percent, and events – is one of the most common formats for
 adverse event tables.
+
+### Displaying Statistics in Separate Columns
+
+Some sponsors require the subject and event counts in separate columns
+rather than packed into one cell – for example, an “n (%)” column and an
+“E” column under each treatment arm. The `stat_columns` setting produces
+this layout directly. Pass a named list of
+[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+objects: each entry becomes its own result column per treatment group,
+and the entry name becomes the column sub-label.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list(
+          "n (%)" = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct"),
+          "E"     = f_str("xxx", "n")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "res4")], 10))
+```
+
+| rowlabel1                   | res1      | res2 | res3      | res4 |
+|:----------------------------|:----------|:-----|:----------|:-----|
+| ABDOMINAL PAIN              | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
+| AGITATION                   | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
+| ANXIETY                     | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
+| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 1    | 3 ( 7.0%) | 3    |
+| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) | 0    | 3 ( 7.0%) | 3    |
+| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 1    | 3 ( 7.0%) | 4    |
+| APPLICATION SITE PAIN       | 0 ( 0.0%) | 0    | 1 ( 2.3%) | 1    |
+| APPLICATION SITE PRURITUS   | 4 (12.5%) | 4    | 6 (14.0%) | 7    |
+| APPLICATION SITE REACTION   | 1 ( 3.1%) | 1    | 1 ( 2.3%) | 1    |
+| APPLICATION SITE URTICARIA  | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
+
+The result columns interleave arm-major, so each treatment group’s stat
+columns sit adjacent: `res1`/`res2` are the first arm’s “n (%)” and “E”
+columns, `res3`/`res4` the second arm’s, and so on. Column identity is
+carried on the label attributes, which follow the pattern
+`"<treatment> (N=n) | <stat name>"`:
+
+``` r
+
+attr(result$res1, "label")
+#> [1] "Placebo (N=47) | n (%)"
+attr(result$res2, "label")
+#> [1] "Placebo (N=47) | E"
+```
+
+Renderers can split these labels on `" | "` to span the treatment group
+(with its header N) over its stat sub-columns as a two-level header.
+`stat_columns` works with nested count layers, by variables, total and
+missing rows, risk difference, metadata, and serialization. A few things
+to keep in mind:
+
+- Stat names may not contain `" | "` or `"(N="`, which are reserved by
+  the label grammar.
+- When a spec contains multiple layers, all layers must be count layers
+  using `stat_columns` with the same statistic names so result columns
+  align; otherwise build separate specs.
+- The `empty` argument of
+  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  applies per format, so a row can display empty text in one stat column
+  and a value in another when their variables differ in missingness.
 
 ### A Note on Parenthesis Hugging
 
@@ -295,6 +375,7 @@ by passing a vector of two variable names to
 [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md).
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(
@@ -313,23 +394,23 @@ result <- tplyr_build(spec, tplyr_adae)
 kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 15))
 ```
 
-| rowlabel1                                  | rowlabel2                      | res1      | res2      | res3      |
-|:-------------------------------------------|:-------------------------------|:----------|:----------|:----------|
-| CARDIAC DISORDERS                          |                                | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FIBRILLATION            | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | ATRIAL HYPERTROPHY             | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS                          | SINUS BRADYCARDIA              | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS                          | TACHYCARDIA                    | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS                          | VENTRICULAR EXTRASYSTOLES      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |                                | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT      | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS                 |                                | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
 
 The first variable in the vector (`AEBODSYS`) becomes the outer level,
 and the second (`AEDECOD`) becomes the inner level. In the output,
@@ -358,6 +439,7 @@ The default mode inserts stub rows for outer-level labels. These stub
 rows have no numeric results – they serve purely as group headers:
 
 ``` r
+
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
@@ -388,6 +470,7 @@ indented. This matches the behavior of `set_nest_count(TRUE)` in Tplyr
 v1:
 
 ``` r
+
 nested <- collapse_row_labels(result, nest = TRUE, indent = "   ")
 kable(head(nested[, c("row_label", "res1", "res2", "res3")], 15))
 ```
@@ -421,6 +504,7 @@ set on a nested layer, the total row reflects the overall count across
 all body systems.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   layers = tplyr_layers(

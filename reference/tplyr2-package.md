@@ -9,3 +9,7 @@ for performance.
 ## Author
 
 **Maintainer**: Mike Stackhouse <mike.stackhouse@atorusresearch.com>
+
+Authors:
+
+- Mike Stackhouse <mike.stackhouse@atorusresearch.com>

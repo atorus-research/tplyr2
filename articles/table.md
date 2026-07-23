@@ -17,6 +17,7 @@ then **build** the table with `tplyr_build(spec, data)`. Let’s look at
 an example using the included `tplyr_adsl` dataset.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -44,6 +45,7 @@ names that define the columns of your output table. The most common case
 is a single treatment variable:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -68,6 +70,7 @@ combinations. This is useful when you need columns split by treatment
 and another variable.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = c("TRT01P", "SEX"),
   layers = tplyr_layers(
@@ -95,6 +98,7 @@ processing begins. This is useful when records should be excluded from
 the entire table.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   where = SAFFL == "Y",
@@ -145,6 +149,7 @@ duplicating every row with the column variable set to the total group
 label.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   total_groups = list(
@@ -173,6 +178,7 @@ Custom groups combine specific treatment levels into a new group. For
 example, you might pool the two active dose groups together.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   custom_groups = list(
@@ -206,6 +212,7 @@ means the “Total” column will include subjects from the custom group as
 well.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   custom_groups = list(
@@ -245,6 +252,7 @@ configuration specifies how the population dataset maps to the spec. The
 actual data is provided at build time.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
@@ -262,16 +270,16 @@ result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", grep("^res", names(result), value = TRUE))], 8))
 ```
 
-| rowlabel1                                            | res1       | res2       | res3       |
-|:-----------------------------------------------------|:-----------|:-----------|:-----------|
-| CARDIAC DISORDERS                                    | 5 ( 5.8%)  | 6 ( 7.1%)  | 6 ( 7.1%)  |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS           | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
-| GASTROINTESTINAL DISORDERS                           | 6 ( 7.0%)  | 6 ( 7.1%)  | 3 ( 3.6%)  |
+| rowlabel1 | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| CARDIAC DISORDERS | 5 ( 5.8%) | 6 ( 7.1%) | 6 ( 7.1%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS | 6 ( 7.0%) | 6 ( 7.1%) | 3 ( 3.6%) |
 | GENERAL DISORDERS AND ADMINISTRATION SITE CONDITIONS | 11 (12.8%) | 21 (25.0%) | 21 (25.0%) |
-| IMMUNE SYSTEM DISORDERS                              | 0 ( 0.0%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |
-| INFECTIONS AND INFESTATIONS                          | 5 ( 5.8%)  | 4 ( 4.8%)  | 3 ( 3.6%)  |
-| INJURY, POISONING AND PROCEDURAL COMPLICATIONS       | 2 ( 2.3%)  | 2 ( 2.4%)  | 2 ( 2.4%)  |
-| INVESTIGATIONS                                       | 3 ( 3.5%)  | 1 ( 1.2%)  | 1 ( 1.2%)  |
+| IMMUNE SYSTEM DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| INFECTIONS AND INFESTATIONS | 5 ( 5.8%) | 4 ( 4.8%) | 3 ( 3.6%) |
+| INJURY, POISONING AND PROCEDURAL COMPLICATIONS | 2 ( 2.3%) | 2 ( 2.4%) | 2 ( 2.4%) |
+| INVESTIGATIONS | 3 ( 3.5%) | 1 ( 1.2%) | 1 ( 1.2%) |
 
 A few things to note:
 
@@ -289,6 +297,7 @@ N values using
 [`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md):
 
 ``` r
+
 header_n <- tplyr_header_n(result)
 kable(header_n)
 ```
@@ -310,6 +319,7 @@ It uses its own `where` clause, specified in the
 call:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(
@@ -350,6 +360,7 @@ has zero subjects with a given characteristic, a `0 (0.0%)` row still
 appears rather than being dropped.
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
@@ -380,6 +391,7 @@ data. This is essential for AE tables where preferred terms should only
 appear under their actual body system:
 
 ``` r
+
 spec <- tplyr_spec(
   cols = "TRTA",
   pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
@@ -399,18 +411,18 @@ result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rowlabel2", grep("^res", names(result), value = TRUE))], 10))
 ```
 
-| rowlabel1         | rowlabel2                      | res1      | res2      | res3      |
-|:------------------|:-------------------------------|:----------|:----------|:----------|
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION            | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
-| CARDIAC DISORDERS | ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY             | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT      | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE     | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA              | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
 | CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
-| CARDIAC DISORDERS | TACHYCARDIA                    | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
 With `limit_data_by = c("AEBODSYS", "AEDECOD")`, tplyr2 only creates
 rows for body system/preferred term combinations that exist in the data,
