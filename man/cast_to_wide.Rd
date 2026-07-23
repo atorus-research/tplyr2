@@ -4,9 +4,24 @@
 \alias{cast_to_wide}
 \title{Cast long data to wide output format}
 \usage{
-cast_to_wide(dt, row_label_cols, cols, layer_index, col_n = NULL)
+cast_to_wide(
+  dt,
+  row_label_cols,
+  cols,
+  layer_index,
+  col_n = NULL,
+  stat_labels = NULL
+)
+}
+\arguments{
+\item{stat_labels}{Character vector of stat column labels (the names of
+the \code{stat_columns} setting), or NULL for the standard single-format cast}
 }
 \description{
-Cast long data to wide output format
+When \code{stat_labels} is provided (stat_columns mode), the long data carries
+one \verb{formatted_<i>} column per statistic and each column group spreads
+into one res column per statistic, interleaved column-group-major. Column
+labels follow the pattern \code{"<column group> (N=n) | <stat label>"} so
+renderers can span the column group over its stat sub-columns.
 }
 \keyword{internal}

@@ -10,17 +10,22 @@
 #' @param layer_index Integer layer index (1-based)
 #' @param anti_join NULL or a \code{tplyr_meta_anti_join} object for missing
 #'   subjects rows
+#' @param statistic NULL or a character string naming which statistic the
+#'   cell displays (set for \code{stat_columns} layers, where the stat
+#'   sub-columns of a column group share the same source-data filters)
 #'
 #' @return A tplyr_meta object
 #' @export
 tplyr_meta <- function(names = character(0), filters = list(),
-                       layer_index = integer(0), anti_join = NULL) {
+                       layer_index = integer(0), anti_join = NULL,
+                       statistic = NULL) {
   structure(
     list(
       names = names,
       filters = filters,
       layer_index = layer_index,
-      anti_join = anti_join
+      anti_join = anti_join,
+      statistic = statistic
     ),
     class = "tplyr_meta"
   )
@@ -48,6 +53,9 @@ print.tplyr_meta <- function(x, ...) {
   cat(str_c("tplyr_meta [layer ", x$layer_index, "]\n"))
   if (length(x$names) > 0) {
     cat(str_c("  Names: ", str_c(x$names, collapse = ", "), "\n"))
+  }
+  if (!is.null(x$statistic)) {
+    cat(str_c("  Statistic: ", x$statistic, "\n"))
   }
   if (length(x$filters) > 0) {
     cat("  Filters:\n")
@@ -383,6 +391,16 @@ build_cell_filter_exprs <- function(output, row_idx, rc, layer, layer_idx,
   if (rc %in% names(col_level_map) && length(cols) > 0) {
     col_level <- col_level_map[[rc]]
 
+    # stat_columns labels append " | <stat>" after the column-group segment;
+    # strip it before resolving column filters (kept in lockstep with the
+    # cached parser in build_cell_metadata)
+    if (inherits(layer, "tplyr_count_layer") &&
+        !is.null(settings$stat_columns)) {
+      parts <- str_split(col_level, fixed(" | "))[[1]]
+      col_level <- str_c(parts[seq_len(min(length(cols), length(parts)))],
+                         collapse = " | ")
+    }
+
     if (inherits(layer, "tplyr_shift_layer")) {
       # Shift: label is "cols_val | shift_col_val"
       parts <- str_split(col_level, fixed(" | "))[[1]]
@@ -585,18 +603,20 @@ build_cell_filter_exprs <- function(output, row_idx, rc, layer, layer_idx,
 #' @keywords internal
 build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   cols <- spec$cols
-  res_cols <- sort(str_subset(names(output), "^res\\d+$"))
+  res_cols <- sort_by_numeric_suffix(str_subset(names(output), "^res\\d+$"))
   n_rows <- nrow(output)
   n_res <- length(res_cols)
 
   if (n_res == 0) return(list())
 
-  # Parse column variable levels from res column labels
+  # Parse column variable levels from res column labels. The "(N=n)" suffix
+  # sits at the end of the label, or after the column-group segment when
+  # stat_columns appends a " | <stat>" part.
   col_level_map <- list()
   for (rc in res_cols) {
     lbl <- attr(output[[rc]], "label")
     if (!is.null(lbl)) {
-      col_level_map[[rc]] <- str_replace(lbl, "\\s*\\(N=\\d+\\)$", "")
+      col_level_map[[rc]] <- str_replace(lbl, "\\s*\\(N=\\d+\\)(?= \\| |$)", "")
     }
   }
 
@@ -651,12 +671,30 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     col_cache <- vector("list", n_res)
     names(col_cache) <- res_cols
     is_shift <- inherits(layer, "tplyr_shift_layer")
+    has_stat_cols <- inherits(layer, "tplyr_count_layer") &&
+      !is.null(layer$settings$stat_columns)
     for (ri in seq_along(res_cols)) {
       rc <- res_cols[ri]
       cf <- list()
       cn <- character(0)
+      stat_lbl <- NULL
+      if (has_stat_cols && length(cols) == 0) {
+        # No column variables: the label is the stat name itself
+        stat_lbl <- col_level_map[[rc]]
+      }
       if (rc %in% names(col_level_map) && length(cols) > 0) {
         col_level <- col_level_map[[rc]]
+        if (has_stat_cols) {
+          # stat_columns labels append " | <stat>" after the column-group
+          # segment; strip it before resolving column filters and record it
+          # as the cell's statistic
+          parts <- str_split(col_level, fixed(" | "))[[1]]
+          if (length(parts) > length(cols)) {
+            stat_lbl <- parts[length(cols) + 1]
+          }
+          col_level <- str_c(parts[seq_len(min(length(cols), length(parts)))],
+                             collapse = " | ")
+        }
         if (is_shift) {
           parts <- str_split(col_level, fixed(" | "))[[1]]
           for (ci in seq_along(cols)) {
@@ -708,7 +746,8 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
 
       col_cache[[ri]] <- list(
         filters = cf, names = cn,
-        pop_filters = pop_cf, pop_names = pop_cn
+        pop_filters = pop_cf, pop_names = pop_cn,
+        statistic = stat_lbl
       )
     }
 
@@ -952,7 +991,8 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
         names = all_names,
         filters = all_filters,
         layer_index = as.integer(layer_idx),
-        anti_join = aj
+        anti_join = aj,
+        statistic = cc$statistic
       )
     }
   }

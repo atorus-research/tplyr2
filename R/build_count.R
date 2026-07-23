@@ -148,28 +148,12 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     rd_data <- compute_risk_diff(counts, cols, tv, by_data_vars, settings$risk_diff)
   }
 
-  # --- Format ---
-  fmt <- get_count_format(settings)
-  fmt_args <- map(fmt$vars, function(v) counts[[v]])
-  counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
-
-  # Format missing row if present
-  if (!is.null(missing_row)) {
-    fmt_args_m <- map(fmt$vars, function(v) missing_row[[v]])
-    missing_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_m))]
-  }
-
-  # Format missing subjects row if present
-  if (!is.null(missing_subjects_row)) {
-    fmt_args_ms <- map(fmt$vars, function(v) missing_subjects_row[[v]])
-    missing_subjects_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_ms))]
-  }
-
-  # Format total row if present
-  if (!is.null(total_result)) {
-    fmt_args_t <- map(fmt$vars, function(v) total_result[[v]])
-    total_result[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_t))]
-  }
+  # --- Format (main counts + special rows all carry the full stat set) ---
+  fmts <- get_count_formats(settings)
+  apply_count_formats(counts, fmts)
+  apply_count_formats(missing_row, fmts)
+  apply_count_formats(missing_subjects_row, fmts)
+  apply_count_formats(total_result, fmts)
 
   # --- Build row label columns ---
   row_labels <- build_row_labels_count(counts, by_labels, by_data_vars, tv)
@@ -202,7 +186,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   compute_count_sort_keys(counts, dt, cols, by_data_vars, tv, settings)
 
   # --- dcast to wide format ---
-  wide <- cast_to_wide(counts, row_labels, cols, layer_index, col_n = col_n)
+  wide <- cast_to_wide(counts, row_labels, cols, layer_index, col_n = col_n,
+                       stat_labels = names(fmts))
 
   # --- Override ord1 with computed sort keys ---
   method <- settings$order_count_method
@@ -258,7 +243,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   missing_count <- settings$missing_count
   keep_levels <- settings$keep_levels
   limit_data_by <- settings$limit_data_by
-  fmt <- get_count_format(settings)
+  fmts <- get_count_formats(settings)
 
   # Prepare denominator dataset (shared across levels)
   denom_dt <- data.table::copy(pop_dt %||% dt)
@@ -319,8 +304,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
                                      limit_data_by, denom_group)
 
     # Format
-    fmt_args <- map(fmt$vars, function(v) counts[[v]])
-    counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
+    apply_count_formats(counts, fmts)
 
     # Build row labels for this level
     build_nested_row_labels(counts, by_labels, by_data_vars, target_vars,
@@ -359,8 +343,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       total_missings, distinct_by, missing_count,
       get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt
     )
-    fmt_args_t <- map(fmt$vars, function(v) total_result[[v]])
-    total_result[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_t))]
+    apply_count_formats(total_result, fmts)
 
     # Build row labels for total row
     build_nested_row_labels_special(total_result, by_labels, by_data_vars,
@@ -384,8 +367,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     )
     missing_row <- missing_result$missing_row
 
-    fmt_args_m <- map(fmt$vars, function(v) missing_row[[v]])
-    missing_row[, formatted := do.call(apply_formats, c(list(fmt), fmt_args_m))]
+    apply_count_formats(missing_row, fmts)
 
     build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
                                      target_vars, outer_tv, n_label_cols)
@@ -409,7 +391,8 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # Cast to wide
   row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
-  wide <- cast_to_wide(combined, row_label_cols, cols, layer_index, col_n = col_n)
+  wide <- cast_to_wide(combined, row_label_cols, cols, layer_index, col_n = col_n,
+                       stat_labels = names(fmts))
 
   # Add ord2 for nesting depth
   if (".nest_level" %in% names(combined)) {
@@ -997,6 +980,51 @@ get_count_format <- function(settings) {
   f_str("xx (xx.x%)", "n", "pct")
 }
 
+#' Resolve the list of count formats for a layer
+#'
+#' Returns the `stat_columns` list when set (one result column per format
+#' per column group); otherwise a single-element unnamed list wrapping the
+#' legacy format so callers can treat both modes uniformly. The presence of
+#' names on the result signals stat-columns mode downstream.
+#' @keywords internal
+get_count_formats <- function(settings) {
+  if (!is.null(settings$stat_columns)) {
+    return(settings$stat_columns)
+  }
+  list(get_count_format(settings))
+}
+
+#' Apply count format(s) to a long counts table
+#'
+#' Legacy mode (single unnamed format) writes a single `formatted` column,
+#' preserving pre-stat_columns behavior exactly. Stat-columns mode (named
+#' formats) writes one `formatted_<i>` column per format; `cast_to_wide()`
+#' spreads these into separate res columns per column group. All count
+#' statistics are already present on `dt` (including the special total and
+#' missing row tables), so every format can be applied to every row.
+#'
+#' @param dt data.table with computed count statistics (or NULL, a no-op)
+#' @param fmts List of f_str objects from `get_count_formats()`
+#' @keywords internal
+apply_count_formats <- function(dt, fmts) {
+  if (is.null(dt)) return(invisible(NULL))
+
+  if (is.null(names(fmts))) {
+    fmt <- fmts[[1]]
+    fmt_args <- map(fmt$vars, function(v) dt[[v]])
+    dt[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
+  } else {
+    walk(seq_along(fmts), function(i) {
+      fmt <- fmts[[i]]
+      fmt_args <- map(fmt$vars, function(v) dt[[v]])
+      col_name <- str_c("formatted_", i)
+      dt[, (col_name) := do.call(apply_formats, c(list(fmt), fmt_args))]
+    })
+  }
+
+  invisible(dt)
+}
+
 #' Classify by values into data variables and labels
 #' @keywords internal
 classify_by <- function(by, col_names) {
@@ -1062,10 +1090,22 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
 }
 
 #' Cast long data to wide output format
+#'
+#' When `stat_labels` is provided (stat_columns mode), the long data carries
+#' one `formatted_<i>` column per statistic and each column group spreads
+#' into one res column per statistic, interleaved column-group-major. Column
+#' labels follow the pattern `"<column group> (N=n) | <stat label>"` so
+#' renderers can span the column group over its stat sub-columns.
+#'
+#' @param stat_labels Character vector of stat column labels (the names of
+#'   the `stat_columns` setting), or NULL for the standard single-format cast
 #' @keywords internal
-cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
+cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
+                         stat_labels = NULL) {
   # Track column value labels for metadata
   col_labels <- NULL
+  n_stats <- length(stat_labels)
+  value_cols <- if (n_stats > 0) str_c("formatted_", seq_len(n_stats)) else "formatted"
 
   # Compute sort order before casting
   # Use .missing_sort and .total_sort for special rows, else row position
@@ -1082,9 +1122,13 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
   }
 
   if (length(cols) == 0) {
-    # No column variables - single result column
-    wide <- dt[, c(row_label_cols, "formatted"), with = FALSE]
-    data.table::setnames(wide, "formatted", "res1")
+    # No column variables - one result column per stat (no dcast, so the
+    # pre-sorted row order is preserved)
+    wide <- dt[, c(row_label_cols, value_cols), with = FALSE]
+    data.table::setnames(wide, value_cols, str_c("res", seq_along(value_cols)))
+    if (n_stats > 0) {
+      col_labels <- stat_labels
+    }
   } else {
     # Build dcast formula: row_labels ~ cols
     lhs <- str_c(row_label_cols, collapse = " + ")
@@ -1101,15 +1145,39 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL) {
     wide <- data.table::dcast(
       dt,
       as.formula(formula_str),
-      value.var = "formatted",
+      value.var = value_cols,
       fill = ""
     )
 
+    if (n_stats > 1) {
+      # Multiple value.var columns come back named "formatted_<i>_<combo>",
+      # grouped stat-major. Reconstruct the expected names per column group
+      # (never parse dcast output) and reorder column-group-major so each
+      # group's stat columns sit adjacent.
+      combos <- str_replace(str_subset(names(wide), "^formatted_1_"),
+                            "^formatted_1_", "")
+      val_cols <- unlist(map(combos, function(cmb) {
+        str_c("formatted_", seq_len(n_stats), "_", cmb)
+      }))
+      data.table::setcolorder(wide, c(row_label_cols, val_cols))
+    } else {
+      # Single value.var: dcast names columns by the group value alone
+      combos <- setdiff(names(wide), row_label_cols)
+      val_cols <- combos
+    }
+
+    if (n_stats > 0) {
+      # "(N=n)" attaches to the column-group segment; the stat label follows
+      group_labels <- build_col_labels(combos, col_n)
+      col_labels <- unlist(map(group_labels, function(gl) {
+        str_c(gl, " | ", stat_labels)
+      }))
+    } else {
+      col_labels <- build_col_labels(val_cols, col_n)
+    }
+
     # Rename value columns from dcast names to res1, res2, ...
-    val_cols <- setdiff(names(wide), row_label_cols)
-    col_labels <- build_col_labels(val_cols, col_n)
-    new_names <- str_c("res", seq_along(val_cols))
-    data.table::setnames(wide, val_cols, new_names)
+    data.table::setnames(wide, val_cols, str_c("res", seq_along(val_cols)))
 
     # Clean up temp column
     if (".col_combo" %in% names(dt)) {
