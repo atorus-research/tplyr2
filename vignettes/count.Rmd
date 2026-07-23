@@ -165,6 +165,43 @@ kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 10))
 
 In this output, the first number is the count of distinct subjects, the percentage is based on distinct subjects, and the number in brackets is the total event count. This pattern -- `xxx (xx.x%) [xxx]` for distinct subjects, percent, and events -- is one of the most common formats for adverse event tables.
 
+### Displaying Statistics in Separate Columns
+
+Some sponsors require the subject and event counts in separate columns rather than packed into one cell -- for example, an "n (%)" column and an "E" column under each treatment arm. The `stat_columns` setting produces this layout directly. Pass a named list of `f_str()` objects: each entry becomes its own result column per treatment group, and the entry name becomes the column sub-label.
+
+```{r stat_columns}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list(
+          "n (%)" = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct"),
+          "E"     = f_str("xxx", "n")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "res4")], 10))
+```
+
+The result columns interleave arm-major, so each treatment group's stat columns sit adjacent: `res1`/`res2` are the first arm's "n (%)" and "E" columns, `res3`/`res4` the second arm's, and so on. Column identity is carried on the label attributes, which follow the pattern `"<treatment> (N=n) | <stat name>"`:
+
+```{r stat_columns_labels}
+attr(result$res1, "label")
+attr(result$res2, "label")
+```
+
+Renderers can split these labels on `" | "` to span the treatment group (with its header N) over its stat sub-columns as a two-level header. `stat_columns` works with nested count layers, by variables, total and missing rows, risk difference, metadata, and serialization. A few things to keep in mind:
+
+* Stat names may not contain `" | "` or `"(N="`, which are reserved by the label grammar.
+* When a spec contains multiple layers, all layers must be count layers using `stat_columns` with the same statistic names so result columns align; otherwise build separate specs.
+* The `empty` argument of `f_str()` applies per format, so a row can display empty text in one stat column and a value in another when their variables differ in missingness.
+
 ### A Note on Parenthesis Hugging
 
 You may notice that tplyr2 carefully aligns numbers within their format fields, padding with leading spaces so that decimal points and parentheses line up across rows. For even tighter alignment, tplyr2 supports "parenthesis hugging" using uppercase `X` characters in format strings. When you use `X` instead of `x`, leading spaces shift outside the parenthesis so the opening delimiter sits right next to the number. This is a more advanced feature covered in detail in the format strings documentation.

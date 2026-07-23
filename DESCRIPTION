@@ -10,7 +10,6 @@ Description: Implements a grammar of summary data for clinical reports. Clinical
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -28,3 +27,4 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 LazyData: true
+Config/roxygen2/version: 8.0.0

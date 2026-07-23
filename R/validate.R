@@ -28,6 +28,38 @@ validate_spec <- function(spec) {
     validate_layer(layer, i)
   })
 
+  validate_stat_columns_alignment(spec$layers)
+
+  invisible(TRUE)
+}
+
+#' Validate stat_columns consistency across layers
+#'
+#' Layers using stat_columns emit one res column per statistic per column
+#' group, while other layers emit one per column group. harmonize_and_bind()
+#' aligns layers positionally by res column name, so mixing the two shapes
+#' in one spec would silently place results under the wrong column labels.
+#'
+#' @param layers List of tplyr_layer objects
+#' @return Invisible TRUE if valid
+#' @keywords internal
+validate_stat_columns_alignment <- function(layers) {
+  sc_names <- map(layers, function(l) {
+    if (inherits(l, "tplyr_count_layer")) names(l$settings$stat_columns) else NULL
+  })
+  has_sc <- map_lgl(sc_names, Negate(is.null))
+
+  if (!any(has_sc) || length(layers) == 1) return(invisible(TRUE))
+
+  all_count <- all(map_lgl(layers, inherits, "tplyr_count_layer"))
+  if (!all_count || !all(has_sc) ||
+      !all(map_lgl(sc_names, identical, sc_names[[1]]))) {
+    stop("When any layer uses stat_columns, all layers in the spec must be ",
+         "count layers using stat_columns with the same statistic names, so ",
+         "that result columns align across layers. Apply stat_columns ",
+         "consistently or build separate specs.", call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 
@@ -65,6 +97,61 @@ validate_layer <- function(layer, index) {
   if (!is.null(layer$settings$format_strings)) {
     validate_format_strings(layer$settings$format_strings, index)
   }
+
+  # Validate stat_columns if present (count layers only; other layer types
+  # silently ignore the setting, consistent with layer_settings() docs)
+  if (!is.null(layer$settings$stat_columns) &&
+      inherits(layer, "tplyr_count_layer")) {
+    validate_stat_columns(layer$settings$stat_columns, index)
+
+    if (!is.null(layer$settings$format_strings)) {
+      warning(str_glue("Layer {index}: both stat_columns and format_strings are set; stat_columns takes precedence for count layers"),
+              call. = FALSE)
+    }
+  }
+
+  invisible(TRUE)
+}
+
+#' Validate stat_columns in layer settings
+#'
+#' @param stat_cols A named list expected to contain f_str objects
+#' @param layer_index Integer layer index (for error messages)
+#' @return Invisible TRUE if valid
+#' @keywords internal
+validate_stat_columns <- function(stat_cols, layer_index) {
+  if (!is.list(stat_cols) || length(stat_cols) == 0) {
+    stop(str_glue("Layer {layer_index}: stat_columns must be a non-empty named list of f_str objects"),
+         call. = FALSE)
+  }
+
+  nms <- names(stat_cols)
+  if (is.null(nms) || any(!nzchar(nms))) {
+    stop(str_glue("Layer {layer_index}: every stat_columns element must be named; names become the column sub-labels"),
+         call. = FALSE)
+  }
+  if (anyDuplicated(nms) > 0) {
+    stop(str_glue("Layer {layer_index}: stat_columns names must be unique"),
+         call. = FALSE)
+  }
+
+  walk(nms, function(nm) {
+    # ' | ' and '(N=' are load-bearing in the column label grammar parsed by
+    # build_col_labels() and cell metadata; names containing them would
+    # corrupt column identity downstream
+    if (str_detect(nm, fixed(" | "))) {
+      stop(str_glue("Layer {layer_index}: stat_columns name '{nm}' may not contain ' | ', which is reserved as the column label separator"),
+           call. = FALSE)
+    }
+    if (str_detect(nm, fixed("(N="))) {
+      stop(str_glue("Layer {layer_index}: stat_columns name '{nm}' may not contain '(N=', which is reserved for header N labels"),
+           call. = FALSE)
+    }
+    if (!inherits(stat_cols[[nm]], "tplyr_f_str")) {
+      stop(str_glue("Layer {layer_index}: stat_columns[['{nm}']] must be an f_str object"),
+           call. = FALSE)
+    }
+  })
 
   invisible(TRUE)
 }
@@ -154,10 +241,11 @@ validate_layer_stats <- function(layer, index) {
   desc_stats <- c("n", "mean", "sd", "median", "var", "min", "max",
                   "iqr", "q1", "q3", "missing", "total", "pct")
 
-  if (is.null(layer$settings$format_strings)) return(invisible(TRUE))
+  fmt_lists <- c(layer$settings$format_strings, layer$settings$stat_columns)
+  if (is.null(fmt_lists) || length(fmt_lists) == 0) return(invisible(TRUE))
 
-  walk(names(layer$settings$format_strings), function(nm) {
-    fmt <- layer$settings$format_strings[[nm]]
+  walk(names(fmt_lists), function(nm) {
+    fmt <- fmt_lists[[nm]]
 
     if (inherits(layer, "tplyr_count_layer") ||
         inherits(layer, "tplyr_shift_layer")) {

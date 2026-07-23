@@ -6,6 +6,7 @@
 \usage{
 layer_settings(
   format_strings = NULL,
+  stat_columns = NULL,
   denoms_by = NULL,
   denom_where = NULL,
   denom_ignore = NULL,
@@ -34,6 +35,14 @@ layer_settings(
 }
 \arguments{
 \item{format_strings}{Named list of f_str objects}
+
+\item{stat_columns}{Named list of f_str objects for count layers. Each
+entry produces its own result column per column group (e.g. one
+"n (\\%)" column and one "E" column per treatment arm), with the entry
+name used as the column sub-label. Column label attributes follow the
+pattern \code{"<column group> (N=n) | <stat name>"}. When set, it takes
+precedence over \code{format_strings}. Names may not contain
+\code{" | "} or \code{"(N="}, which are reserved by the label grammar.}
 
 \item{denoms_by}{Character vector of variable names for denominator grouping}
 
@@ -97,6 +106,7 @@ Not all settings apply to every layer type. The table below shows which
 settings are applicable for each of the four layer types:\tabular{lllll}{
    Setting \tab Count \tab Desc \tab Shift \tab Analyze \cr
    \code{format_strings} \tab X \tab X \tab X \tab X \cr
+   \code{stat_columns} \tab X \tab  \tab  \tab  \cr
    \code{denoms_by} \tab X \tab X \tab X \tab  \cr
    \code{denom_where} \tab X \tab X \tab X \tab  \cr
    \code{denom_ignore} \tab X \tab  \tab X \tab  \cr

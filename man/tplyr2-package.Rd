@@ -11,5 +11,10 @@ Implements a grammar of summary data for clinical reports. Clinical summary tabl
 \author{
 \strong{Maintainer}: Mike Stackhouse \email{mike.stackhouse@atorusresearch.com}
 
+Authors:
+\itemize{
+  \item Mike Stackhouse \email{mike.stackhouse@atorusresearch.com}
+}
+
 }
 \keyword{internal}
