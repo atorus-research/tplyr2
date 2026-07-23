@@ -75,9 +75,11 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/deserialize_settings.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/f_str.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/format_analyze_results.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/format_number_vec.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/format_risk_diff.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/format_with_precision.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/get_col_levels.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_count_format.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_count_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/get_data_labels.html</loc></url>
@@ -106,6 +108,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_part.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_string.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/pop_data.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/prepare_cast_column.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/reconstruct_layer_from_ard.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/rename_ord_columns.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.html</loc></url>

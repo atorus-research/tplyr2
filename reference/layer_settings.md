@@ -33,6 +33,9 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  pct_lt = NULL,
+  pct_gt = NULL,
+  zero_count_display = "full",
   name = NULL
 )
 ```
@@ -144,6 +147,26 @@ layer_settings(
 
   List with risk difference configuration
 
+- pct_lt:
+
+  Numeric less-than threshold for count-layer percents. A cell with a
+  nonzero count whose percent would display below this value renders the
+  percent as `"<"` followed by the threshold (e.g. `pct_lt = 1` shows
+  `1 ( <1%)` instead of `1 ( 0%)`). NULL disables.
+
+- pct_gt:
+
+  Numeric greater-than threshold for count-layer percents. A cell whose
+  percent is below 100 but would display above this value renders the
+  percent as `">"` followed by the threshold (e.g. `pct_gt = 99` shows
+  `>99` for `99.6%`). NULL disables.
+
+- zero_count_display:
+
+  How to display count-layer cells whose count is zero: `"full"`
+  (default) keeps the usual `"0 ( 0%)"`; `"count_only"` shows only the
+  count field (e.g. `" 0"`); `"blank"` shows an empty string.
+
 - name:
 
   Character string, layer name for identification
@@ -185,6 +208,9 @@ settings are applicable for each of the four layer types:
 | `result_order_var`         | X     |      |       |         |
 | `outer_sort_position`      | X     |      |       |         |
 | `risk_diff`                | X     |      |       |         |
+| `pct_lt`                   | X     |      |       |         |
+| `pct_gt`                   | X     |      |       |         |
+| `zero_count_display`       | X     |      |       |         |
 | `name`                     | X     | X    | X     | X       |
 
 Settings provided for an inapplicable layer type are silently ignored.

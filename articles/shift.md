@@ -152,8 +152,8 @@ kable(result[, !grepl("^ord_", names(result))])
 | rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| Creatine Kinase | WEEK 24 | N | 2 ( 20.0%) | 0 ( 0.0%) | 4 ( 40.0%) | 4 ( 40.0%) | 0 ( 0.0%) | 2 ( 20.0%) | 2 ( 20.0%) | 0 ( 0.0%) | 6 ( 60.0%) |
-| Creatine Kinase | WEEK 24 | H | 3 ( 30.0%) | 0 ( 0.0%) | 1 ( 10.0%) | 1 ( 10.0%) | 0 ( 0.0%) | 3 ( 30.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 2 ( 20.0%) |
+| Creatine Kinase | WEEK 24 | N | 0 ( 0.0%) | 4 ( 40.0%) | 2 ( 20.0%) | 0 ( 0.0%) | 2 ( 20.0%) | 4 ( 40.0%) | 0 ( 0.0%) | 6 ( 60.0%) | 2 ( 20.0%) |
+| Creatine Kinase | WEEK 24 | H | 0 ( 0.0%) | 1 ( 10.0%) | 3 ( 30.0%) | 0 ( 0.0%) | 3 ( 30.0%) | 1 ( 10.0%) | 0 ( 0.0%) | 2 ( 20.0%) | 0 ( 0.0%) |
 
 Now the table includes all three levels – L, N, and H – in both the rows
 and the column groups, regardless of whether any subjects actually fell
@@ -200,8 +200,8 @@ kable(result_counts[, !grepl("^ord_", names(result_counts))])
 | rowlabel1       | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
 |:----------------|:----------|:----------|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|:-----|
 | Creatine Kinase | WEEK 24   | L         | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    | 0    |
-| Creatine Kinase | WEEK 24   | N         | 2    | 0    | 4    | 4    | 0    | 2    | 2    | 0    | 6    |
-| Creatine Kinase | WEEK 24   | H         | 3    | 0    | 1    | 1    | 0    | 3    | 0    | 0    | 2    |
+| Creatine Kinase | WEEK 24   | N         | 0    | 4    | 2    | 0    | 2    | 4    | 0    | 6    | 2    |
+| Creatine Kinase | WEEK 24   | H         | 0    | 1    | 3    | 0    | 3    | 1    | 0    | 2    | 0    |
 
 ## One Thing to Note
 

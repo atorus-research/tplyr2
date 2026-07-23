@@ -486,9 +486,9 @@ kable(result[, !grepl("^ord", names(result))])
 
 | rowlabel1 | res1 | res2 | res3 | res4 | res5 | res6 |
 |:----------|:-----|:-----|:-----|:-----|:-----|:-----|
-| LOW       | 1    | 0    | 1    | 1    | 0    | 2    |
-| NORMAL    | 1    | 1    | 8    | 2    | 2    | 4    |
-| HIGH      | 2    | 0    | 1    | 2    | 1    | 1    |
+| LOW       | 0    | 1    | 1    | 0    | 2    | 1    |
+| NORMAL    | 1    | 8    | 1    | 2    | 4    | 2    |
+| HIGH      | 0    | 1    | 2    | 1    | 1    | 2    |
 
 In the output, `rowlabel1` contains the baseline (row) variable values,
 and the result columns represent each combination of treatment arm and

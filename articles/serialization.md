@@ -232,7 +232,8 @@ cat(json_content, sep = "\n")
 #>         "total_row_count_missings": true,
 #>         "missing_subjects": false,
 #>         "missing_subjects_label": "Missing",
-#>         "stats_as_columns": false
+#>         "stats_as_columns": false,
+#>         "zero_count_display": "full"
 #>       }
 #>     },
 #>     {
@@ -268,7 +269,8 @@ cat(json_content, sep = "\n")
 #>         "total_row_count_missings": true,
 #>         "missing_subjects": false,
 #>         "missing_subjects_label": "Missing",
-#>         "stats_as_columns": false
+#>         "stats_as_columns": false,
+#>         "zero_count_display": "full"
 #>       }
 #>     }
 #>   ]
