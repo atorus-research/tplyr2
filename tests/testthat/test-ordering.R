@@ -164,3 +164,39 @@ test_that("multi-layer output has correct ord_layer_index", {
   expect_true(1 %in% result$ord_layer_index)
   expect_true(2 %in% result$ord_layer_index)
 })
+
+# Issue #24: count layers order by-group rows by the by variable's factor levels
+test_that("count orders by-group rows by factor levels", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 9),
+    VISIT = factor(rep(c("Week 2", "Week 12", "Baseline"), 6),
+                   levels = c("Baseline", "Week 2", "Week 12")),
+    RESP = rep(c("Y", "N", "Y"), 6)
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_count("RESP", by = "VISIT"))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(unique(b$rowlabel1), c("Baseline", "Week 2", "Week 12"))
+})
+
+test_that("count by-group order respects a VARN companion", {
+  d <- data.frame(
+    TRTP = "A",
+    AVISIT = rep(c("Week 2", "Week 12", "Baseline"), 4),
+    AVISITN = rep(c(2, 12, 0), 4),
+    RESP = rep(c("Y", "N"), 6)
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_count("RESP", by = "AVISIT"))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(unique(b$rowlabel1), c("Baseline", "Week 2", "Week 12"))
+})
+
+test_that("count by-group order falls back to alphabetical for non-factor", {
+  d <- data.frame(TRTP = "A", G = rep(c("zeta", "alpha", "mid"), 4),
+                  RESP = rep(c("Y", "N"), 6))
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_count("RESP", by = "G"))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(unique(b$rowlabel1), c("alpha", "mid", "zeta"))
+})

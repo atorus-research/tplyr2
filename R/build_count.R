@@ -189,9 +189,18 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   compute_count_sort_keys(counts, dt, cols, by_data_vars, tv, settings)
 
   # --- dcast to wide format ---
-  wide <- cast_to_wide(counts, row_labels, cols, layer_index, col_n = col_n,
-                       stat_labels = names(fmts),
+  # Preserve by-group factor ordering through the dcast (issue #24). dcast sorts
+  # its row-label LHS alphabetically, which would order by groups by their
+  # string value; compute_count_sort_keys() already computed .ord_by_* keys
+  # (respecting factor levels > VARN > alphabetical), so prepend them to the LHS
+  # (mirrors the shift layer) and drop them afterward.
+  by_order_cols <- str_subset(names(counts), "^\\.ord_by_\\d+$")
+  wide <- cast_to_wide(counts, c(by_order_cols, row_labels), cols, layer_index,
+                       col_n = col_n, stat_labels = names(fmts),
                        col_levels = get_col_levels(dt, cols))
+  for (oc in by_order_cols) {
+    if (oc %in% names(wide)) wide[, (oc) := NULL]
+  }
 
   # --- Override ord1 with computed sort keys ---
   method <- settings$order_count_method

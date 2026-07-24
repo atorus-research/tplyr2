@@ -41,6 +41,11 @@
   and desc layers (or any renderer assuming `res1` is the first `cols` level)
   could get inconsistent column order. Shift layers likewise order their
   column dimension by the shift variable's factor levels.
+- `group_count()` now orders its `by`-group rows by the `by` variable's factor
+  levels (then a VARN companion, then alphabetically) instead of always
+  alphabetically (#24). Previously a factor `by` such as visits came out
+  mis-ordered (e.g. `Week 12` before `Week 2`), matching `group_shift()` and
+  `group_desc()`.
 - `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no longer
   drops the by-groups and returns only the last group's statistics (#20). It
   now keeps the by-groups as rows and produces one result column per
