@@ -149,6 +149,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/tplyr_write_spec.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/translate_group_value.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/transpose_stats_to_columns.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/transpose_stats_with_by.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_build_data.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_format_strings.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/validate_layer.html</loc></url>

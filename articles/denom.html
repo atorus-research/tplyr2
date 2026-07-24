@@ -277,6 +277,19 @@ count:</p>
 But if you want each sex subgroup to sum to 100% independently, set
 <code>denoms_by</code> to include both the column variable and the
 <code>by</code> variable:</p>
+<blockquote>
+<p><strong><code>denoms_by</code> replaces, it does not
+augment.</strong> <code>denoms_by</code> <em>replaces</em> the default
+denominator grouping (the <code>cols</code> variable(s)) rather than
+refining within it. To get per-column denominators that also break down
+by a <code>by</code> variable you must list the <code>cols</code>
+variable(s) explicitly —
+e.g. <code>denoms_by = c("TRT01P", "SEX")</code>, <strong>not</strong>
+<code>denoms_by = "SEX"</code>. Passing only the <code>by</code>
+variable computes each percentage out of the entire
+<code>by</code>-group population across <em>all</em> columns, so the
+percentages won’t sum sensibly per column.</p>
+</blockquote>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>

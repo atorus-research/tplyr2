@@ -4,6 +4,12 @@
 
 ### New features
 
+- New `shift_denom` setting for shift layers (#18).
+  `shift_denom = "column"` computes percentages column-wise — out of
+  each shift column group (the “from”/baseline group) within the
+  treatment arm — the standard “% within the from group” shift display,
+  and the header `(N=)` labels then reflect those per-column-group
+  denominators. The default `"total"` keeps the arm-total denominator.
 - New `pct_lt` and `pct_gt` count-layer settings for the regulatory
   “less-than / greater-than” percent conventions (#14). A cell with a
   nonzero count whose percent would display below `pct_lt` renders as
@@ -44,3 +50,17 @@
   renderer assuming `res1` is the first `cols` level) could get
   inconsistent column order. Shift layers likewise order their column
   dimension by the shift variable’s factor levels.
+- `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no
+  longer drops the by-groups and returns only the last group’s
+  statistics (#20). It now keeps the by-groups as rows and produces one
+  result column per treatment x statistic (labelled `"<arm> | <stat>"`).
+  Behavior without a `by` variable (treatment groups as rows, statistics
+  as columns) is unchanged.
+
+### Documentation
+
+- Clarified in
+  [`?layer_settings`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  and the denominators vignette that `denoms_by` **replaces** (does not
+  augment) the default `cols`-based denominator grouping, so you must
+  include the `cols` variable(s) to get per-column denominators (#19).

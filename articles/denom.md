@@ -94,6 +94,15 @@ Here the percentages use the full treatment arm as the denominator. But
 if you want each sex subgroup to sum to 100% independently, set
 `denoms_by` to include both the column variable and the `by` variable:
 
+> **`denoms_by` replaces, it does not augment.** `denoms_by` *replaces*
+> the default denominator grouping (the `cols` variable(s)) rather than
+> refining within it. To get per-column denominators that also break
+> down by a `by` variable you must list the `cols` variable(s)
+> explicitly — e.g. `denoms_by = c("TRT01P", "SEX")`, **not**
+> `denoms_by = "SEX"`. Passing only the `by` variable computes each
+> percentage out of the entire `by`-group population across *all*
+> columns, so the percentages won’t sum sensibly per column.
+
 ``` r
 
 spec <- tplyr_spec(

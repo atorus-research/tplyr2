@@ -80,6 +80,7 @@ and are ignored during build. Type-specific validation happens at build time.</p
 <span>  format_strings <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stat_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  denoms_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  shift_denom <span class="op">=</span> <span class="st">"total"</span>,</span>
 <span>  denom_where <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  denom_ignore <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  distinct_by <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -128,7 +129,24 @@ precedence over <code>format_strings</code>. Names may not contain
 
 
 <dt id="arg-denoms-by">denoms_by<a class="anchor" aria-label="anchor" href="#arg-denoms-by"></a></dt>
-<dd><p>Character vector of variable names for denominator grouping</p></dd>
+<dd><p>Character vector of variable names for denominator grouping.
+This <strong>replaces</strong> (does not augment) the default denominator grouping,
+which is the column (<code>cols</code>) variable(s). To get per-column
+denominators that also break down by a <code>by</code> variable, you must list
+the <code>cols</code> variable(s) explicitly alongside the <code>by</code>
+variable(s) — e.g. <code>denoms_by = c("TRT", "SEX")</code>, not
+<code>denoms_by = "SEX"</code>. Passing only the <code>by</code> variable collapses
+the denominator across the columns.</p></dd>
+
+
+<dt id="arg-shift-denom">shift_denom<a class="anchor" aria-label="anchor" href="#arg-shift-denom"></a></dt>
+<dd><p>Denominator basis for shift layers. <code>"total"</code>
+(default) computes percentages out of the column (<code>cols</code>) total —
+i.e. the treatment arm. <code>"column"</code> computes them column-wise, out of
+each shift <em>column</em> group (the "from"/baseline group) within the arm,
+which is the standard "% within the from group" shift display; the header
+<code>(N=)</code> labels then reflect the per-column-group denominators. Ignored
+when <code>denoms_by</code> is set (which specifies the grouping explicitly).</p></dd>
 
 
 <dt id="arg-denom-where">denom_where<a class="anchor" aria-label="anchor" href="#arg-denom-where"></a></dt>
@@ -254,7 +272,7 @@ zero: <code>"full"</code> (default) keeps the usual <code>"0 (  0%)"</code>;
 
 
 <p>Not all settings apply to every layer type. The table below shows which
-settings are applicable for each of the four layer types:</p><table class="table table"><tr><td>Setting</td><td>Count</td><td>Desc</td><td>Shift</td><td>Analyze</td></tr><tr><td><code>format_strings</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr><tr><td><code>stat_columns</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>denoms_by</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>denom_where</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>denom_ignore</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>distinct_by</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>total_row</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_count_missings</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_count</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>keep_levels</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>limit_data_by</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>custom_summaries</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>stats_as_columns</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_by</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_on</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_data</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_cap</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>order_count_method</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>ordering_cols</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>result_order_var</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>outer_sort_position</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>risk_diff</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>pct_lt</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>pct_gt</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>zero_count_display</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>name</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr></table><p>Settings provided for an inapplicable layer type are silently ignored.</p>
+settings are applicable for each of the four layer types:</p><table class="table table"><tr><td>Setting</td><td>Count</td><td>Desc</td><td>Shift</td><td>Analyze</td></tr><tr><td><code>format_strings</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr><tr><td><code>stat_columns</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>denoms_by</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>shift_denom</code></td><td></td><td></td><td>X</td><td></td></tr><tr><td><code>denom_where</code></td><td>X</td><td>X</td><td>X</td><td></td></tr><tr><td><code>denom_ignore</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>distinct_by</code></td><td>X</td><td></td><td>X</td><td></td></tr><tr><td><code>total_row</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>total_row_count_missings</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_count</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>missing_subjects_label</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>keep_levels</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>limit_data_by</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>custom_summaries</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>stats_as_columns</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_by</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_on</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_data</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>precision_cap</code></td><td></td><td>X</td><td></td><td></td></tr><tr><td><code>order_count_method</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>ordering_cols</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>result_order_var</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>outer_sort_position</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>risk_diff</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>pct_lt</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>pct_gt</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>zero_count_display</code></td><td>X</td><td></td><td></td><td></td></tr><tr><td><code>name</code></td><td>X</td><td>X</td><td>X</td><td>X</td></tr></table><p>Settings provided for an inapplicable layer type are silently ignored.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

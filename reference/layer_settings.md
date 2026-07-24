@@ -11,6 +11,7 @@ layer_settings(
   format_strings = NULL,
   stat_columns = NULL,
   denoms_by = NULL,
+  shift_denom = "total",
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -57,7 +58,23 @@ layer_settings(
 
 - denoms_by:
 
-  Character vector of variable names for denominator grouping
+  Character vector of variable names for denominator grouping. This
+  **replaces** (does not augment) the default denominator grouping,
+  which is the column (`cols`) variable(s). To get per-column
+  denominators that also break down by a `by` variable, you must list
+  the `cols` variable(s) explicitly alongside the `by` variable(s) —
+  e.g. `denoms_by = c("TRT", "SEX")`, not `denoms_by = "SEX"`. Passing
+  only the `by` variable collapses the denominator across the columns.
+
+- shift_denom:
+
+  Denominator basis for shift layers. `"total"` (default) computes
+  percentages out of the column (`cols`) total — i.e. the treatment arm.
+  `"column"` computes them column-wise, out of each shift *column* group
+  (the "from"/baseline group) within the arm, which is the standard "%
+  within the from group" shift display; the header `(N=)` labels then
+  reflect the per-column-group denominators. Ignored when `denoms_by` is
+  set (which specifies the grouping explicitly).
 
 - denom_where:
 
@@ -186,6 +203,7 @@ settings are applicable for each of the four layer types:
 | `format_strings`           | X     | X    | X     | X       |
 | `stat_columns`             | X     |      |       |         |
 | `denoms_by`                | X     | X    | X     |         |
+| `shift_denom`              |       |      | X     |         |
 | `denom_where`              | X     | X    | X     |         |
 | `denom_ignore`             | X     |      | X     |         |
 | `distinct_by`              | X     |      | X     |         |

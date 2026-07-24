@@ -227,6 +227,7 @@ cat(json_content, sep = "\n")
 #>       "where": null,
 #>       "layer_type": "count",
 #>       "settings": {
+#>         "shift_denom": "total",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,
@@ -264,6 +265,7 @@ cat(json_content, sep = "\n")
 #>             "_class": "tplyr_f_str"
 #>           }
 #>         },
+#>         "shift_denom": "total",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,
