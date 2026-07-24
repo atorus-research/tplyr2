@@ -674,3 +674,49 @@ test_that("stats_as_columns=TRUE without by is unchanged (arm rows, stat cols)",
   expect_true(all(c("Mean", "n") %in% names(b)))
   expect_equal(nrow(b), 2)
 })
+
+# Issue #20 (follow-up): by-group rows must follow factor levels, not alphabetical
+test_that("desc orders by-group rows by factor levels", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 9),
+    VISIT = factor(rep(c("Week 2", "Week 12", "Baseline"), 6),
+                   levels = c("Baseline", "Week 2", "Week 12")),
+    AVAL = 1:18
+  )
+  # Regular (stats-as-rows) desc
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_desc("AVAL", by = "VISIT", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")))))), d)
+  b <- b[order(b$ord_layer_1, b$ord_layer_2), ]
+  expect_equal(b$rowlabel1, c("Baseline", "Week 2", "Week 12"))
+})
+
+test_that("stats_as_columns orders by-group rows by factor levels", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 9),
+    VISIT = factor(rep(c("Week 2", "Week 12", "Baseline"), 6),
+                   levels = c("Baseline", "Week 2", "Week 12")),
+    AVAL = 1:18
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_desc("AVAL", by = "VISIT", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), n = f_str("xx", "n")),
+      stats_as_columns = TRUE)))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(b$rowlabel1, c("Baseline", "Week 2", "Week 12"))
+})
+
+test_that("desc by-group order respects a VARN companion column", {
+  d <- data.frame(
+    TRTP = "A",
+    AVISIT = rep(c("Week 2", "Week 12", "Baseline"), 4),
+    AVISITN = rep(c(2, 12, 0), 4),
+    AVAL = 1:12
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_desc("AVAL", by = "AVISIT", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")))))), d)
+  b <- b[order(b$ord_layer_1, b$ord_layer_2), ]
+  # AVISITN orders Baseline(0) < Week 2(2) < Week 12(12)
+  expect_equal(b$rowlabel1, c("Baseline", "Week 2", "Week 12"))
+})
