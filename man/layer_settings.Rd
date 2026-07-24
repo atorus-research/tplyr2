@@ -8,6 +8,7 @@ layer_settings(
   format_strings = NULL,
   stat_columns = NULL,
   denoms_by = NULL,
+  shift_denom = "total",
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -47,7 +48,22 @@ pattern \code{"<column group> (N=n) | <stat name>"}. When set, it takes
 precedence over \code{format_strings}. Names may not contain
 \code{" | "} or \code{"(N="}, which are reserved by the label grammar.}
 
-\item{denoms_by}{Character vector of variable names for denominator grouping}
+\item{denoms_by}{Character vector of variable names for denominator grouping.
+This \strong{replaces} (does not augment) the default denominator grouping,
+which is the column (\code{cols}) variable(s). To get per-column
+denominators that also break down by a \code{by} variable, you must list
+the \code{cols} variable(s) explicitly alongside the \code{by}
+variable(s) — e.g. \code{denoms_by = c("TRT", "SEX")}, not
+\code{denoms_by = "SEX"}. Passing only the \code{by} variable collapses
+the denominator across the columns.}
+
+\item{shift_denom}{Denominator basis for shift layers. \code{"total"}
+(default) computes percentages out of the column (\code{cols}) total —
+i.e. the treatment arm. \code{"column"} computes them column-wise, out of
+each shift \emph{column} group (the "from"/baseline group) within the arm,
+which is the standard "\% within the from group" shift display; the header
+\code{(N=)} labels then reflect the per-column-group denominators. Ignored
+when \code{denoms_by} is set (which specifies the grouping explicitly).}
 
 \item{denom_where}{Expression for separate denominator filter}
 
@@ -126,6 +142,7 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{format_strings} \tab X \tab X \tab X \tab X \cr
    \code{stat_columns} \tab X \tab  \tab  \tab  \cr
    \code{denoms_by} \tab X \tab X \tab X \tab  \cr
+   \code{shift_denom} \tab  \tab  \tab X \tab  \cr
    \code{denom_where} \tab X \tab X \tab X \tab  \cr
    \code{denom_ignore} \tab X \tab  \tab X \tab  \cr
    \code{distinct_by} \tab X \tab  \tab X \tab  \cr

@@ -13,6 +13,7 @@
 #' | `format_strings` | X | X | X | X |
 #' | `stat_columns` | X | | | |
 #' | `denoms_by` | X | X | X | |
+#' | `shift_denom` | | | X | |
 #' | `denom_where` | X | X | X | |
 #' | `denom_ignore` | X | | X | |
 #' | `distinct_by` | X | | X | |
@@ -50,7 +51,21 @@
 #'   pattern \code{"<column group> (N=n) | <stat name>"}. When set, it takes
 #'   precedence over \code{format_strings}. Names may not contain
 #'   \code{" | "} or \code{"(N="}, which are reserved by the label grammar.
-#' @param denoms_by Character vector of variable names for denominator grouping
+#' @param denoms_by Character vector of variable names for denominator grouping.
+#'   This **replaces** (does not augment) the default denominator grouping,
+#'   which is the column (\code{cols}) variable(s). To get per-column
+#'   denominators that also break down by a \code{by} variable, you must list
+#'   the \code{cols} variable(s) explicitly alongside the \code{by}
+#'   variable(s) — e.g. \code{denoms_by = c("TRT", "SEX")}, not
+#'   \code{denoms_by = "SEX"}. Passing only the \code{by} variable collapses
+#'   the denominator across the columns.
+#' @param shift_denom Denominator basis for shift layers. \code{"total"}
+#'   (default) computes percentages out of the column (\code{cols}) total —
+#'   i.e. the treatment arm. \code{"column"} computes them column-wise, out of
+#'   each shift *column* group (the "from"/baseline group) within the arm,
+#'   which is the standard "% within the from group" shift display; the header
+#'   \code{(N=)} labels then reflect the per-column-group denominators. Ignored
+#'   when \code{denoms_by} is set (which specifies the grouping explicitly).
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting
@@ -93,6 +108,7 @@ layer_settings <- function(
     format_strings = NULL,
     stat_columns = NULL,
     denoms_by = NULL,
+    shift_denom = "total",
     denom_where = NULL,
     denom_ignore = NULL,
     distinct_by = NULL,
@@ -122,11 +138,13 @@ layer_settings <- function(
 ) {
   zero_count_display <- match.arg(zero_count_display,
                                   c("full", "count_only", "blank"))
+  shift_denom <- match.arg(shift_denom, c("total", "column"))
   structure(
     list(
       format_strings = format_strings,
       stat_columns = stat_columns,
       denoms_by = denoms_by,
+      shift_denom = shift_denom,
       denom_where = denom_where,
       denom_ignore = denom_ignore,
       distinct_by = distinct_by,

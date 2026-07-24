@@ -42,6 +42,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   # Extract settings
   distinct_by  <- settings$distinct_by
   denoms_by    <- settings$denoms_by
+  shift_denom  <- settings$shift_denom %||% "total"
   denom_where  <- settings$denom_where
   denom_ignore <- settings$denom_ignore
 
@@ -67,14 +68,33 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   }
 
   # --- Compute denominators ---
-  # Default denom_group for shift: use spec cols only (not the shift col_var)
-  denom_group <- if (!is.null(denoms_by)) denoms_by else {
-    if (length(cols) > 0) cols else character(0)
+  # Default denom_group: spec cols only (the treatment arm). shift_denom =
+  # "column" makes the denominator column-wise: per shift column-variable
+  # group (the "from"/baseline group) within each arm. An explicit denoms_by
+  # overrides both.
+  denom_group <- if (!is.null(denoms_by)) {
+    denoms_by
+  } else if (identical(shift_denom, "column")) {
+    c(cols, col_var)
+  } else if (length(cols) > 0) {
+    cols
+  } else {
+    character(0)
   }
+
+  # When the denominator is broken down by the shift column variable, the
+  # header (N=) labels should reflect those per-column-group denominators
+  # rather than the arm totals (issue #18).
+  header_col_n <- col_n
 
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
     counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
+    if (col_var %in% denom_group && !is.null(col_n)) {
+      hn_vars <- intersect(all_cols, denom_group)
+      header_col_n <- unique(denoms[, c(hn_vars, "total"), with = FALSE])
+      data.table::setnames(header_col_n, "total", ".n")
+    }
   } else {
     counts[, total := nrow(denom_dt)]
   }
@@ -126,7 +146,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   order_cols <- str_subset(names(counts), "^\\.row_order$|^\\.by_order_")
   row_label_cols_with_order <- c(order_cols, row_label_cols)
   wide <- cast_to_wide(counts, row_label_cols_with_order, all_cols, layer_index,
-                       col_n = col_n, col_levels = get_col_levels(dt, all_cols))
+                       col_n = header_col_n, col_levels = get_col_levels(dt, all_cols))
 
   # Remove order columns
   for (col in order_cols) {

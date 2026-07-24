@@ -634,3 +634,43 @@ test_that("stats_as_columns FALSE produces normal output", {
   # Normal structure: res columns, not stat-named columns
   expect_true(any(grepl("^res\\d+$", names(result))))
 })
+
+# Issue #20: stats_as_columns with a `by` data variable
+test_that("stats_as_columns=TRUE preserves by-groups as rows", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 6),
+    GRP  = rep(c("g1", "g2", "g3"), 4),
+    AVAL = c(1:6, seq(10, 60, 10))
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_desc("AVAL", by = "GRP", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), n = f_str("xx", "n")),
+      stats_as_columns = TRUE)))), d)
+
+  # by-groups g1/g2/g3 preserved as rows (not collapsed to the treatment)
+  expect_equal(sort(unique(b$rowlabel1)), c("g1", "g2", "g3"))
+  expect_equal(nrow(b), 3)
+
+  # One res column per treatment x stat, labelled "<arm> | <stat>"
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  expect_equal(length(res_cols), 4)
+  expect_true(any(grepl("^A .*\\| Mean$", labs)))
+  expect_true(any(grepl("^B .*\\| n$", labs)))
+
+  # Values are correct per by-group (not just the last group)
+  b <- b[order(b$ord_layer_1), ]
+  a_mean <- res_cols[grepl("^A .*\\| Mean$", labs)]
+  expect_equal(trimws(b[[a_mean]]), c("2.5", "3.5", "4.5"))  # means of g1,g2,g3 for arm A
+})
+
+test_that("stats_as_columns=TRUE without by is unchanged (arm rows, stat cols)", {
+  d <- data.frame(TRTP = rep(c("A", "B"), each = 3), AVAL = c(1:3, 10:12))
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_desc("AVAL", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), n = f_str("xx", "n")),
+      stats_as_columns = TRUE)))), d)
+  # Treatment groups are the rows; stat names are the columns
+  expect_true(all(c("Mean", "n") %in% names(b)))
+  expect_equal(nrow(b), 2)
+})
