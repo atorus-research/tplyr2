@@ -300,3 +300,43 @@ test_that("shift res columns follow the column variable's factor levels", {
   expect_true(grepl("N", labs[2]))
   expect_true(grepl("L", labs[3]))
 })
+
+# Issue #18: column-wise (per-shift-column) denominator
+test_that("shift_denom='column' gives per-from-group percentages and header N", {
+  d <- data.frame(
+    TRT  = "A",
+    BASE = c(rep("N", 8), rep("H", 2)),
+    POST = c(rep("N", 7), "H", "H", "H")
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "POST", column = "BASE"), settings = layer_settings(
+      shift_denom = "column",
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))), d)
+
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  # Header N reflects per-baseline-group sizes: H -> 2, N -> 8
+  expect_true(any(grepl("\\(N=2\\)", labs)))
+  expect_true(any(grepl("\\(N=8\\)", labs)))
+
+  # H-baseline column: 2/2 = 100%; N-baseline column: 7/8 = 88%
+  h_col <- res_cols[grepl("H", labs)]
+  n_col <- res_cols[grepl("\\| N", labs)]
+  expect_equal(trimws(b[[h_col]][b$rowlabel1 == "H"]), "2 (100%)")
+  expect_equal(trimws(b[[n_col]][b$rowlabel1 == "N"]), "7 ( 88%)")
+})
+
+test_that("shift default denom (total) is unchanged", {
+  d <- data.frame(
+    TRT  = "A",
+    BASE = c(rep("N", 8), rep("H", 2)),
+    POST = c(rep("N", 7), "H", "H", "H")
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "POST", column = "BASE"), settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))), d)
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  # Arm total denominator = 10 for every column
+  expect_true(all(grepl("\\(N=10\\)", labs)))
+})

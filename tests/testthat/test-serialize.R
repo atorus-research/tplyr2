@@ -442,3 +442,14 @@ test_that("JSON roundtrip preserves pct_lt/pct_gt/zero_count_display", {
   expect_equal(s$pct_gt, 99)
   expect_equal(s$zero_count_display, "count_only")
 })
+
+# Issue #18: shift_denom survives serialization
+test_that("JSON roundtrip preserves shift_denom", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "BR", column = "AR"),
+                settings = layer_settings(shift_denom = "column"))))
+  path <- file.path(scratch_dir, "shift_denom.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+  expect_equal(spec2$layers[[1]]$settings$shift_denom, "column")
+})

@@ -13,7 +13,11 @@ transpose_stats_to_columns(wide)
 Transposed data.table
 }
 \description{
-Transposes the standard wide output so that treatment groups become rows
-and stat names become columns.
+Transposes the standard wide output so that statistics become columns.
+Without a \code{by} variable, treatment groups become the rows and stat names
+become the columns. With a \code{by} variable, the by groups stay as rows and
+each column is a treatment x statistic combination (issue #20) — e.g. one
+"Arm A | Mean" and "Arm A | n" column per treatment — so the by dimension
+is preserved instead of being collapsed.
 }
 \keyword{internal}

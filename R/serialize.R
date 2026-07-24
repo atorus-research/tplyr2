@@ -142,7 +142,7 @@ serialize_settings <- function(settings) {
   }
 
   # Simple pass-through fields
-  simple_fields <- c("denoms_by", "denom_ignore", "distinct_by",
+  simple_fields <- c("denoms_by", "shift_denom", "denom_ignore", "distinct_by",
                       "total_row", "total_row_label",
                       "total_row_count_missings", "missing_subjects",
                       "missing_subjects_label", "keep_levels",

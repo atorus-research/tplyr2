@@ -303,8 +303,12 @@ build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
 
 #' Transpose stats-as-columns
 #'
-#' Transposes the standard wide output so that treatment groups become rows
-#' and stat names become columns.
+#' Transposes the standard wide output so that statistics become columns.
+#' Without a `by` variable, treatment groups become the rows and stat names
+#' become the columns. With a `by` variable, the by groups stay as rows and
+#' each column is a treatment x statistic combination (issue #20) — e.g. one
+#' "Arm A | Mean" and "Arm A | n" column per treatment — so the by dimension
+#' is preserved instead of being collapsed.
 #'
 #' @param wide data.table from standard desc processing
 #' @return Transposed data.table
@@ -313,21 +317,32 @@ transpose_stats_to_columns <- function(wide) {
   res_cols <- str_subset(names(wide), "^res\\d+$")
   if (length(res_cols) == 0) return(wide)
 
-  # Get treatment group labels
+  # Treatment (cols) group labels, one per res column
   trt_labels <- map_chr(res_cols, function(col) {
     lbl <- attr(wide[[col]], "label")
     if (is.null(lbl)) col else lbl
   })
 
-  # Identify rowlabel columns and find the stat label column (the last one)
+  # Identify rowlabel columns; the last one holds the stat names
   label_cols <- str_subset(names(wide), "^rowlabel\\d+$")
   if (length(label_cols) == 0) return(wide)
 
   stat_col <- label_cols[length(label_cols)]
+  by_cols <- setdiff(label_cols, stat_col)
+
+  # A real `by` dimension exists when the non-stat row labels take more than
+  # one distinct value (a constant `by` label does not count).
+  has_by <- length(by_cols) > 0 &&
+    nrow(unique(wide[, by_cols, with = FALSE])) > 1
+
+  if (has_by) {
+    return(transpose_stats_with_by(wide, res_cols, trt_labels, by_cols, stat_col))
+  }
+
+  # --- No by variable: treatment groups become rows, stats become columns ---
   stat_names <- wide[[stat_col]]
   non_stat_labels <- setdiff(label_cols, stat_col)
 
-  # Build transposed result: one row per treatment group
   result_rows <- vector("list", length(res_cols))
   for (i in seq_along(res_cols)) {
     row_dt <- data.table::data.table(rowlabel1 = trt_labels[i])
@@ -356,6 +371,55 @@ transpose_stats_to_columns <- function(wide) {
   }
 
   transposed
+}
+
+#' Transpose desc stats to columns while keeping `by` groups as rows
+#'
+#' Produces one row per by-group combination and one result column per
+#' treatment x statistic, ordered treatment-major then statistic. Result
+#' columns carry a `"<treatment label> | <stat name>"` label attribute
+#' following the same grammar as count-layer `stat_columns`.
+#'
+#' @keywords internal
+transpose_stats_with_by <- function(wide, res_cols, trt_labels, by_cols, stat_col) {
+  # Statistics in layer order (ord1 encodes the format-string order)
+  if ("ord1" %in% names(wide)) {
+    stat_ord <- unique(wide[, c(stat_col, "ord1"), with = FALSE])
+    data.table::setorderv(stat_ord, "ord1")
+    stat_names <- unique(stat_ord[[stat_col]])
+  } else {
+    stat_names <- unique(wide[[stat_col]])
+  }
+
+  # One row per by-group combination, in first-appearance order
+  out <- unique(wide[, by_cols, with = FALSE])
+  out[, .row_ord := seq_len(.N)]
+
+  col_labels <- character(0)
+  k <- 1L
+  for (i in seq_along(res_cols)) {          # treatment-major
+    for (s in stat_names) {                  # statistic-minor
+      sub <- wide[get(stat_col) == s, c(by_cols, res_cols[i]), with = FALSE]
+      new_col <- str_c("res", k)
+      data.table::setnames(sub, res_cols[i], new_col)
+      out <- merge(out, sub, by = by_cols, all.x = TRUE, sort = FALSE)
+      col_labels <- c(col_labels, str_c(trt_labels[i], " | ", s))
+      k <- k + 1L
+    }
+  }
+
+  data.table::setorderv(out, ".row_ord")
+  out[, ord1 := .row_ord]
+  out[, .row_ord := NULL]
+  out[, ordindx := wide$ordindx[1]]
+
+  # Attach column label attributes
+  new_res <- str_c("res", seq_len(k - 1L))
+  for (j in seq_along(new_res)) {
+    data.table::setattr(out[[new_res[j]]], "label", col_labels[j])
+  }
+
+  out
 }
 
 #' Format values with auto-precision
