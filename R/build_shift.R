@@ -66,12 +66,13 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   # --- Compute denominators ---
   # Default denom_group: spec cols only (the treatment arm). shift_denom =
   # "column" makes the denominator column-wise: per shift column-variable
-  # group (the "from"/baseline group) within each arm. An explicit denoms_by
-  # overrides both.
+  # group (the "from"/baseline group) within each arm, scoped within each `by`
+  # group so a shift-by-visit table gets a per-visit denominator (issue #28).
+  # An explicit denoms_by overrides both.
   denom_group <- if (!is.null(denoms_by)) {
     denoms_by
   } else if (identical(shift_denom, "column")) {
-    c(cols, col_var)
+    c(cols, by_data_vars, col_var)
   } else if (length(cols) > 0) {
     cols
   } else {
@@ -79,14 +80,16 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   }
 
   # When the denominator is broken down by the shift column variable, the
-  # header (N=) labels should reflect those per-column-group denominators
-  # rather than the arm totals (issue #18).
+  # header (N=) labels reflect those per-column-group denominators rather than
+  # the arm totals (issue #18). This is only well-defined when there is no `by`
+  # variable: with a `by` the column-group denominator varies per by-group, so
+  # no single header N can represent it and we keep the arm-level header.
   header_col_n <- col_n
 
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
     counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
-    if (col_var %in% denom_group && !is.null(col_n)) {
+    if (col_var %in% denom_group && length(by_data_vars) == 0 && !is.null(col_n)) {
       hn_vars <- intersect(all_cols, denom_group)
       header_col_n <- unique(denoms[, c(hn_vars, "total"), with = FALSE])
       data.table::setnames(header_col_n, "total", ".n")
