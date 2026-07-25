@@ -1,4 +1,4 @@
-# tplyr2 0.1.0.9000
+# tplyr2 0.2.0
 
 ## New features
 

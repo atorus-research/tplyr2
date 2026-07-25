@@ -1,6 +1,6 @@
 Package: tplyr2
 Title: A Grammar of Clinical Summary Tables
-Version: 0.1.0.9000
+Version: 0.2.0
 Authors@R:
     person("Mike", "Stackhouse", , "mike.stackhouse@atorusresearch.com", role = c("aut", "cre"))
 Description: Implements a grammar of summary data for clinical reports. Clinical
