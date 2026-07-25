@@ -401,3 +401,47 @@ test_that("shift_denom='column' with a by variable uses per-by-group denominator
   # Header falls back to the arm N (a single header can't show per-by-group N)
   expect_false(any(grepl("\\(N=6\\)", labs)))
 })
+
+# Issue #31: shift layers honor zero_count_display (like group_count)
+test_that("group_shift honors zero_count_display", {
+  d <- data.frame(TRT = "A", BASE = c("N", "N", "H"), POST = c("N", "H", "H"))
+
+  mk <- function(mode) {
+    spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_shift(c(row = "POST", column = "BASE"), settings = layer_settings(
+        zero_count_display = mode,
+        format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct"))))))
+    tplyr_build(spec, d)
+  }
+
+  res_of <- function(b, from, to) {
+    rc <- grep("^res\\d+$", names(b), value = TRUE)
+    labs <- vapply(rc, function(c) attr(b[[c]], "label"), character(1))
+    col <- rc[grepl(paste0("\\| ", from, " "), labs)]  # label: "A | <from> (N=n)"
+    trimws(b[[col]][b$rowlabel1 == to])
+  }
+
+  full <- mk("full")
+  count_only <- mk("count_only")
+  blank <- mk("blank")
+
+  # Cell from=H (baseline) to=N (post) is zero (the one High-baseline subject
+  # stayed High), with the arm total (3) as the default denominator.
+  expect_equal(res_of(full, "H", "N"), "0 (  0%)")
+  expect_equal(res_of(count_only, "H", "N"), "0")
+  expect_equal(res_of(blank, "H", "N"), "")
+})
+
+test_that("group_shift honors pct_lt threshold", {
+  # 1 of 254 baseline-Normal subjects -> 0.39% -> "<1"
+  d <- data.frame(TRT = "A",
+                  BASE = rep("N", 254),
+                  POST = c("H", rep("N", 253)))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "POST", column = "BASE"), settings = layer_settings(
+      pct_lt = 1,
+      format_strings = list(n_counts = f_str("xxx (xxx%)", "n", "pct")))))), d)
+  rc <- grep("^res\\d+$", names(b), value = TRUE)
+  hcol <- rc[1]
+  expect_true(any(grepl("<1", b[[hcol]])))
+})

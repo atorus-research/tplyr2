@@ -37,6 +37,10 @@
   With a `by` variable the header `(N=)` reflects the arm total (the
   per-column-group denominator varies by by-group, so no single header N can
   represent it); the no-`by` behavior (from-group N in the header) is unchanged.
+- `group_shift()` now honors the `zero_count_display`, `pct_lt`, and `pct_gt`
+  layer settings, applying them the same way `group_count()` does (#31).
+  Previously a shift layer ignored them (e.g. a zero cell always rendered as
+  `0 (  0%)` even with `zero_count_display = "count_only"`).
 - Descriptive statistics that round to negative zero now display as `0.0`
   instead of `-0.0`, matching base R `format()` (#29).
 - Result and risk-difference columns are now ordered by their numeric suffix
