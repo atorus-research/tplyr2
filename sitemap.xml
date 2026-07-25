@@ -33,7 +33,6 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_total_groups.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_analyze_layer.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_analyze_row_labels.html</loc></url>
-<url><loc>https://github.com/mstackhouse/tplyr2/reference/build_cell_filter_exprs.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_cell_metadata.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_col_labels.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_count_layer.html</loc></url>
@@ -52,7 +51,6 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/call_analyze_fn_by_group.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/cast_to_wide.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/classify_by.html</loc></url>
-<url><loc>https://github.com/mstackhouse/tplyr2/reference/classify_row_type.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/collect_precision.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/collect_precision_values.html</loc></url>
