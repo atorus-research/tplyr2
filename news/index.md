@@ -50,6 +50,22 @@
   renderer assuming `res1` is the first `cols` level) could get
   inconsistent column order. Shift layers likewise order their column
   dimension by the shift variable’s factor levels.
+- [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+  now orders its `by`-group rows by the `by` variable’s factor levels
+  (then a VARN companion, then alphabetically) instead of always
+  alphabetically (#24). Previously a factor `by` such as visits came out
+  mis-ordered (e.g. `Week 12` before `Week 2`), matching
+  [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
+  and
+  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
+- Fixed
+  [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+  total/missing rows with a `by` variable (#24): each by-group’s `Total`
+  (or `Missing`) row is now labelled with its by-group value instead of
+  a blank, and special rows now sort after the normal rows within each
+  group (previously e.g. `Total` was interleaved alphabetically among
+  the target values, and with a `by` variable the row label was dropped
+  entirely).
 - `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no
   longer drops the by-groups and returns only the last group’s
   statistics (#20). It now keeps the by-groups as rows and produces one

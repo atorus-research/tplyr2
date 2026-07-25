@@ -222,11 +222,11 @@ kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 | DEATH                       | 2 ( 2.3%)   | 0 ( 0.0%)   | 1 ( 1.2%)   |
 | LACK OF EFFICACY            | 3 ( 3.5%)   | 1 ( 1.2%)   | 0 ( 0.0%)   |
 | LOST TO FOLLOW-UP           | 1 ( 1.2%)   | 0 ( 0.0%)   | 1 ( 1.2%)   |
-| Overall Total               | 86 (100.0%) | 84 (100.0%) | 84 (100.0%) |
 | PHYSICIAN DECISION          | 1 ( 1.2%)   | 2 ( 2.4%)   | 0 ( 0.0%)   |
 | PROTOCOL VIOLATION          | 2 ( 2.3%)   | 3 ( 3.6%)   | 1 ( 1.2%)   |
 | STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)   | 3 ( 3.6%)   | 2 ( 2.4%)   |
 | WITHDRAWAL BY SUBJECT       | 9 (10.5%)   | 8 ( 9.5%)   | 10 (11.9%)  |
+| Overall Total               | 86 (100.0%) | 84 (100.0%) | 84 (100.0%) |
 
 ## Distinct Versus Event Counts
 

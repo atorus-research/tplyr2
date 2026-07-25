@@ -329,13 +329,13 @@ tail_rows <- tail(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 5)
 kable(tail_rows)
 ```
 
-|     | rowlabel1                 | res1      | res2      | res3      | rdiff1          |
-|:----|:--------------------------|:----------|:----------|:----------|:----------------|
-| 85  | URTICARIA                 | 0 ( 0.0%) | 1 ( 2.3%) | 1 ( 2.0%) | 2.6 (-1.0, 6.2) |
-| 86  | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) |
-| 87  | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) |
-| 88  | VOMITING                  | 0 ( 0.0%) | 2 ( 4.7%) | 0 ( 0.0%) | 2.6 (-1.0, 6.2) |
-| 89  | WOUND                     | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) |
+|  | rowlabel1 | res1 | res2 | res3 | rdiff1 |
+|:---|:---|:---|:---|:---|:---|
+| 85 | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) |
+| 86 | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) | 1.3 (-1.2, 3.8) |
+| 87 | VOMITING | 0 ( 0.0%) | 2 ( 4.7%) | 0 ( 0.0%) | 2.6 (-1.0, 6.2) |
+| 88 | WOUND | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) | 0.0 ( 0.0, 0.0) |
+| 89 | Any adverse event | 32 (100.0%) | 43 (100.0%) | 50 (100.0%) |  |
 
 The “Any adverse event” row has an empty `rdiff1` value because it is a
 total row added after the risk difference computation.

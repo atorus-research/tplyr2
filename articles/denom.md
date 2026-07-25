@@ -392,7 +392,7 @@ kable(result[nr_idx, c("rowlabel1", "res1", "res2", "res3")])
 
 |     | rowlabel1    | res1       | res2       | res3       |
 |:----|:-------------|:-----------|:-----------|:-----------|
-| 63  | Not reported | 54 (62.8%) | 41 (48.8%) | 34 (40.5%) |
+| 89  | Not reported | 54 (62.8%) | 41 (48.8%) | 34 (40.5%) |
 
 The “Not reported” row counts subjects who are present in the population
 (ADSL) but have no records in the analysis data (ADAE). This is
