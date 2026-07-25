@@ -453,3 +453,78 @@ test_that("JSON roundtrip preserves shift_denom", {
   spec2 <- tplyr_read_spec(path)
   expect_equal(spec2$layers[[1]]$settings$shift_denom, "column")
 })
+
+# Coverage: feature-rich serialization branches
+test_that("YAML roundtrip preserves a feature-rich spec", {
+  skip_if_not_installed("yaml")
+  spec <- tplyr_spec(
+    cols = "TRT",
+    where = AGE > 18,
+    pop_data = pop_data("ADSL", where = SAFFL == "Y"),
+    total_groups = list(total_group("TRT", "All")),
+    custom_groups = list(custom_group("TRT", "Active" = c("A", "B"))),
+    layers = tplyr_layers(
+      group_count("RESP", by = label("My Label"),
+        settings = layer_settings(
+          risk_diff = list(comparisons = list(c("A", "B")), ci = 0.95),
+          missing_count = list(label = "Missing", missing_values = c("UNK"))))
+    )
+  )
+  path <- file.path(scratch_dir, "rich.yaml")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+  expect_true(inherits(spec2, "tplyr_spec"))
+  expect_equal(spec2$cols, "TRT")
+  s <- spec2$layers[[1]]$settings
+  expect_equal(s$risk_diff$comparisons[[1]], c("A", "B"))
+  expect_equal(s$missing_count$label, "Missing")
+  expect_true(!is.null(spec2$total_groups))
+  expect_true(!is.null(spec2$custom_groups))
+})
+
+test_that("serialization roundtrips precision_data and an analyze function", {
+  pdat <- data.frame(VISIT = c("V1", "V2"), max_int = c(2L, 3L), max_dec = c(1L, 2L))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AVAL", settings = layer_settings(precision_data = pdat)),
+    group_analyze("AVAL", analyze_fn = function(df, ...) {
+      data.frame(row_label = "custom", var1 = mean(df$AVAL))
+    })
+  ))
+  path <- file.path(scratch_dir, "prec_fn.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+  expect_s3_class(spec2$layers[[2]], "tplyr_analyze_layer")
+  expect_true(is.function(spec2$layers[[2]]$analyze_fn))
+  expect_true(!is.null(spec2$layers[[1]]$settings$precision_data))
+})
+
+test_that("tplyr_write_spec errors on an unsupported extension", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("V")))
+  expect_error(tplyr_write_spec(spec, file.path(scratch_dir, "x.txt")),
+               "extension|json|yaml")
+})
+
+test_that("tplyr_read_spec errors on a missing file", {
+  expect_error(tplyr_read_spec(file.path(scratch_dir, "does_not_exist.json")),
+               "not found|File")
+})
+
+# Coverage: by-list with a label element, and missing_count with an f_str format
+test_that("serialization roundtrips a by list mixing a data var and a label", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", by = list("SEX", label("A Label")))))
+  path <- file.path(scratch_dir, "by_list.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+  expect_equal(length(spec2$layers[[1]]$by), 2)
+})
+
+test_that("serialization roundtrips missing_count with an f_str format", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      missing_count = list(label = "Missing", format = f_str("xx", "n"))))))
+  path <- file.path(scratch_dir, "mc_fmt.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+  expect_s3_class(spec2$layers[[1]]$settings$missing_count$format, "tplyr_f_str")
+})

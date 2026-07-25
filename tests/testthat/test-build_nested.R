@@ -391,3 +391,37 @@ test_that("nested count result columns carry label attributes", {
     expect_true(nchar(lbl) > 0)
   }
 })
+
+# Coverage: nested count with distinct counting, special rows, denoms_by list
+test_that("nested count with distinct_by, total_row, missing_count and by", {
+  d <- data.frame(
+    TRT = rep(c("A", "B"), each = 12),
+    ID  = rep(1:8, 3),
+    SOC = rep(c("Cardiac", "Cardiac", "GI", NA), 6),
+    PT  = rep(c("Afib", "MI", "Nausea", NA), 6)
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "ID",
+      total_row = TRUE,
+      missing_count = list(label = "Missing"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct"))))))
+  result <- tplyr_build(spec, d)
+  expect_true(any(grepl("Total", unlist(result[grepl("rowlabel", names(result))]))))
+  expect_true(any(grepl("^res\\d+$", names(result))))
+})
+
+test_that("nested count with keep_levels and per-level denoms_by list", {
+  d <- data.frame(
+    TRT = rep(c("A", "B"), each = 9),
+    SOC = rep(c("Cardiac", "GI", "Skin"), 6),
+    PT  = rep(c("Afib", "Nausea", "Rash"), 6)
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      keep_levels = c("Cardiac", "GI"),
+      denoms_by = list("TRT", c("TRT"))))))
+  result <- tplyr_build(spec, d)
+  expect_false("Skin" %in% result$rowlabel1)
+  expect_true(any(grepl("^res\\d+$", names(result))))
+})

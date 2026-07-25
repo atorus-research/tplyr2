@@ -291,3 +291,38 @@ test_that("tplyr_to_ard grouping columns are correct", {
   expect_true("GRP" %in% names(ard))
   expect_true("SEX" %in% names(ard))
 })
+
+# Coverage: ARD for a shift layer
+test_that("tplyr_to_ard handles a shift layer", {
+  d <- data.frame(TRT = rep("A", 10),
+                  BR = rep(c("N", "H"), 5), AR = rep(c("N", "H"), each = 5))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "AR", column = "BR"))))
+  b <- tplyr_build(spec, d)
+  ard <- tplyr_to_ard(b)
+  expect_true(is.data.frame(ard))
+  expect_true(nrow(ard) > 0)
+})
+
+# Coverage: from_ard roundtrip for shift and no-cols layers
+test_that("tplyr_to_ard/from_ard roundtrip for a shift layer", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 8),
+                  BR = rep(c("N","H"), 8), AR = rep(c("N","H"), each = 4, times = 2))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "AR", column = "BR"))))
+  b <- tplyr_build(spec, d)
+  ard <- tplyr_to_ard(b)
+  recon <- tplyr_from_ard(ard, spec)
+  expect_true(is.data.frame(recon))
+  expect_true(any(grepl("^res\\d+$", names(recon))))
+})
+
+test_that("tplyr_to_ard handles a layer with no column variables", {
+  d <- data.frame(V = rep(c("X","Y"), each = 5))
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(group_count("V")))
+  b <- tplyr_build(spec, d)
+  ard <- tplyr_to_ard(b)
+  expect_true(nrow(ard) > 0)
+  recon <- tplyr_from_ard(ard, spec)
+  expect_true(is.data.frame(recon))
+})

@@ -884,3 +884,13 @@ test_that("print.tplyr_meta displays anti-join info", {
   expect_true(any(grepl("Anti-join", out)))
   expect_true(any(grepl("USUBJID", out)))
 })
+
+# Coverage: print.tplyr_meta
+test_that("print.tplyr_meta renders names, filters and statistic", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 6), V = rep(c("X","Y"), 6))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("V"))),
+                   d, metadata = TRUE)
+  rid <- b$row_id[1]
+  m <- tplyr_meta_result(b, rid, "res1")
+  expect_output(print(m), "tplyr_meta")
+})

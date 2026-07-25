@@ -293,3 +293,15 @@ test_that("backward compatibility: no pop_data produces same results", {
   labels <- vapply(res_cols, function(col) attr(result[[col]], "label"), character(1))
   expect_true(all(grepl("N=2", labels)))
 })
+
+# Coverage: print methods and resolve_pop_cols NULL branch
+test_that("pop_data / total_group / custom_group print methods run", {
+  expect_output(print(pop_data("ADSL", where = SAFFL == "Y")), "population data")
+  expect_output(print(total_group("TRT", "All Patients")), "total group")
+  expect_output(print(custom_group("TRT", "Active" = c("A", "B"))), "custom group")
+})
+
+test_that("resolve_pop_cols returns spec cols when pop config has NULL cols", {
+  cfg <- pop_data(cols = NULL, where = SAFFL == "Y")
+  expect_equal(tplyr2:::resolve_pop_cols(cfg, c("TRT", "SEX")), c("TRT", "SEX"))
+})

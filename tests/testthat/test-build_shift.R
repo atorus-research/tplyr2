@@ -340,3 +340,39 @@ test_that("shift default denom (total) is unchanged", {
   # Arm total denominator = 10 for every column
   expect_true(all(grepl("\\(N=10\\)", labs)))
 })
+
+# Coverage: shift edge branches
+test_that("group_shift errors when target_var lacks row/column names", {
+  expect_error(group_shift(c("BR", "AR")), "row.*column|names")
+})
+
+test_that("shift supports distinct_by, denom_where, denom_ignore, and a where filter", {
+  d <- data.frame(
+    TRT = rep("A", 8),
+    ID  = rep(1:4, each = 2),
+    KEEP = rep(c("y", "n"), 4),
+    BR = rep(c("N", "H"), each = 4),
+    AR = rep(c("N", "H"), 4)
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "AR", column = "BR"), where = KEEP == "y",
+      settings = layer_settings(
+        distinct_by = "ID",
+        denom_where = quote(KEEP == "y"),
+        denom_ignore = "X"))))
+  result <- tplyr_build(spec, d)
+  expect_true(any(grepl("^res\\d+$", names(result))))
+})
+
+test_that("shift works with a by variable and no spec columns", {
+  d <- data.frame(
+    SEX = factor(rep(c("F", "M"), each = 6), levels = c("M", "F")),
+    BR = rep(c("N", "H"), 6),
+    AR = rep(c("N", "H", "N"), 4)
+  )
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_shift(c(row = "AR", column = "BR"), by = "SEX")))
+  result <- tplyr_build(spec, d)
+  expect_true("rowlabel1" %in% names(result))
+  expect_true(any(grepl("^res\\d+$", names(result))))
+})

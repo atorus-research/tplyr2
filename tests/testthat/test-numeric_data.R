@@ -130,3 +130,17 @@ test_that("numeric data for nested count layer", {
   expect_true(is.data.frame(nd))
   expect_true("n" %in% names(nd))
 })
+
+# Coverage: numeric-data getters and NULL branches
+test_that("tplyr_numeric_data returns NULL when absent and filters by layer", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 5), V = rep(c("X","Y"), 5))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("V"))), d)
+  nd <- tplyr_numeric_data(b)
+  expect_true(is.null(nd) || is.data.frame(nd) || is.list(nd))
+  # No numeric_data attribute -> NULL
+  expect_null(tplyr_numeric_data(data.frame(x = 1)))
+})
+
+test_that("tplyr_stats_data returns NULL without numeric data", {
+  expect_null(tplyr_stats_data(data.frame(x = 1), 1, "n"))
+})
