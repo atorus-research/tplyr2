@@ -117,9 +117,12 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   numeric_snapshot <- data.table::copy(counts)
 
   # --- Format ---
+  # Route through apply_count_formats() (same as group_count) so shift layers
+  # honor zero_count_display and the pct_lt/pct_gt thresholds (issue #31).
   fmt <- get_count_format(settings)
-  fmt_args <- map(fmt$vars, function(v) counts[[v]])
-  counts[, formatted := do.call(apply_formats, c(list(fmt), fmt_args))]
+  apply_count_formats(counts, list(fmt),
+                      pct_lt = settings$pct_lt, pct_gt = settings$pct_gt,
+                      zero_count_display = settings$zero_count_display %||% "full")
 
   # --- Build row labels ---
   row_label_cols <- build_shift_row_labels(counts, by_labels, by_data_vars, row_var)
