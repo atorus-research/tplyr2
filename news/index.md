@@ -38,6 +38,16 @@
 
 ### Bug fixes
 
+- `group_shift(shift_denom = "column")` with a `by` variable now scopes
+  the column (from-group) denominator within each by-group instead of
+  pooling it across them (#28). A shift-by-visit table now gets
+  per-visit percentages. With a `by` variable the header `(N=)` reflects
+  the arm total (the per-column-group denominator varies by by-group, so
+  no single header N can represent it); the no-`by` behavior (from-group
+  N in the header) is unchanged.
+- Descriptive statistics that round to negative zero now display as
+  `0.0` instead of `-0.0`, matching base R
+  [`format()`](https://rdrr.io/r/base/format.html) (#29).
 - Result and risk-difference columns are now ordered by their numeric
   suffix when layers are combined and when metadata is built. Previously
   tables with more than 9 result columns sorted them lexicographically
