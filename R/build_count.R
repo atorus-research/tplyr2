@@ -361,7 +361,31 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   }
 
   # Sort for correct interleaving: outer value, then level, then inner value
-  sort_nested(combined, target_vars, by_data_vars)
+  sort_nested(combined, target_vars, by_data_vars, dt = dt)
+
+  # Handle missing row (outermost level only). Appended before the total row
+  # so it sorts ahead of it (matching the single-variable path); the row order
+  # below is derived from this physical append order.
+  if (!is.null(missing_count)) {
+    outer_tv <- target_vars[1]
+    group_vars <- c(cols, by_data_vars, outer_tv)
+    missing_result <- compute_missing_counts(
+      dt, combined[.nest_level == 1], cols, by_data_vars, outer_tv, group_vars,
+      get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt,
+      distinct_by, missing_count
+    )
+    missing_row <- missing_result$missing_row
+
+    apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
+
+    build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
+                                     target_vars, outer_tv, n_label_cols)
+    missing_row[, .nest_level := 0L]
+
+    shared_cols <- intersect(names(combined), names(missing_row))
+    missing_row <- missing_row[, shared_cols, with = FALSE]
+    combined <- data.table::rbindlist(list(combined, missing_row), use.names = TRUE, fill = TRUE)
+  }
 
   # Handle total row (outermost level only)
   if (total_row) {
@@ -384,28 +408,6 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     combined <- data.table::rbindlist(list(combined, total_result), use.names = TRUE, fill = TRUE)
   }
 
-  # Handle missing row (outermost level only)
-  if (!is.null(missing_count)) {
-    outer_tv <- target_vars[1]
-    group_vars <- c(cols, by_data_vars, outer_tv)
-    missing_result <- compute_missing_counts(
-      dt, combined[.nest_level == 1], cols, by_data_vars, outer_tv, group_vars,
-      get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt,
-      distinct_by, missing_count
-    )
-    missing_row <- missing_result$missing_row
-
-    apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
-
-    build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
-                                     target_vars, outer_tv, n_label_cols)
-    missing_row[, .nest_level := 0L]
-
-    shared_cols <- intersect(names(combined), names(missing_row))
-    missing_row <- missing_row[, shared_cols, with = FALSE]
-    combined <- data.table::rbindlist(list(combined, missing_row), use.names = TRUE, fill = TRUE)
-  }
-
   # Fill any remaining NA rowlabel columns
   for (i in seq_len(n_label_cols)) {
     col_name <- str_c("rowlabel", i)
@@ -419,9 +421,25 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # Cast to wide
   row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
-  wide <- cast_to_wide(combined, row_label_cols, cols, layer_index, col_n = col_n,
+
+  # Preserve the factor-aware row order through the dcast, which otherwise
+  # re-sorts its row-label LHS alphabetically and discards sort_nested()'s
+  # interleaving (issue #16). Feed dcast a leading numeric LHS key (mirrors
+  # the shift layer's .row_order). The key must be CONSTANT across the cols
+  # dimension so a row group's per-cols rows still collapse into one wide row,
+  # so use each rowlabel group's first physical position: category rows in
+  # sort_nested() order, then the appended missing and total rows.
+  combined[, .row_seq := .I]
+  combined[, .nest_row_order := min(.row_seq), by = row_label_cols]
+  combined[, .row_seq := NULL]
+
+  wide <- cast_to_wide(combined, c(".nest_row_order", row_label_cols), cols,
+                       layer_index, col_n = col_n,
                        stat_labels = names(fmts),
                        col_levels = get_col_levels(dt, cols))
+  if (".nest_row_order" %in% names(wide)) {
+    wide[, .nest_row_order := NULL]
+  }
 
   # Add ord2 for nesting depth
   if (".nest_level" %in% names(combined)) {
@@ -531,22 +549,28 @@ build_nested_row_labels_special <- function(dt, by_labels, by_data_vars,
 
 #' Sort nested count data for correct interleaving
 #' @keywords internal
-sort_nested <- function(combined, target_vars, by_data_vars) {
+sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL) {
   n_levels <- length(target_vars)
 
-  # Compute sort keys for each level
-  # Outer rank: alphabetical (or factor) position of outermost target var
-  outer_vals <- sort(unique(combined[[target_vars[1]]]))
-  combined[, .sort_outer := match(get(target_vars[1]), outer_vals)]
+  # Compute sort keys for each level. Coerce to character so the source factor
+  # levels (from `dt`) drive the order: the target column on `combined` is a
+  # factor re-leveled alphabetically by the nested rbindlist/CJ, so trusting
+  # its own levels would reintroduce alphabetical ordering (issue #16).
+  # Outer rank: factor levels > VARN > alphabetical of the outermost target var.
+  combined[, .sort_outer := compute_var_order(
+    as.character(get(target_vars[1])), var_name = target_vars[1], data_dt = dt
+  )]
 
   if (n_levels >= 2) {
-    # Inner rank: position within each outer group
+    # Inner rank: same priority, applied to the inner target var. A global key
+    # orders inner values consistently across outer groups; combined with the
+    # outer/nest_level sort below it interleaves correctly.
     combined[, .sort_inner := 0L]
     inner_rows <- combined[.nest_level >= 2]
     if (nrow(inner_rows) > 0) {
-      inner_rows[, .sort_inner := data.table::frank(
-        get(target_vars[2]), ties.method = "dense"
-      ), by = c(by_data_vars, target_vars[1])]
+      inner_rows[, .sort_inner := compute_var_order(
+        as.character(get(target_vars[2])), var_name = target_vars[2], data_dt = dt
+      )]
       # Update combined via join
       join_cols <- intersect(names(combined), names(inner_rows))
       join_cols <- setdiff(join_cols, ".sort_inner")
