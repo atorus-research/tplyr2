@@ -66,6 +66,14 @@
   group (previously e.g. `Total` was interleaved alphabetically among
   the target values, and with a `by` variable the row label was dropped
   entirely).
+- `group_count(order_count_method = "byfactor")` now orders category
+  rows by the target variable’s factor levels instead of alphabetically
+  (#16). The target column is coerced to character while counts are
+  built, so the level order is now recovered from the source data
+  ([`compute_var_order()`](https://github.com/mstackhouse/tplyr2/reference/compute_var_order.md)).
+  Nested count layers likewise order their outer and inner categories by
+  factor levels (previously they fell back to the dcast’s alphabetical
+  row order).
 - `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no
   longer drops the by-groups and returns only the last group’s
   statistics (#20). It now keeps the by-groups as rows and produces one

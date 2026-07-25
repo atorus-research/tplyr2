@@ -320,28 +320,28 @@ display <- output |>
 kable(head(display[, c("row_label", "res1", "res2", "res3")], 20))
 ```
 
-| row_label | res1 | res2 | res3 |
-|:---|:---|:---|:---|
-| Any adverse event |  |  |  |
-|  | 32 (100.0%) | 43 (100.0%) | 50 (100.0%) |
-| CARDIAC DISORDERS |  |  |  |
-|  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  |  |  |
-|  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS |  |  |  |
-|  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| row_label                                  | res1      | res2      | res3      |
+|:-------------------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS                          |           |           |           |
+|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
+|                                            | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS                 |           |           |           |
+|                                            | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| ABDOMINAL PAIN                             | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CONSTIPATION                               | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
 When combining
 [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
@@ -375,23 +375,23 @@ display_formatted <- output |>
 kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
-| row_label                      | res1        | res2        | res3        |
-|:-------------------------------|:------------|:------------|:------------|
-| Any adverse event              |             |             |             |
-|                                | 32 (100.0%) | 43 (100.0%) | 50 (100.0%) |
-| CARDIAC DISORDERS              |             |             |             |
-|                                | 4 (12.5%)   | 6 (14.0%)   | 5 (10.0%)   |
-| ATRIAL FIBRILLATION            | 0 (\<1%)    | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| ATRIAL FLUTTER                 | 0 (\<1%)    | 1 ( 2.3%)   | 0 ( 0.0%)   |
-| ATRIAL HYPERTROPHY             | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| BUNDLE BRANCH BLOCK RIGHT      | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| CARDIAC FAILURE CONGESTIVE     | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| MYOCARDIAL INFARCTION          | 0 (\<1%)    | 1 ( 2.3%)   | 2 ( 4.0%)   |
-| SINUS BRADYCARDIA              | 0 (\<1%)    | 3 ( 7.0%)   | 1 ( 2.0%)   |
-| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%)   | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| SUPRAVENTRICULAR TACHYCARDIA   | 0 (\<1%)    | 0 ( 0.0%)   | 1 ( 2.0%)   |
-| TACHYCARDIA                    | 1 ( 3.1%)   | 0 ( 0.0%)   | 0 ( 0.0%)   |
-| VENTRICULAR EXTRASYSTOLES      | 0 (\<1%)    | 1 ( 2.3%)   | 0 ( 0.0%)   |
+| row_label                                  | res1      | res2      | res3      |
+|:-------------------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS                          |           |           |           |
+|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
+| ATRIAL FIBRILLATION                        | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 2.0%) |
+| ATRIAL FLUTTER                             | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 (\<1%)  | 1 ( 2.3%) | 2 ( 4.0%) |
+| SINUS BRADYCARDIA                          | 0 (\<1%)  | 3 ( 7.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 2.0%) |
+| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
+|                                            | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
 
 ## Summary
 
