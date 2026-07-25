@@ -172,15 +172,23 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   }
 
   # --- Combine main counts + missing + missing_subjects + total ---
+  # Flag special rows so they can be ordered after the normal rows within each
+  # by-group (the dcast otherwise interleaves e.g. "Total" alphabetically among
+  # the target values). Set on the main counts first so the column survives the
+  # column-aligning subset below.
+  counts[, .is_special := 0L]
   if (!is.null(missing_row)) {
+    missing_row[, .is_special := 1L]
     missing_row <- missing_row[, names(counts), with = FALSE]
     counts <- data.table::rbindlist(list(counts, missing_row), use.names = TRUE, fill = TRUE)
   }
   if (!is.null(missing_subjects_row)) {
+    missing_subjects_row[, .is_special := 1L]
     missing_subjects_row <- missing_subjects_row[, names(counts), with = FALSE]
     counts <- data.table::rbindlist(list(counts, missing_subjects_row), use.names = TRUE, fill = TRUE)
   }
   if (!is.null(total_result)) {
+    total_result[, .is_special := 1L]
     total_result <- total_result[, names(counts), with = FALSE]
     counts <- data.table::rbindlist(list(counts, total_result), use.names = TRUE, fill = TRUE)
   }
@@ -194,11 +202,15 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   # string value; compute_count_sort_keys() already computed .ord_by_* keys
   # (respecting factor levels > VARN > alphabetical), so prepend them to the LHS
   # (mirrors the shift layer) and drop them afterward.
+  # `.is_special` sits between the by keys and the row labels so special rows
+  # (total/missing) sort after the normal rows within each by-group (#24).
   by_order_cols <- str_subset(names(counts), "^\\.ord_by_\\d+$")
-  wide <- cast_to_wide(counts, c(by_order_cols, row_labels), cols, layer_index,
-                       col_n = col_n, stat_labels = names(fmts),
+  special_col <- if (".is_special" %in% names(counts)) ".is_special" else character(0)
+  drop_cols <- c(by_order_cols, special_col)
+  wide <- cast_to_wide(counts, c(by_order_cols, special_col, row_labels), cols,
+                       layer_index, col_n = col_n, stat_labels = names(fmts),
                        col_levels = get_col_levels(dt, cols))
-  for (oc in by_order_cols) {
+  for (oc in drop_cols) {
     if (oc %in% names(wide)) wide[, (oc) := NULL]
   }
 
@@ -885,10 +897,15 @@ build_row_labels_special <- function(dt, by_labels, by_data_vars, tv, existing_l
     col_idx <- col_idx + 1L
   }
 
-  # Add by data variable columns (use empty string for special rows if not present)
+  # Add by data variable columns. Special rows (total/missing/missing_subjects)
+  # are computed per by-group, so the by variable value is present in `dt` and
+  # must label the row — otherwise every group's special row collapses to the
+  # same blank label (issue #24).
   for (bv in by_data_vars) {
     col_name <- str_c("rowlabel", col_idx)
-    if (!col_name %in% names(dt)) {
+    if (bv %in% names(dt)) {
+      dt[, (col_name) := as.character(get(bv))]
+    } else if (!col_name %in% names(dt)) {
       dt[, (col_name) := ""]
     }
     col_idx <- col_idx + 1L

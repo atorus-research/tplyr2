@@ -46,6 +46,11 @@
   alphabetically (#24). Previously a factor `by` such as visits came out
   mis-ordered (e.g. `Week 12` before `Week 2`), matching `group_shift()` and
   `group_desc()`.
+- Fixed `group_count()` total/missing rows with a `by` variable (#24): each
+  by-group's `Total` (or `Missing`) row is now labelled with its by-group value
+  instead of a blank, and special rows now sort after the normal rows within
+  each group (previously e.g. `Total` was interleaved alphabetically among the
+  target values, and with a `by` variable the row label was dropped entirely).
 - `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no longer
   drops the by-groups and returns only the last group's statistics (#20). It
   now keeps the by-groups as rows and produces one result column per
