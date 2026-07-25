@@ -119,3 +119,22 @@ test_that("IBM rounding integrates with format_number_vec", {
   result_default <- tplyr2:::format_number_vec(c(2.5, 3.5), group)
   expect_equal(trimws(result_default), c("2", "4"))
 })
+
+# Issue #29: a value rounding to negative zero displays without the sign
+test_that("negative zero is normalized to zero in formatted output", {
+  fmt <- f_str("xx.x", "mean")
+  expect_equal(trimws(apply_formats(fmt, -0.005)), "0.0")
+  expect_equal(trimws(apply_formats(fmt, -0.04)), "0.0")   # rounds to -0.0
+  expect_equal(trimws(apply_formats(fmt, 0.0)), "0.0")
+  # integer format
+  fmt_i <- f_str("xx", "n")
+  expect_equal(trimws(apply_formats(fmt_i, -0.3)), "0")
+})
+
+test_that("group_desc mean of a tiny negative value shows 0.0 not -0.0", {
+  d <- data.frame(TRT = "A", CHG = c(-0.04, 0.02, -0.01, 0.01))  # mean = -0.005
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("CHG", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")))))), d)
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Mean"]), "0.0")
+})

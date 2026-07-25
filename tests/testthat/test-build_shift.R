@@ -376,3 +376,28 @@ test_that("shift works with a by variable and no spec columns", {
   expect_true("rowlabel1" %in% names(result))
   expect_true(any(grepl("^res\\d+$", names(result))))
 })
+
+# Issue #28: shift_denom="column" scopes the denominator within each by group
+test_that("shift_denom='column' with a by variable uses per-by-group denominators", {
+  d <- data.frame(TRT = "A",
+    VISIT = c(rep("V1", 5), rep("V2", 3)),
+    BASE  = c("N","N","N","N","H", "N","N","H"),
+    POST  = c("N","N","N","H","H", "N","H","H"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "POST", column = "BASE"), by = "VISIT",
+      settings = layer_settings(shift_denom = "column",
+        format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))), d)
+
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res_cols, function(c) attr(b[[c]], "label"), character(1))
+  n_col <- res_cols[grepl("\\| N", labs)]
+
+  # V1 Normal-baseline denom = 4 (3 stay N -> 75%); V2 = 2 (1 stays N -> 50%)
+  v1_nn <- b[[n_col]][b$rowlabel1 == "V1" & b$rowlabel2 == "N"]
+  v2_nn <- b[[n_col]][b$rowlabel1 == "V2" & b$rowlabel2 == "N"]
+  expect_equal(trimws(v1_nn), "3 ( 75%)")
+  expect_equal(trimws(v2_nn), "1 ( 50%)")
+
+  # Header falls back to the arm N (a single header can't show per-by-group N)
+  expect_false(any(grepl("\\(N=6\\)", labs)))
+})

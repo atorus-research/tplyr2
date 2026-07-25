@@ -143,14 +143,18 @@ format_number_vec <- function(values, group, precision = NULL, lt = NULL, gt = N
 
   if (any(!na_mask)) {
     if (dec_width > 0) {
+      rounded <- tplyr_round(values[!na_mask], dec_width)
+      # Normalize negative zero to zero so a value rounding to -0 displays as
+      # "0.0", matching base R format() which drops the sign (issue #29).
+      rounded[rounded == 0] <- 0
       result[!na_mask] <- formatC(
-        tplyr_round(values[!na_mask], dec_width),
-        format = "f", digits = dec_width, width = total_width
+        rounded, format = "f", digits = dec_width, width = total_width
       )
     } else {
+      rounded <- tplyr_round(values[!na_mask], 0)
+      rounded[rounded == 0] <- 0
       result[!na_mask] <- formatC(
-        tplyr_round(values[!na_mask], 0),
-        format = "d", width = int_width
+        rounded, format = "d", width = int_width
       )
     }
   }
