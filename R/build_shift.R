@@ -16,13 +16,9 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   by <- layer$by
   settings <- layer$settings
 
-  # Validate target_var
-  if (length(target_var) != 2 || is.null(names(target_var)) ||
-      !all(c("row", "column") %in% names(target_var))) {
-    stop("group_shift() target_var must be a named character vector ",
-         "with 'row' and 'column' elements, e.g. c(row = \"BNRIND\", column = \"ANRIND\")")
-  }
-
+  # target_var is validated by group_shift() at construction and again by
+  # validate_layer() at build time (which always runs before this), so it is
+  # guaranteed to be a named row/column vector here.
   row_var <- target_var[["row"]]
   col_var <- target_var[["column"]]
 

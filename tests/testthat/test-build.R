@@ -108,3 +108,15 @@ test_that("tplyr_build errors on unknown layer type", {
   )
   expect_error(tplyr_build(spec, data.frame(TRT01P = "A")), "not a tplyr_layer")
 })
+
+# Coverage: dispatch guard for an unknown layer type (reachable e.g. from a
+# malformed deserialized spec whose layer has no recognized subclass)
+test_that("tplyr_build errors on a layer with an unknown type", {
+  bogus_layer <- structure(
+    list(target_var = "VAL", by = NULL, where = NULL, settings = layer_settings()),
+    class = "tplyr_layer"
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = list(bogus_layer))
+  d <- data.frame(TRT = c("A", "B"), VAL = c("X", "Y"))
+  expect_error(tplyr_build(spec, d), "Unknown layer type")
+})
