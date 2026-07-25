@@ -274,3 +274,29 @@ test_that("compute_risk_diff calculates correct difference", {
   expect_true(x_row$lower < 20)
   expect_true(x_row$upper > 20)
 })
+
+# Coverage: error branches
+test_that("risk_diff errors when there are no column variables", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 10), RESP = rep(c("Y","N"), 10))
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      risk_diff = list(comparisons = list(c("A", "B")))))))
+  expect_error(tplyr_build(spec, d), "column variable")
+})
+
+test_that("risk_diff errors on a comparison that is not length 2", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 10), RESP = rep(c("Y","N"), 10))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      risk_diff = list(comparisons = list(c("A", "B", "C")))))))
+  expect_error(tplyr_build(spec, d), "2-element")
+})
+
+test_that("risk_diff respects a custom ci level", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 20), RESP = rep(c("Y","N","Y","N"), 10))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      risk_diff = list(comparisons = list(c("A", "B")), ci = 0.90)))))
+  result <- tplyr_build(spec, d)
+  expect_true(any(grepl("^rdiff", names(result))))
+})

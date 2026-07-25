@@ -330,3 +330,34 @@ test_that("analyze layer validation catches missing analyze_fn", {
     "analyze layer must have a valid analyze_fn"
   )
 })
+
+# Coverage: analyze_fn contract validation (reachable guards, not dead code)
+test_that("analyze_fn must return a data.frame", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 3), AVAL = 1:6)
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_analyze("AVAL", analyze_fn = function(df, ...) list(x = 1))))
+  expect_error(tplyr_build(spec, d), "must return a data.frame")
+})
+
+test_that("analyze_fn without cols must return a data.frame", {
+  d <- data.frame(AVAL = 1:6)
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_analyze("AVAL", analyze_fn = function(df, ...) 42)))
+  expect_error(tplyr_build(spec, d), "must return a data.frame")
+})
+
+test_that("analyze_fn without format_strings must return 'formatted' and 'row_label'", {
+  d <- data.frame(TRT = rep(c("A","B"), each = 3), AVAL = 1:6)
+
+  spec_no_fmt <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_analyze("AVAL", analyze_fn = function(df, ...) {
+      data.frame(row_label = "m", value = mean(df$AVAL))  # no 'formatted'
+    })))
+  expect_error(tplyr_build(spec_no_fmt, d), "must return a 'formatted' column")
+
+  spec_no_rl <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_analyze("AVAL", analyze_fn = function(df, ...) {
+      data.frame(formatted = "1.0")  # no 'row_label'
+    })))
+  expect_error(tplyr_build(spec_no_rl, d), "must return a 'row_label' column")
+})

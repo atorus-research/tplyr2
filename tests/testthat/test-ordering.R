@@ -165,6 +165,33 @@ test_that("multi-layer output has correct ord_layer_index", {
   expect_true(2 %in% result$ord_layer_index)
 })
 
+# Coverage: order_count_method = "bycount"
+test_that("order_count_method = bycount orders by descending count", {
+  data <- data.frame(
+    TRT = rep("A", 60),
+    VAL = c(rep("rare", 5), rep("common", 40), rep("mid", 15))
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("VAL", settings = layer_settings(order_count_method = "bycount"))))
+  result <- tplyr_build(spec, data)
+  result <- result[order(result$ord_layer_1), ]
+  # Highest count first: common (40), mid (15), rare (5)
+  expect_equal(result$rowlabel1, c("common", "mid", "rare"))
+})
+
+test_that("order_count_method = bycount with ordering_cols + result_order_var", {
+  data <- data.frame(
+    TRT = rep(c("A", "B"), c(30, 30)),
+    VAL = c(rep(c("x", "y", "z"), c(5, 10, 15)), rep(c("x", "y", "z"), c(20, 5, 5)))
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("VAL", settings = layer_settings(
+      order_count_method = "bycount", ordering_cols = "A", result_order_var = "n"))))
+  result <- tplyr_build(spec, data)
+  expect_true(all(!is.na(result$ord_layer_1)))
+  expect_equal(nrow(result), 3)
+})
+
 # Issue #24: count layers order by-group rows by the by variable's factor levels
 test_that("count orders by-group rows by factor levels", {
   d <- data.frame(
