@@ -177,6 +177,20 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   long <- data.table::rbindlist(result_rows)
 
+  # Ordering key for by-group rows, respecting the by variables' factor levels
+  # (then VARN, then alphabetical). Without this, by groups fall out in the
+  # dcast's alphabetical order, e.g. "Week 12" before "Week 2" (issue #20).
+  if (length(by_data_vars) > 0) {
+    ord_codes <- map(by_data_vars, function(bv) {
+      v <- long[[bv]]
+      if (is.factor(v)) as.integer(v)
+      else compute_var_order(as.character(v), var_name = bv, data_dt = dt)
+    })
+    key_df <- stats::setNames(as.data.frame(ord_codes, stringsAsFactors = FALSE),
+                              str_c("k", seq_along(ord_codes)))
+    long[, .by_ord := data.table::frankv(key_df, ties.method = "dense")]
+  }
+
   # Build row label columns
   label_cols <- character(0)
   col_idx <- 1L
@@ -211,12 +225,15 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   # dcast to wide
   all_label_cols <- label_cols
   col_labels <- NULL
+  # Carry the by-group ordering key through the cast (it is constant per by
+  # group, so it never splits a dcast cell)
+  extra_lhs <- if (".by_ord" %in% names(long)) ".by_ord" else character(0)
 
   if (length(cols) == 0) {
-    wide <- long[, c(all_label_cols, "formatted", "stat_order"), with = FALSE]
+    wide <- long[, c(all_label_cols, "formatted", "stat_order", extra_lhs), with = FALSE]
     data.table::setnames(wide, "formatted", "res1")
   } else {
-    lhs <- paste(c(all_label_cols, "stat_order"), collapse = " + ")
+    lhs <- paste(c(all_label_cols, "stat_order", extra_lhs), collapse = " + ")
     rhs <- prepare_cast_column(long, cols, get_col_levels(dt, cols))
     formula_str <- paste(lhs, "~", rhs)
     wide <- data.table::dcast(
@@ -226,7 +243,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
       fill = ""
     )
 
-    val_cols <- setdiff(names(wide), c(all_label_cols, "stat_order"))
+    val_cols <- setdiff(names(wide), c(all_label_cols, "stat_order", extra_lhs))
     col_labels <- build_col_labels(val_cols, col_n)
     new_names <- str_c("res", seq_along(val_cols))
     data.table::setnames(wide, val_cols, new_names)
@@ -245,6 +262,12 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     wide[, ord1 := stat_order]
   }
   wide[, stat_order := NULL]
+
+  # Secondary ordering: by-group factor order within each statistic
+  if (".by_ord" %in% names(wide)) {
+    wide[, ord2 := .by_ord]
+    wide[, .by_ord := NULL]
+  }
 
   # Attach label attributes to result columns
   if (!is.null(col_labels)) {
@@ -391,8 +414,15 @@ transpose_stats_with_by <- function(wide, res_cols, trt_labels, by_cols, stat_co
     stat_names <- unique(wide[[stat_col]])
   }
 
-  # One row per by-group combination, in first-appearance order
-  out <- unique(wide[, by_cols, with = FALSE])
+  # One row per by-group combination, ordered by the by-group factor order
+  # (ord2, set upstream) so e.g. "Week 2" precedes "Week 12" (issue #20).
+  if ("ord2" %in% names(wide)) {
+    out <- unique(wide[, c(by_cols, "ord2"), with = FALSE])
+    data.table::setorderv(out, "ord2")
+    out[, ord2 := NULL]
+  } else {
+    out <- unique(wide[, by_cols, with = FALSE])
+  }
   out[, .row_ord := seq_len(.N)]
 
   col_labels <- character(0)
