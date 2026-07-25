@@ -83,6 +83,8 @@
 <li>Count layers now order their <code>res*</code> columns by the <code>cols</code> variable’s factor levels, matching <code><a href="../reference/group_desc.html">group_desc()</a></code> (#13). Previously count layers ordered result columns alphabetically by the <code>cols</code> value, so a spec mixing count and desc layers (or any renderer assuming <code>res1</code> is the first <code>cols</code> level) could get inconsistent column order. Shift layers likewise order their column dimension by the shift variable’s factor levels.</li>
 <li>
 <code>group_desc(stats_as_columns = TRUE)</code> combined with a <code>by</code> variable no longer drops the by-groups and returns only the last group’s statistics (#20). It now keeps the by-groups as rows and produces one result column per treatment x statistic (labelled <code>"&lt;arm&gt; | &lt;stat&gt;"</code>). Behavior without a <code>by</code> variable (treatment groups as rows, statistics as columns) is unchanged.</li>
+<li>
+<code><a href="../reference/group_desc.html">group_desc()</a></code> now orders its <code>by</code>-group rows by the <code>by</code> variable’s factor levels (then a VARN companion, then alphabetically) instead of always alphabetically (#20). Previously a factor <code>by</code> such as visits came out mis-ordered (e.g. <code>Week 12</code> before <code>Week 2</code>); this applies to both the standard stats-as-rows output and <code>stats_as_columns = TRUE</code>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-0-1-0-9000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0-9000"></a></h3>

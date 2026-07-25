@@ -56,6 +56,12 @@
   result column per treatment x statistic (labelled `"<arm> | <stat>"`).
   Behavior without a `by` variable (treatment groups as rows, statistics
   as columns) is unchanged.
+- [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  now orders its `by`-group rows by the `by` variable’s factor levels
+  (then a VARN companion, then alphabetically) instead of always
+  alphabetically (#20). Previously a factor `by` such as visits came out
+  mis-ordered (e.g. `Week 12` before `Week 2`); this applies to both the
+  standard stats-as-rows output and `stats_as_columns = TRUE`.
 
 ### Documentation
 
