@@ -67,14 +67,21 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
   ordering_cols_setting <- settings$ordering_cols
   result_order_var <- settings$result_order_var %||% "n"
 
-  # Sort key for each by_data_var
-
+  # Sort key for each by_data_var. The by columns on `counts` are character
+  # (rebuilt from CJ levels in complete_counts), so recover a factor by
+  # variable's level order from the source data directly; otherwise fall back
+  # to compute_var_order (VARN companion, then alphabetical). Issue #24.
   for (i in seq_along(by_data_vars)) {
     bv <- by_data_vars[i]
     col_name <- str_c(".ord_by_", i)
-    counts[, (col_name) := compute_var_order(
-      get(bv), var_name = bv, data_dt = dt
-    )]
+    if (is.factor(dt[[bv]])) {
+      lv <- levels(dt[[bv]])
+      counts[, (col_name) := match(as.character(get(bv)), lv)]
+    } else {
+      counts[, (col_name) := compute_var_order(
+        get(bv), var_name = bv, data_dt = dt
+      )]
+    }
   }
 
   # Sort key for target variable

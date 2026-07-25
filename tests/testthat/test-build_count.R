@@ -490,3 +490,44 @@ test_that("zero_count_display controls how zero cells render", {
   expect_equal(trimws(zc_count), "0")
   expect_equal(trimws(zc_blank), "")
 })
+
+# Issue #24: total/missing rows with a by variable are labelled and placed correctly
+test_that("total_row with a by variable labels each group's total and places it last", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 9),
+    VISIT = factor(rep(c("Baseline", "Week 2", "Week 12"), 6),
+                   levels = c("Baseline", "Week 2", "Week 12")),
+    RESP = rep(c("Y", "N", "Y"), 6)
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_count("RESP", by = "VISIT", settings = layer_settings(total_row = TRUE)))), d)
+  b <- b[order(b$ord_layer_1), ]
+
+  # Each VISIT group has its own Total row, labelled with the VISIT value
+  total_rows <- b[b$rowlabel2 == "Total", ]
+  expect_equal(nrow(total_rows), 3)
+  expect_setequal(total_rows$rowlabel1, c("Baseline", "Week 2", "Week 12"))
+  # No blank by-labels
+  expect_false(any(b$rowlabel1 == ""))
+
+  # Within each VISIT, Total is the last row
+  for (v in c("Baseline", "Week 2", "Week 12")) {
+    grp <- b[b$rowlabel1 == v, ]
+    expect_equal(grp$rowlabel2[nrow(grp)], "Total")
+  }
+})
+
+test_that("special rows sort after normal rows (Missing before Total)", {
+  d <- data.frame(
+    TRTP = rep(c("A", "B"), each = 6),
+    RESP = c("Y", "N", "Y", NA, "Y", "N", "Y", "N", "Y", "Y", NA, "N")
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      total_row = TRUE, missing_count = list(label = "Missing"))))), d)
+  b <- b[order(b$ord_layer_1), ]
+  # Order: category rows, then Missing, then Total
+  labs <- b$rowlabel1
+  expect_equal(labs[(length(labs) - 1):length(labs)], c("Missing", "Total"))
+  expect_true(which(labs == "Missing") < which(labs == "Total"))
+})
