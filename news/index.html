@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tplyr2</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,9 +67,9 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.1.0.9000" id="tplyr2-0109000">tplyr2 0.1.0.9000<a class="anchor" aria-label="anchor" href="#tplyr2-0109000"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.2.0" id="tplyr2-020">tplyr2 0.2.0<a class="anchor" aria-label="anchor" href="#tplyr2-020"></a></h2>
 <div class="section level3">
-<h3 id="new-features-0-1-0-9000">New features<a class="anchor" aria-label="anchor" href="#new-features-0-1-0-9000"></a></h3>
+<h3 id="new-features-0-2-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0"></a></h3>
 <ul><li>New <code>shift_denom</code> setting for shift layers (#18). <code>shift_denom = "column"</code> computes percentages column-wise — out of each shift column group (the “from”/baseline group) within the treatment arm — the standard “% within the from group” shift display, and the header <code>(N=)</code> labels then reflect those per-column-group denominators. The default <code>"total"</code> keeps the arm-total denominator.</li>
 <li>New <code>pct_lt</code> and <code>pct_gt</code> count-layer settings for the regulatory “less-than / greater-than” percent conventions (#14). A cell with a nonzero count whose percent would display below <code>pct_lt</code> renders as <code>"&lt;"</code> + the threshold (e.g. <code>1 ( &lt;1%)</code> instead of <code>1 (  0%)</code>); a percent below 100 that would display above <code>pct_gt</code> renders as <code>"&gt;"</code> + the threshold (e.g. <code>&gt;99</code>). The comparison is against the rounded display value, so a percent that rounds up to the threshold keeps its number.</li>
 <li>New <code>zero_count_display</code> count-layer setting (#14) controlling how cells with a zero count render: <code>"full"</code> (default, unchanged), <code>"count_only"</code> (just the count field, e.g. <code>" 0"</code>), or <code>"blank"</code> (empty string).</li>
@@ -78,7 +78,7 @@
 <code>tplyr_meta</code> objects gain an optional <code>statistic</code> field recording which statistic a cell displays (populated for <code>stat_columns</code> layers).</li>
 </ul></div>
 <div class="section level3">
-<h3 id="bug-fixes-0-1-0-9000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-1-0-9000"></a></h3>
+<h3 id="bug-fixes-0-2-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-2-0"></a></h3>
 <ul><li>
 <code>group_shift(shift_denom = "column")</code> with a <code>by</code> variable now scopes the column (from-group) denominator within each by-group instead of pooling it across them (#28). A shift-by-visit table now gets per-visit percentages. With a <code>by</code> variable the header <code>(N=)</code> reflects the arm total (the per-column-group denominator varies by by-group, so no single header N can represent it); the no-<code>by</code> behavior (from-group N in the header) is unchanged.</li>
 <li>
@@ -97,7 +97,7 @@
 <code><a href="../reference/group_desc.html">group_desc()</a></code> now orders its <code>by</code>-group rows by the <code>by</code> variable’s factor levels (then a VARN companion, then alphabetically) instead of always alphabetically (#20). Previously a factor <code>by</code> such as visits came out mis-ordered (e.g. <code>Week 12</code> before <code>Week 2</code>); this applies to both the standard stats-as-rows output and <code>stats_as_columns = TRUE</code>.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-0-1-0-9000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-1-0-9000"></a></h3>
+<h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
 <ul><li>Clarified in <code><a href="../reference/layer_settings.html">?layer_settings</a></code> and the denominators vignette that <code>denoms_by</code> <strong>replaces</strong> (does not augment) the default <code>cols</code>-based denominator grouping, so you must include the <code>cols</code> variable(s) to get per-column denominators (#19).</li>
 </ul></div>
 </div>
