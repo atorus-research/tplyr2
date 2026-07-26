@@ -364,3 +364,40 @@ test_that("replace_leading_whitespace vector input", {
   result <- replace_leading_whitespace(c("  a", " b", "c"))
   expect_equal(result, c("\u00a0\u00a0a", "\u00a0b", "c"))
 })
+
+# Issue #36: as_display() strips internal columns
+test_that("as_display keeps display columns and drops ord/row_id", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("SEX", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))),
+    data.frame(TRT = rep(c("A", "B"), 3), SEX = rep(c("F", "M"), 3)),
+    metadata = TRUE)
+  disp <- as_display(b)
+  expect_false(any(grepl("^ord", names(disp))))
+  expect_false("row_id" %in% names(disp))
+  expect_true(all(c("rowlabel1", "res1", "res2") %in% names(disp)))
+
+  labelled <- as_display(b, labels = TRUE)
+  expect_false(any(grepl("^res\\d+$", names(labelled))))
+  expect_true(any(grepl("\\(N=", names(labelled))))
+})
+
+test_that("as_display errors on a non-data.frame", {
+  expect_error(as_display(list(1, 2)), "data.frame")
+})
+
+# as_display keeps the assoc_test p-value column (#36 + #37 integration)
+test_that("as_display retains the pval column from assoc_test", {
+  d <- data.frame(TRT = factor(rep(c("A", "B"), each = 10)),
+                  G = factor(rep(c("g1", "g2"), 10)),
+                  RESP = factor(rep(c("N", "H"), 10)))
+  at <- assoc_test(fn = function(.d) fisher.test(table(.d$TRT, .d$RESP))$p.value,
+                   label = "p-value")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", by = "G", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d)
+  disp <- as_display(b)
+  expect_true("pval1" %in% names(disp))
+  labelled <- as_display(b, labels = TRUE)
+  expect_true("p-value" %in% names(labelled))
+})

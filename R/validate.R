@@ -263,7 +263,7 @@ validate_build_data <- function(spec, dt) {
 validate_layer_stats <- function(layer, index) {
   count_stats <- c("n", "pct", "total", "distinct_n", "distinct_pct",
                    "distinct_total")
-  desc_stats <- c("n", "mean", "sd", "median", "var", "min", "max",
+  desc_stats <- c("n", "n_records", "mean", "sd", "median", "var", "min", "max",
                   "iqr", "q1", "q3", "missing", "total", "pct")
 
   fmt_lists <- c(layer$settings$format_strings, layer$settings$stat_columns)

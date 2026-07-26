@@ -699,7 +699,15 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
   summary_group <- c(cols, by_data_vars)
 
   if (length(summary_group) > 0) {
-    missing_n <- missing_dt[, list(n = .N), by = summary_group]
+    # Seed the Missing row from every column/by group (from `counts`, the
+    # completed grid) so it is always emitted and zero-filled where a group has
+    # no missing values, then fold in the actual missing counts (issue #33).
+    all_groups <- unique(counts[, summary_group, with = FALSE])
+    for (g in summary_group) all_groups[, (g) := as.character(get(g))]
+    actual <- missing_dt[, list(n = .N), by = summary_group]
+    for (g in summary_group) actual[, (g) := as.character(get(g))]
+    missing_n <- merge(all_groups, actual, by = summary_group, all.x = TRUE)
+    missing_n[is.na(n), n := 0L]
   } else {
     missing_n <- data.table::data.table(n = nrow(missing_dt))
   }

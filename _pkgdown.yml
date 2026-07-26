@@ -67,6 +67,7 @@ reference:
   contents:
     - apply_conditional_format
     - apply_row_masks
+    - as_display
     - collapse_row_labels
     - replace_leading_whitespace
     - str_extract_num
