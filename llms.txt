@@ -290,6 +290,8 @@ Post-processing functions for display formatting
   : Conditional reformatting of a pre-populated string of numbers
 - [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
   : Apply row masks to blank repeated row labels
+- [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+  : Extract a display-ready frame from a build result
 - [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
   : Collapse row labels into a single column
 - [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md)

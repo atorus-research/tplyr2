@@ -543,11 +543,11 @@ kable(tplyr_numeric_data(result, layer = 1))
 kable(tplyr_numeric_data(result, layer = 2))
 ```
 
-| TRT01P | n | mean | sd | median | var | min | max | iqr | q1 | q3 | missing | total | pct |
-|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Placebo | 86 | 75.20930 | 8.590167 | 76.0 | 73.79097 | 52 | 89 | 12.50 | 69.25 | 81.75 | 0 | 86 | 100 |
-| Xanomeline High Dose | 84 | 74.38095 | 7.886094 | 76.0 | 62.19048 | 56 | 88 | 9.25 | 70.75 | 80.00 | 0 | 84 | 100 |
-| Xanomeline Low Dose | 84 | 75.66667 | 8.286051 | 77.5 | 68.65863 | 51 | 88 | 11.00 | 71.00 | 82.00 | 0 | 84 | 100 |
+| TRT01P | n | n_records | mean | sd | median | var | min | max | iqr | q1 | q3 | missing | total | pct |
+|:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| Placebo | 86 | 86 | 75.20930 | 8.590167 | 76.0 | 73.79097 | 52 | 89 | 12.50 | 69.25 | 81.75 | 0 | 86 | 100 |
+| Xanomeline High Dose | 84 | 84 | 74.38095 | 7.886094 | 76.0 | 62.19048 | 56 | 88 | 9.25 | 70.75 | 80.00 | 0 | 84 | 100 |
+| Xanomeline Low Dose | 84 | 84 | 75.66667 | 8.286051 | 77.5 | 68.65863 | 51 | 88 | 11.00 | 71.00 | 82.00 | 0 | 84 | 100 |
 
 This gives you the exact counts, percentages, means, and every other
 computed statistic in raw numeric form, keyed by the same grouping

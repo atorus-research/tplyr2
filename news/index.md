@@ -5,6 +5,24 @@
 ### New features
 
 - New
+  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+  helper returning a display-ready frame — the `rowlabel*`, `res*`, and
+  `rdiff*` columns only, with the internal `ord*` (and `row_id`) columns
+  dropped, ready to hand to a table-rendering package (#36). Pass
+  `labels = TRUE` to rename the result columns to their column-group
+  header labels.
+- New `n_records` descriptive statistic keyword for
+  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  — the number of records assessed (non-missing + missing), for tables
+  that report an `n` of records/subjects assessed rather than the
+  non-missing analysis count (#34). The existing `n` (non-missing)
+  keyword is unchanged.
+- New `denom_row` setting for shift layers — emits the
+  per-baseline-group denominator (the `shift_denom = "column"`
+  denominator) as an integer `n` row above the shift-to rows, instead of
+  forcing callers to recompute it (#35). The label defaults to `"n"`
+  (`denom_row_label`).
+- New
   [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
   for count and shift layers — an omnibus association-test column (#37).
   It runs a caller-supplied function once per `by` group over the raw
@@ -47,6 +65,13 @@
 
 ### Bug fixes
 
+- [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+  `missing_count` now always emits the Missing row when set,
+  zero-filling every column/by group that has no missing values, so the
+  row reads `0 ( 0%)` throughout instead of being dropped (when the
+  total missing count is zero) or leaving empty cells (when only some
+  columns have missings) (#33). Matches classic Tplyr
+  `set_missing_count()`.
 - `group_shift(shift_denom = "column")` with a `by` variable now scopes
   the column (from-group) denominator within each by-group instead of
   pooling it across them (#28). A shift-by-visit table now gets

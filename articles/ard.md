@@ -168,23 +168,23 @@ kable(head(desc_ard, 20))
 | 19  |           2 | Placebo              | NA  | n         |  86.000000 |
 | 20  |           2 | Xanomeline High Dose | NA  | n         |  84.000000 |
 | 21  |           2 | Xanomeline Low Dose  | NA  | n         |  84.000000 |
-| 22  |           2 | Placebo              | NA  | mean      |  75.209302 |
-| 23  |           2 | Xanomeline High Dose | NA  | mean      |  74.380952 |
-| 24  |           2 | Xanomeline Low Dose  | NA  | mean      |  75.666667 |
-| 25  |           2 | Placebo              | NA  | sd        |   8.590167 |
-| 26  |           2 | Xanomeline High Dose | NA  | sd        |   7.886094 |
-| 27  |           2 | Xanomeline Low Dose  | NA  | sd        |   8.286051 |
-| 28  |           2 | Placebo              | NA  | median    |  76.000000 |
-| 29  |           2 | Xanomeline High Dose | NA  | median    |  76.000000 |
-| 30  |           2 | Xanomeline Low Dose  | NA  | median    |  77.500000 |
-| 31  |           2 | Placebo              | NA  | var       |  73.790971 |
-| 32  |           2 | Xanomeline High Dose | NA  | var       |  62.190476 |
-| 33  |           2 | Xanomeline Low Dose  | NA  | var       |  68.658635 |
-| 34  |           2 | Placebo              | NA  | min       |  52.000000 |
-| 35  |           2 | Xanomeline High Dose | NA  | min       |  56.000000 |
-| 36  |           2 | Xanomeline Low Dose  | NA  | min       |  51.000000 |
-| 37  |           2 | Placebo              | NA  | max       |  89.000000 |
-| 38  |           2 | Xanomeline High Dose | NA  | max       |  88.000000 |
+| 22  |           2 | Placebo              | NA  | n_records |  86.000000 |
+| 23  |           2 | Xanomeline High Dose | NA  | n_records |  84.000000 |
+| 24  |           2 | Xanomeline Low Dose  | NA  | n_records |  84.000000 |
+| 25  |           2 | Placebo              | NA  | mean      |  75.209302 |
+| 26  |           2 | Xanomeline High Dose | NA  | mean      |  74.380952 |
+| 27  |           2 | Xanomeline Low Dose  | NA  | mean      |  75.666667 |
+| 28  |           2 | Placebo              | NA  | sd        |   8.590167 |
+| 29  |           2 | Xanomeline High Dose | NA  | sd        |   7.886094 |
+| 30  |           2 | Xanomeline Low Dose  | NA  | sd        |   8.286051 |
+| 31  |           2 | Placebo              | NA  | median    |  76.000000 |
+| 32  |           2 | Xanomeline High Dose | NA  | median    |  76.000000 |
+| 33  |           2 | Xanomeline Low Dose  | NA  | median    |  77.500000 |
+| 34  |           2 | Placebo              | NA  | var       |  73.790971 |
+| 35  |           2 | Xanomeline High Dose | NA  | var       |  62.190476 |
+| 36  |           2 | Xanomeline Low Dose  | NA  | var       |  68.658635 |
+| 37  |           2 | Placebo              | NA  | min       |  52.000000 |
+| 38  |           2 | Xanomeline High Dose | NA  | min       |  56.000000 |
 
 This is one of the key advantages of the ARD format: it preserves every
 computed value, not just those that appear in the formatted output.

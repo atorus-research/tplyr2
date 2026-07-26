@@ -231,53 +231,58 @@ reference them by name in your format strings.</p>
 <td><code>length(x[!is.na(x)])</code></td>
 </tr>
 <tr class="even">
+<td><code>n_records</code></td>
+<td>Records assessed (incl. missing analysis values)</td>
+<td><code>length(x)</code></td>
+</tr>
+<tr class="odd">
 <td><code>mean</code></td>
 <td>Arithmetic mean</td>
 <td><code>mean(x, na.rm = TRUE)</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>sd</code></td>
 <td>Standard deviation</td>
 <td><code>sd(x, na.rm = TRUE)</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>median</code></td>
 <td>Median</td>
 <td><code>median(x, na.rm = TRUE)</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>var</code></td>
 <td>Variance</td>
 <td><code>var(x, na.rm = TRUE)</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>min</code></td>
 <td>Minimum</td>
 <td>
 <code>min(x)</code> of finite values</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>max</code></td>
 <td>Maximum</td>
 <td>
 <code>max(x)</code> of finite values</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>iqr</code></td>
 <td>Interquartile range</td>
 <td><code>IQR(x, type = ...)</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>q1</code></td>
 <td>First quartile (25th percentile)</td>
 <td><code>quantile(x, 0.25, type = ...)</code></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td><code>q3</code></td>
 <td>Third quartile (75th percentile)</td>
 <td><code>quantile(x, 0.75, type = ...)</code></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code>missing</code></td>
 <td>Missing count</td>
 <td><code>sum(is.na(x))</code></td>

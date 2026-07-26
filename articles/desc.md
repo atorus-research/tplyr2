@@ -80,19 +80,20 @@ every
 [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
 layer – you simply reference them by name in your format strings.
 
-| Statistic | Description                      | Details                         |
-|-----------|----------------------------------|---------------------------------|
-| `n`       | Non-missing count                | `length(x[!is.na(x)])`          |
-| `mean`    | Arithmetic mean                  | `mean(x, na.rm = TRUE)`         |
-| `sd`      | Standard deviation               | `sd(x, na.rm = TRUE)`           |
-| `median`  | Median                           | `median(x, na.rm = TRUE)`       |
-| `var`     | Variance                         | `var(x, na.rm = TRUE)`          |
-| `min`     | Minimum                          | `min(x)` of finite values       |
-| `max`     | Maximum                          | `max(x)` of finite values       |
-| `iqr`     | Interquartile range              | `IQR(x, type = ...)`            |
-| `q1`      | First quartile (25th percentile) | `quantile(x, 0.25, type = ...)` |
-| `q3`      | Third quartile (75th percentile) | `quantile(x, 0.75, type = ...)` |
-| `missing` | Missing count                    | `sum(is.na(x))`                 |
+| Statistic | Description | Details |
+|----|----|----|
+| `n` | Non-missing count | `length(x[!is.na(x)])` |
+| `n_records` | Records assessed (incl. missing analysis values) | `length(x)` |
+| `mean` | Arithmetic mean | `mean(x, na.rm = TRUE)` |
+| `sd` | Standard deviation | `sd(x, na.rm = TRUE)` |
+| `median` | Median | `median(x, na.rm = TRUE)` |
+| `var` | Variance | `var(x, na.rm = TRUE)` |
+| `min` | Minimum | `min(x)` of finite values |
+| `max` | Maximum | `max(x)` of finite values |
+| `iqr` | Interquartile range | `IQR(x, type = ...)` |
+| `q1` | First quartile (25th percentile) | `quantile(x, 0.25, type = ...)` |
+| `q3` | Third quartile (75th percentile) | `quantile(x, 0.75, type = ...)` |
+| `missing` | Missing count | `sum(is.na(x))` |
 
 A few important notes about these built-in summaries:
 

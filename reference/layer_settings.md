@@ -12,6 +12,8 @@ layer_settings(
   stat_columns = NULL,
   denoms_by = NULL,
   shift_denom = "total",
+  denom_row = FALSE,
+  denom_row_label = "n",
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -76,6 +78,19 @@ layer_settings(
   within the from group" shift display; the header `(N=)` labels then
   reflect the per-column-group denominators. Ignored when `denoms_by` is
   set (which specifies the grouping explicitly).
+
+- denom_row:
+
+  Logical, shift layers only. When `TRUE`, emit the per-column-group
+  denominator (the same `total` used for the percentages) as an integer
+  row above the shift-to rows — the "n" row of a threshold/normal-range
+  shift table. Pairs naturally with `shift_denom = "column"`. Defaults
+  to `FALSE`.
+
+- denom_row_label:
+
+  Character string, the row label for the `denom_row` row. Defaults to
+  `"n"`.
 
 - denom_where:
 
@@ -212,6 +227,8 @@ settings are applicable for each of the four layer types:
 | `stat_columns`             | X     |      |       |         |
 | `denoms_by`                | X     | X    | X     |         |
 | `shift_denom`              |       |      | X     |         |
+| `denom_row`                |       |      | X     |         |
+| `denom_row_label`          |       |      | X     |         |
 | `denom_where`              | X     | X    | X     |         |
 | `denom_ignore`             | X     |      | X     |         |
 | `distinct_by`              | X     |      | X     |         |

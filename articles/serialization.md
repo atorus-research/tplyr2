@@ -228,6 +228,8 @@ cat(json_content, sep = "\n")
 #>       "layer_type": "count",
 #>       "settings": {
 #>         "shift_denom": "total",
+#>         "denom_row": false,
+#>         "denom_row_label": "n",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,
@@ -266,6 +268,8 @@ cat(json_content, sep = "\n")
 #>           }
 #>         },
 #>         "shift_denom": "total",
+#>         "denom_row": false,
+#>         "denom_row_label": "n",
 #>         "total_row": false,
 #>         "total_row_label": "Total",
 #>         "total_row_count_missings": true,

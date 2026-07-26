@@ -1061,10 +1061,11 @@ Every tplyr2 build retains unformatted numeric data as an attribute. Use
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Raw numeric data for the desc layer (layer 2)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="../reference/tplyr_numeric_data.html">tplyr_numeric_data</a></span><span class="op">(</span><span class="va">result</span>, layer <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<table style="width:100%;" class="table">
+<table class="table">
 <colgroup>
-<col width="20%">
+<col width="18%">
 <col width="2%">
+<col width="8%">
 <col width="8%">
 <col width="8%">
 <col width="6%">
@@ -1081,6 +1082,7 @@ Every tplyr2 build retains unformatted numeric data as an attribute. Use
 <thead><tr class="header">
 <th align="left">TRT01P</th>
 <th align="right">n</th>
+<th align="right">n_records</th>
 <th align="right">mean</th>
 <th align="right">sd</th>
 <th align="right">median</th>
@@ -1098,6 +1100,7 @@ Every tplyr2 build retains unformatted numeric data as an attribute. Use
 <tr class="odd">
 <td align="left">Placebo</td>
 <td align="right">86</td>
+<td align="right">86</td>
 <td align="right">75.20930</td>
 <td align="right">8.590167</td>
 <td align="right">76.0</td>
@@ -1114,6 +1117,7 @@ Every tplyr2 build retains unformatted numeric data as an attribute. Use
 <tr class="even">
 <td align="left">Xanomeline High Dose</td>
 <td align="right">84</td>
+<td align="right">84</td>
 <td align="right">74.38095</td>
 <td align="right">7.886094</td>
 <td align="right">76.0</td>
@@ -1129,6 +1133,7 @@ Every tplyr2 build retains unformatted numeric data as an attribute. Use
 </tr>
 <tr class="odd">
 <td align="left">Xanomeline Low Dose</td>
+<td align="right">84</td>
 <td align="right">84</td>
 <td align="right">75.66667</td>
 <td align="right">8.286051</td>
