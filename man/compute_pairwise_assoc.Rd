@@ -34,7 +34,10 @@ distinct counts/denominators when non-NULL.}
 }
 \value{
 A data.table with one row per target level per comparison, holding
-the row variables, \code{.comp_idx}, and the scalar p-value \code{p}.
+the row variables, \code{.comp_idx}, and the formatted display string
+\code{.disp}. Numeric \code{fn} returns are formatted with
+\code{config$format}; a character \code{fn} return is passed through
+verbatim (issue #47); \code{NA} and a zero denominator render a blank.
 }
 \description{
 For each comparison arm and each target-variable level, builds a 2x2

@@ -15,13 +15,19 @@ assoc_test(
 \arguments{
 \item{fn}{A function of one argument. In omnibus mode it is called with the
 source-data subset (a data.frame) for a single \code{by} group; in pairwise
-mode it is called with a 2x2 numeric matrix (see Details). It must return a
-single numeric value (typically a p-value). Return \code{NA} to render a
-blank.}
+mode it is called with a 2x2 numeric matrix (see Details). It returns a
+single value that is rendered into the cell one of two ways: a
+\strong{numeric} (typically a p-value) is formatted with \code{format}, or a
+\strong{character} string is passed through \emph{verbatim} -- letting the
+function that computes an arbitrary test also supply the finished display,
+e.g. a significance flag (\code{"0.031*"}), a ceiling/floor
+(\code{">.99"}, \code{"<.0001"}), or a sentinel (\code{"NE"}). Return
+\code{NA} (numeric or character) to render a blank.}
 
-\item{format}{An \code{\link{f_str}} object formatting the returned value.
-The f_str must reference a single variable (any name; the returned scalar
-is passed positionally). Defaults to \code{f_str("x.xxx", "p")}.}
+\item{format}{An \code{\link{f_str}} object formatting a \strong{numeric}
+return; it is ignored when \code{fn} returns a character string. The f_str
+must reference a single variable (any name; the returned scalar is passed
+positionally). Defaults to \code{f_str("x.xxx", "p")}.}
 
 \item{label}{Character string used as the result column's header label. In
 pairwise mode it may be a vector with one entry per comparison (or a single
@@ -67,7 +73,9 @@ comparison) pair, a 2x2 contingency \strong{matrix}
 rows are (reference, comparison) arm, columns are (event, no event) -- where
 \code{n} is the cell count and \code{N} the population denominator for that
 arm. When the layer sets \code{distinct_by}, the distinct counts/denominators
-are used. \code{fn} must return a scalar p-value (\code{NA} renders a blank).
+are used. \code{fn} returns a scalar p-value -- numeric (formatted with
+\code{format}) or a verbatim character display string (\code{NA} renders a
+blank).
 
 Attach it to a layer via
 \code{layer_settings(assoc_test = assoc_test(...))}.

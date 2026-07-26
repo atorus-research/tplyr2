@@ -21,6 +21,6 @@ empty, a single-row table with only \code{.assoc_p}.
 }
 \description{
 Runs \code{config$fn} once per \code{by} group over the source-data subset
-for that group, and returns the formatted scalar keyed by the by variables.
+for that group, and returns the display string keyed by the by variables.
 }
 \keyword{internal}

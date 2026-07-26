@@ -24,19 +24,27 @@
 #' rows are (reference, comparison) arm, columns are (event, no event) -- where
 #' \code{n} is the cell count and \code{N} the population denominator for that
 #' arm. When the layer sets \code{distinct_by}, the distinct counts/denominators
-#' are used. \code{fn} must return a scalar p-value (\code{NA} renders a blank).
+#' are used. \code{fn} returns a scalar p-value -- numeric (formatted with
+#' \code{format}) or a verbatim character display string (\code{NA} renders a
+#' blank).
 #'
 #' Attach it to a layer via
 #' \code{layer_settings(assoc_test = assoc_test(...))}.
 #'
 #' @param fn A function of one argument. In omnibus mode it is called with the
 #'   source-data subset (a data.frame) for a single \code{by} group; in pairwise
-#'   mode it is called with a 2x2 numeric matrix (see Details). It must return a
-#'   single numeric value (typically a p-value). Return \code{NA} to render a
-#'   blank.
-#' @param format An \code{\link{f_str}} object formatting the returned value.
-#'   The f_str must reference a single variable (any name; the returned scalar
-#'   is passed positionally). Defaults to \code{f_str("x.xxx", "p")}.
+#'   mode it is called with a 2x2 numeric matrix (see Details). It returns a
+#'   single value that is rendered into the cell one of two ways: a
+#'   \strong{numeric} (typically a p-value) is formatted with \code{format}, or a
+#'   \strong{character} string is passed through \emph{verbatim} -- letting the
+#'   function that computes an arbitrary test also supply the finished display,
+#'   e.g. a significance flag (\code{"0.031*"}), a ceiling/floor
+#'   (\code{">.99"}, \code{"<.0001"}), or a sentinel (\code{"NE"}). Return
+#'   \code{NA} (numeric or character) to render a blank.
+#' @param format An \code{\link{f_str}} object formatting a \strong{numeric}
+#'   return; it is ignored when \code{fn} returns a character string. The f_str
+#'   must reference a single variable (any name; the returned scalar is passed
+#'   positionally). Defaults to \code{f_str("x.xxx", "p")}.
 #' @param label Character string used as the result column's header label. In
 #'   pairwise mode it may be a vector with one entry per comparison (or a single
 #'   value recycled across comparisons); \code{NULL} generates a default
@@ -144,10 +152,40 @@ print.tplyr_assoc_test <- function(x, ...) {
   invisible(x)
 }
 
+#' Render an \code{assoc_test} \code{fn} return value for display
+#'
+#' Turns a single value returned by a caller-supplied \code{fn} into the string
+#' shown in the \code{pval} cell:
+#' \itemize{
+#'   \item a length-1 \strong{numeric} (or logical) is formatted with
+#'     \code{config$format}; \code{NA} renders a blank;
+#'   \item a length-1 \strong{character} is passed through verbatim (issue #47),
+#'     so a caller computing an arbitrary test can also supply the finished
+#'     display (significance flags, \code{">.99"}/\code{"<.0001"} ceilings,
+#'     \code{"NE"} sentinels, trailing-space alignment); \code{NA_character_}
+#'     renders a blank;
+#'   \item anything else (wrong length, non-atomic) renders a blank.
+#' }
+#'
+#' @param raw The raw value returned by \code{fn} (already wrapped so errors
+#'   arrive as \code{NA}).
+#' @param format An \code{\link{f_str}} object used for numeric returns.
+#' @return A length-1 character display string.
+#' @keywords internal
+format_assoc_return <- function(raw, format) {
+  if (length(raw) != 1) return("")
+  if (is.character(raw)) return(if (is.na(raw)) "" else raw)
+  if (is.numeric(raw) || is.logical(raw)) {
+    if (is.na(raw)) return("")
+    return(apply_formats(format, as.numeric(raw)))
+  }
+  ""
+}
+
 #' Compute the association-test result per by-group
 #'
 #' Runs \code{config$fn} once per \code{by} group over the source-data subset
-#' for that group, and returns the formatted scalar keyed by the by variables.
+#' for that group, and returns the display string keyed by the by variables.
 #'
 #' @param source_dt data.table of source rows for the layer (after any layer
 #'   \code{where}), holding the \code{cols}, \code{by}, and target/row variables.
@@ -160,22 +198,17 @@ print.tplyr_assoc_test <- function(x, ...) {
 #' @keywords internal
 compute_assoc_test <- function(source_dt, by_data_vars, config) {
   run_one <- function(sub) {
-    p <- tryCatch(config$fn(as.data.frame(sub)), error = function(e) NA_real_)
-    if (length(p) != 1 || !is.numeric(p)) p <- NA_real_
-    as.numeric(p)
+    raw <- tryCatch(config$fn(as.data.frame(sub)), error = function(e) NA_real_)
+    format_assoc_return(raw, config$format)
   }
 
   if (length(by_data_vars) > 0) {
-    res <- source_dt[, list(.p = run_one(.SD)), by = by_data_vars]
+    res <- source_dt[, list(.assoc_p = run_one(.SD)), by = by_data_vars]
     for (bv in by_data_vars) res[, (bv) := as.character(get(bv))]
   } else {
-    res <- data.table::data.table(.p = run_one(source_dt))
+    res <- data.table::data.table(.assoc_p = run_one(source_dt))
   }
 
-  res[, .assoc_p := apply_formats(config$format, .p)]
-  # Blank out NA results (apply_formats renders NA as spaces)
-  res[is.na(.p), .assoc_p := ""]
-  res[, .p := NULL]
   res
 }
 
@@ -261,7 +294,10 @@ resolve_assoc_reference <- function(config, dt, cols) {
 #' @param reference Character(1) resolved reference arm level.
 #'
 #' @return A data.table with one row per target level per comparison, holding
-#'   the row variables, \code{.comp_idx}, and the scalar p-value \code{p}.
+#'   the row variables, \code{.comp_idx}, and the formatted display string
+#'   \code{.disp}. Numeric \code{fn} returns are formatted with
+#'   \code{config$format}; a character \code{fn} return is passed through
+#'   verbatim (issue #47); \code{NA} and a zero denominator render a blank.
 #' @keywords internal
 compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
                                    distinct_by, config, reference) {
@@ -279,12 +315,11 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
   run_one <- function(n_ref, n_cmp, N_ref, N_cmp) {
     if (is.na(n_ref) || is.na(n_cmp) || is.na(N_ref) || is.na(N_cmp) ||
         N_ref == 0 || N_cmp == 0) {
-      return(NA_real_)
+      return("")
     }
     m <- matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)
-    p <- tryCatch(config$fn(m), error = function(e) NA_real_)
-    if (length(p) != 1 || !is.numeric(p)) p <- NA_real_
-    as.numeric(p)
+    raw <- tryCatch(config$fn(m), error = function(e) NA_real_)
+    format_assoc_return(raw, config$format)
   }
 
   ref_dt <- counts_long[get(col_var) == reference,
@@ -299,14 +334,14 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
 
     paired <- merge(ref_dt, cmp_dt, by = row_vars, all = TRUE)
 
-    p_vec <- map_dbl(seq_len(nrow(paired)), function(r) {
+    disp_vec <- map_chr(seq_len(nrow(paired)), function(r) {
       run_one(paired$n_ref[r], paired$n_cmp[r],
               paired$N_ref[r], paired$N_cmp[r])
     })
 
     cbind(
       paired[, row_vars, with = FALSE],
-      data.table::data.table(.comp_idx = ci_idx, p = p_vec)
+      data.table::data.table(.comp_idx = ci_idx, .disp = disp_vec)
     )
   })
 
@@ -363,9 +398,8 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
 
     sub <- assoc_data[.comp_idx == ci_idx]
     if (nrow(sub) > 0) {
-      sub[, .fmt := apply_formats(config$format, p)]
-      sub[is.na(p), .fmt := ""]
-
+      # .disp already carries the formatted (numeric) or verbatim (character)
+      # display string from compute_pairwise_assoc().
       wide_join_cols <- tv_label_col
       sub_join_cols <- tv
       if (length(by_data_vars) > 0) {
@@ -380,7 +414,7 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
       }
 
       on_clause <- setNames(sub_join_cols, wide_join_cols)
-      wide[sub, (pcol) := i..fmt, on = on_clause]
+      wide[sub, (pcol) := i..disp, on = on_clause]
       wide[is.na(get(pcol)), (pcol) := ""]
     }
 
