@@ -34,6 +34,7 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  assoc_test = NULL,
   pct_lt = NULL,
   pct_gt = NULL,
   zero_count_display = "full",
@@ -164,6 +165,13 @@ layer_settings(
 
   List with risk difference configuration
 
+- assoc_test:
+
+  A
+  [`assoc_test`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  object attaching an omnibus association-test p-value column (count and
+  shift layers).
+
 - pct_lt:
 
   Numeric less-than threshold for count-layer percents. A cell with a
@@ -226,6 +234,7 @@ settings are applicable for each of the four layer types:
 | `result_order_var`         | X     |      |       |         |
 | `outer_sort_position`      | X     |      |       |         |
 | `risk_diff`                | X     |      |       |         |
+| `assoc_test`               | X     |      | X     |         |
 | `pct_lt`                   | X     |      |       |         |
 | `pct_gt`                   | X     |      |       |         |
 | `zero_count_display`       | X     |      |       |         |

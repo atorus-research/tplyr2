@@ -127,6 +127,15 @@ return a single-row data.frame of named numeric values. Each format string
 entry becomes one output row, with its name used as the row label.</p>
 <p>If no <code>format_strings</code> are provided, <code>analyze_fn</code> must return a
 data.frame with <code>row_label</code> and <code>formatted</code> columns.</p>
+<p>Note that <code>analyze_fn</code> is called once per <code>cols</code> x <code>by</code>
+combination, so it only ever sees a single treatment column at a time — it
+cannot compute a statistic <em>across</em> the treatment columns. For an
+omnibus association test that spans the columns (e.g. Fisher's exact or CMH
+on a count/shift layer), see <code><a href="assoc_test.html">assoc_test</a></code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="assoc_test.html">assoc_test</a></code> for cross-column association tests.</p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

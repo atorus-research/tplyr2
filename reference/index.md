@@ -31,6 +31,8 @@ Creating layers and adding them to a spec
   : Create a text label for use in by parameters
 - [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
   : Create layer settings
+- [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  : Association-test column for count and shift layers
 
 ## Formatting
 

@@ -31,6 +31,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_precision_cap.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_total_groups.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/assoc_test.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_analyze_layer.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_analyze_row_labels.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/build_cell_metadata.html</loc></url>
@@ -57,6 +58,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/complete_counts.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/complete_nested_level.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/complete_shift_counts.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_assoc_test.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_count_sort_keys.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_counts.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_subjects.html</loc></url>
@@ -101,6 +103,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_missing_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_not_in_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_not_na_filter.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_assoc_column.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_risk_diff_columns.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_group.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_part.html</loc></url>

@@ -4,6 +4,15 @@
 
 ### New features
 
+- New
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  for count and shift layers — an omnibus association-test column (#37).
+  It runs a caller-supplied function once per `by` group over the raw
+  source-data subset for that group (all `cols` levels), so a Fisher’s
+  exact or CMH test can tabulate across the treatment columns, and lands
+  the formatted result as a single trailing `pval1` column (one value
+  per by-group, on the group’s first row). Attach via
+  `layer_settings(assoc_test = ...)`.
 - New `shift_denom` setting for shift layers (#18).
   `shift_denom = "column"` computes percentages column-wise — out of
   each shift column group (the “from”/baseline group) within the

@@ -58,3 +58,15 @@ entry becomes one output row, with its name used as the row label.
 
 If no `format_strings` are provided, `analyze_fn` must return a
 data.frame with `row_label` and `formatted` columns.
+
+Note that `analyze_fn` is called once per `cols` x `by` combination, so
+it only ever sees a single treatment column at a time — it cannot
+compute a statistic *across* the treatment columns. For an omnibus
+association test that spans the columns (e.g. Fisher's exact or CMH on a
+count/shift layer), see
+[`assoc_test`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md).
+
+## See also
+
+[`assoc_test`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+for cross-column association tests.
