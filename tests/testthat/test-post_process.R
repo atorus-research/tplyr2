@@ -364,3 +364,24 @@ test_that("replace_leading_whitespace vector input", {
   result <- replace_leading_whitespace(c("  a", " b", "c"))
   expect_equal(result, c("\u00a0\u00a0a", "\u00a0b", "c"))
 })
+
+# Issue #36: as_display() strips internal columns
+test_that("as_display keeps display columns and drops ord/row_id", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("SEX", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))),
+    data.frame(TRT = rep(c("A", "B"), 3), SEX = rep(c("F", "M"), 3)),
+    metadata = TRUE)
+  disp <- as_display(b)
+  expect_false(any(grepl("^ord", names(disp))))
+  expect_false("row_id" %in% names(disp))
+  expect_true(all(c("rowlabel1", "res1", "res2") %in% names(disp)))
+
+  labelled <- as_display(b, labels = TRUE)
+  expect_false(any(grepl("^res\\d+$", names(labelled))))
+  expect_true(any(grepl("\\(N=", names(labelled))))
+})
+
+test_that("as_display errors on a non-data.frame", {
+  expect_error(as_display(list(1, 2)), "data.frame")
+})

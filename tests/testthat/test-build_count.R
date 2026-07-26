@@ -531,3 +531,31 @@ test_that("special rows sort after normal rows (Missing before Total)", {
   expect_equal(labs[(length(labs) - 1):length(labs)], c("Missing", "Total"))
   expect_true(which(labs == "Missing") < which(labs == "Total"))
 })
+
+# Issue #33: missing_count always emits a zero-filled Missing row
+test_that("missing_count shows a zero-filled Missing row when there are no missings", {
+  d <- data.frame(TRT = rep(c("A", "B"), each = 4),
+                  V = c("Completed","Completed","Early","Early",
+                        "Completed","Completed","Completed","Early"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")),
+      missing_count = list(label = "Missing"))))), d)
+  miss <- b[b$rowlabel1 == "Missing", ]
+  expect_equal(nrow(miss), 1)
+  expect_equal(trimws(miss$res1), "0 (  0%)")
+  expect_equal(trimws(miss$res2), "0 (  0%)")
+})
+
+test_that("missing_count zero-fills columns with no missings when only some have them", {
+  d <- data.frame(TRT = rep(c("A", "B"), each = 4),
+                  V = c("Completed", NA, "Early", "Early",
+                        "Completed","Completed","Completed","Early"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")),
+      missing_count = list(label = "Missing"))))), d)
+  miss <- b[b$rowlabel1 == "Missing", ]
+  expect_equal(trimws(miss$res1), "1 ( 25%)")   # A has one missing
+  expect_equal(trimws(miss$res2), "0 (  0%)")   # B has none -> zero-filled
+})

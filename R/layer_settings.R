@@ -14,6 +14,8 @@
 #' | `stat_columns` | X | | | |
 #' | `denoms_by` | X | X | X | |
 #' | `shift_denom` | | | X | |
+#' | `denom_row` | | | X | |
+#' | `denom_row_label` | | | X | |
 #' | `denom_where` | X | X | X | |
 #' | `denom_ignore` | X | | X | |
 #' | `distinct_by` | X | | X | |
@@ -66,6 +68,13 @@
 #'   which is the standard "% within the from group" shift display; the header
 #'   \code{(N=)} labels then reflect the per-column-group denominators. Ignored
 #'   when \code{denoms_by} is set (which specifies the grouping explicitly).
+#' @param denom_row Logical, shift layers only. When \code{TRUE}, emit the
+#'   per-column-group denominator (the same \code{total} used for the
+#'   percentages) as an integer row above the shift-to rows — the "n" row of a
+#'   threshold/normal-range shift table. Pairs naturally with
+#'   \code{shift_denom = "column"}. Defaults to \code{FALSE}.
+#' @param denom_row_label Character string, the row label for the \code{denom_row}
+#'   row. Defaults to \code{"n"}.
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting
@@ -109,6 +118,8 @@ layer_settings <- function(
     stat_columns = NULL,
     denoms_by = NULL,
     shift_denom = "total",
+    denom_row = FALSE,
+    denom_row_label = "n",
     denom_where = NULL,
     denom_ignore = NULL,
     distinct_by = NULL,
@@ -145,6 +156,8 @@ layer_settings <- function(
       stat_columns = stat_columns,
       denoms_by = denoms_by,
       shift_denom = shift_denom,
+      denom_row = denom_row,
+      denom_row_label = denom_row_label,
       denom_where = denom_where,
       denom_ignore = denom_ignore,
       distinct_by = distinct_by,

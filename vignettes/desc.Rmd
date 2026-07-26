@@ -63,6 +63,7 @@ tplyr2 provides a set of built-in summary statistics that cover the most common 
 | Statistic | Description | Details |
 |-----------|-------------|---------|
 | `n` | Non-missing count | `length(x[!is.na(x)])` |
+| `n_records` | Records assessed (incl. missing analysis values) | `length(x)` |
 | `mean` | Arithmetic mean | `mean(x, na.rm = TRUE)` |
 | `sd` | Standard deviation | `sd(x, na.rm = TRUE)` |
 | `median` | Median | `median(x, na.rm = TRUE)` |

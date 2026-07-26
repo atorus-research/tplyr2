@@ -528,3 +528,15 @@ test_that("serialization roundtrips missing_count with an f_str format", {
   spec2 <- tplyr_read_spec(path)
   expect_s3_class(spec2$layers[[1]]$settings$missing_count$format, "tplyr_f_str")
 })
+
+# Issue #35: denom_row settings survive serialization
+test_that("JSON roundtrip preserves denom_row / denom_row_label", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "BR", column = "AR"), settings = layer_settings(
+      shift_denom = "column", denom_row = TRUE, denom_row_label = "N assessed"))))
+  path <- file.path(scratch_dir, "denom_row.json")
+  tplyr_write_spec(spec, path)
+  s <- tplyr_read_spec(path)$layers[[1]]$settings
+  expect_true(s$denom_row)
+  expect_equal(s$denom_row_label, "N assessed")
+})

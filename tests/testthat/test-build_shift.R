@@ -445,3 +445,25 @@ test_that("group_shift honors pct_lt threshold", {
   hcol <- rc[1]
   expect_true(any(grepl("<1", b[[hcol]])))
 })
+
+# Issue #35: denom_row emits the per-column-group denominator as an integer row
+test_that("group_shift denom_row emits an n row above the shift-to rows", {
+  df <- data.frame(
+    TRTP = factor(rep("A", 12), levels = "A"),
+    BNRIND = factor(c(rep("N", 8), rep("H", 4)), levels = c("N", "H")),
+    ANRIND = factor(c("N","N","H","N","N","N","H","H","H","N","H","H"), levels = c("N", "H")))
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_shift(c(row = "ANRIND", column = "BNRIND"), settings = layer_settings(
+      shift_denom = "column", denom_row = TRUE,
+      format_strings = list(n_counts = f_str("xx (xxx%)", "n", "pct")))))), df)
+  # Capture labels before row subsetting (which drops column attributes)
+  rc <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(rc, function(c) attr(b[[c]], "label"), character(1))
+  n_col <- rc[grepl("\\| N ", labs)]
+  h_col <- rc[grepl("\\| H ", labs)]
+  b <- b[order(b$ord_layer_1), ]
+  # First row is the denom row, labelled "n", with the baseline group sizes
+  expect_equal(b$rowlabel1[1], "n")
+  expect_equal(trimws(b[[n_col]][1]), "8")
+  expect_equal(trimws(b[[h_col]][1]), "4")
+})

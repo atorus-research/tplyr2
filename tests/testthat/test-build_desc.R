@@ -720,3 +720,18 @@ test_that("desc by-group order respects a VARN companion column", {
   # AVISITN orders Baseline(0) < Week 2(2) < Week 12(12)
   expect_equal(b$rowlabel1, c("Baseline", "Week 2", "Week 12"))
 })
+
+# Issue #34: n_records statistic counts all assessed records (incl. missing values)
+test_that("n_records counts all records while n counts non-missing", {
+  d <- data.frame(TRTP = c("Placebo","Placebo","Placebo","Placebo","Drug","Drug","Drug"),
+                  CHG = c(-2, 3, NA, 5, 10, NA, NA), ALL = "x")
+  b <- tplyr_build(tplyr_spec(cols = "ALL", layers = tplyr_layers(
+    group_desc("CHG", by = "TRTP", settings = layer_settings(
+      format_strings = list(n = f_str("xx", "n"), nrec = f_str("xx", "n_records")))))), d)
+  b <- b[order(b$ord_layer_1, b$rowlabel1), ]
+  n_row   <- b[b$rowlabel2 == "n", ]
+  rec_row <- b[b$rowlabel2 == "nrec", ]
+  expect_equal(trimws(n_row$res1[n_row$rowlabel1 == "Placebo"]), "3")
+  expect_equal(trimws(rec_row$res1[rec_row$rowlabel1 == "Placebo"]), "4")
+  expect_equal(trimws(rec_row$res1[rec_row$rowlabel1 == "Drug"]), "3")
+})

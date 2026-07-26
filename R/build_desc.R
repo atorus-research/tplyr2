@@ -61,7 +61,8 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     v_clean <- v[!is.na(v)]
     v_finite <- v_clean[is.finite(v_clean)]
     list(
-      n       = length(v_clean),
+      n         = length(v_clean),
+      n_records = length(v),
       mean    = if (length(v_clean) > 0) mean(v_clean, na.rm = TRUE) else NA_real_,
       sd      = if (length(v_clean) > 1) sd(v_clean, na.rm = TRUE) else NA_real_,
       median  = if (length(v_clean) > 0) median(v_clean, na.rm = TRUE) else NA_real_,

@@ -143,6 +143,28 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
     }
   }
 
+  # --- Denominator row (#35) ---
+  # Emit the per-column-group denominator (the `total` already computed) as an
+  # integer row above the shift-to rows. One value per column group per by
+  # group; sorts to the top (.row_order = 0).
+  if (isTRUE(settings$denom_row)) {
+    denom_label <- settings$denom_row_label %||% "n"
+    dr <- unique(counts[, c(all_cols, by_data_vars, "total"), with = FALSE])
+    dr[, (row_var) := denom_label]
+    fmt_w <- max(nchar(counts[["formatted"]]), na.rm = TRUE)
+    dr[, formatted := formatC(total, format = "d", width = fmt_w)]
+    build_shift_row_labels(dr, by_labels, by_data_vars, row_var)
+    dr[, .row_order := 0L]
+    for (bv in by_data_vars) {
+      if (is.factor(dt[[bv]])) {
+        dr[, str_c(".by_order_", bv) := match(get(bv), levels(dt[[bv]]))]
+      }
+    }
+    shared <- intersect(names(counts), names(dr))
+    dr <- dr[, shared, with = FALSE]
+    counts <- data.table::rbindlist(list(dr, counts), use.names = TRUE, fill = TRUE)
+  }
+
   # --- Cast to wide format ---
   # Include .row_order in row labels for dcast, then remove after
   order_cols <- str_subset(names(counts), "^\\.row_order$|^\\.by_order_")

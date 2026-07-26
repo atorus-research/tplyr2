@@ -9,6 +9,8 @@ layer_settings(
   stat_columns = NULL,
   denoms_by = NULL,
   shift_denom = "total",
+  denom_row = FALSE,
+  denom_row_label = "n",
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -64,6 +66,15 @@ each shift \emph{column} group (the "from"/baseline group) within the arm,
 which is the standard "\% within the from group" shift display; the header
 \code{(N=)} labels then reflect the per-column-group denominators. Ignored
 when \code{denoms_by} is set (which specifies the grouping explicitly).}
+
+\item{denom_row}{Logical, shift layers only. When \code{TRUE}, emit the
+per-column-group denominator (the same \code{total} used for the
+percentages) as an integer row above the shift-to rows — the "n" row of a
+threshold/normal-range shift table. Pairs naturally with
+\code{shift_denom = "column"}. Defaults to \code{FALSE}.}
+
+\item{denom_row_label}{Character string, the row label for the \code{denom_row}
+row. Defaults to \code{"n"}.}
 
 \item{denom_where}{Expression for separate denominator filter}
 
@@ -143,6 +154,8 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{stat_columns} \tab X \tab  \tab  \tab  \cr
    \code{denoms_by} \tab X \tab X \tab X \tab  \cr
    \code{shift_denom} \tab  \tab  \tab X \tab  \cr
+   \code{denom_row} \tab  \tab  \tab X \tab  \cr
+   \code{denom_row_label} \tab  \tab  \tab X \tab  \cr
    \code{denom_where} \tab X \tab X \tab X \tab  \cr
    \code{denom_ignore} \tab X \tab  \tab X \tab  \cr
    \code{distinct_by} \tab X \tab  \tab X \tab  \cr
