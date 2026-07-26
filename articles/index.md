@@ -42,6 +42,8 @@
   Difference](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md):
 - [Custom Analysis
   Layers](https://github.com/mstackhouse/tplyr2/articles/analyze.md):
+- [Comparative Statistics and Binding External
+  Results](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md):
 - [Spec
   Serialization](https://github.com/mstackhouse/tplyr2/articles/serialization.md):
 - [Analysis Results

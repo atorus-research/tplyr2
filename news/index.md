@@ -182,6 +182,19 @@
 
 ### Documentation
 
+- New vignette *“Comparative Statistics and Binding External Results”*
+  ([`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md))
+  — how to attach cross-arm comparisons
+  ([`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md),
+  `risk_diff`, single-proportion CIs) and how to bind
+  externally-computed model results (MMRM/ANCOVA/Cox/logistic p-values,
+  LS-means, CIs) onto an assembled table via
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  and
+  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),
+  plus where
+  [`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+  fits.
 - Clarified in
   [`?layer_settings`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
   and the denominators vignette that `denoms_by` **replaces** (does not

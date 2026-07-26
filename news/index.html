@@ -40,6 +40,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>Advanced</h6></li>
     <li><a class="dropdown-item" href="../articles/riskdiff.html">Risk Difference</a></li>
     <li><a class="dropdown-item" href="../articles/analyze.html">Custom Analysis Layers</a></li>
+    <li><a class="dropdown-item" href="../articles/binding-statistics.html">Comparative Statistics and Binding External Results</a></li>
     <li><a class="dropdown-item" href="../articles/serialization.html">Spec Serialization</a></li>
     <li><a class="dropdown-item" href="../articles/ard.html">Analysis Results Data</a></li>
     <li><hr class="dropdown-divider"></li>
@@ -109,7 +110,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>
-<ul><li>Clarified in <code><a href="../reference/layer_settings.html">?layer_settings</a></code> and the denominators vignette that <code>denoms_by</code> <strong>replaces</strong> (does not augment) the default <code>cols</code>-based denominator grouping, so you must include the <code>cols</code> variable(s) to get per-column denominators (#19).</li>
+<ul><li>New vignette <em>“Comparative Statistics and Binding External Results”</em> (<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code>) — how to attach cross-arm comparisons (<code><a href="../reference/assoc_test.html">assoc_test()</a></code>, <code>risk_diff</code>, single-proportion CIs) and how to bind externally-computed model results (MMRM/ANCOVA/Cox/logistic p-values, LS-means, CIs) onto an assembled table via <code><a href="../reference/apply_formats.html">apply_formats()</a></code> and <code><a href="../reference/as_display.html">as_display()</a></code>, plus where <code><a href="../reference/group_analyze.html">group_analyze()</a></code> fits.</li>
+<li>Clarified in <code><a href="../reference/layer_settings.html">?layer_settings</a></code> and the denominators vignette that <code>denoms_by</code> <strong>replaces</strong> (does not augment) the default <code>cols</code>-based denominator grouping, so you must include the <code>cols</code> variable(s) to get per-column denominators (#19).</li>
 </ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
