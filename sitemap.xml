@@ -63,6 +63,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_count_sort_keys.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_counts.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_subjects.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_risk_diff.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_total_row.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_var_order.html</loc></url>
@@ -105,6 +106,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_not_in_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_not_na_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_assoc_column.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_pairwise_assoc.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_risk_diff_columns.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_group.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_part.html</loc></url>
@@ -114,6 +116,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/reconstruct_layer_from_ard.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/rename_ord_columns.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/resolve_assoc_reference.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/resolve_pop_cols.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/resolve_precision.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/serializable_to_spec.html</loc></url>

@@ -5,7 +5,7 @@ Validate a single layer
 ## Usage
 
 ``` r
-validate_layer(layer, index)
+validate_layer(layer, index, cols = NULL)
 ```
 
 ## Arguments
@@ -17,6 +17,12 @@ validate_layer(layer, index)
 - index:
 
   Integer layer index (for error messages)
+
+- cols:
+
+  Character vector of spec column variables (for cross-checks such as
+  pairwise assoc_test); may be NULL when validating a layer in
+  isolation.
 
 ## Value
 
