@@ -33,6 +33,7 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  assoc_test = NULL,
   pct_lt = NULL,
   pct_gt = NULL,
   zero_count_display = "full",
@@ -120,6 +121,9 @@ row. Defaults to \code{"n"}.}
 
 \item{risk_diff}{List with risk difference configuration}
 
+\item{assoc_test}{A \code{\link{assoc_test}} object attaching an omnibus
+association-test p-value column (count and shift layers).}
+
 \item{pct_lt}{Numeric less-than threshold for count-layer percents. A cell
 with a nonzero count whose percent would display below this value renders
 the percent as \code{"<"} followed by the threshold (e.g. \code{pct_lt = 1}
@@ -178,6 +182,7 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{result_order_var} \tab X \tab  \tab  \tab  \cr
    \code{outer_sort_position} \tab X \tab  \tab  \tab  \cr
    \code{risk_diff} \tab X \tab  \tab  \tab  \cr
+   \code{assoc_test} \tab X \tab  \tab X \tab  \cr
    \code{pct_lt} \tab X \tab  \tab  \tab  \cr
    \code{pct_gt} \tab X \tab  \tab  \tab  \cr
    \code{zero_count_display} \tab X \tab  \tab  \tab  \cr

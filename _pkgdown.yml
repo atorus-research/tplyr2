@@ -31,6 +31,7 @@ reference:
     - group_analyze
     - label
     - layer_settings
+    - assoc_test
 
 - title: Formatting
   desc: Controlling the display of numeric results

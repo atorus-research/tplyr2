@@ -385,3 +385,19 @@ test_that("as_display keeps display columns and drops ord/row_id", {
 test_that("as_display errors on a non-data.frame", {
   expect_error(as_display(list(1, 2)), "data.frame")
 })
+
+# as_display keeps the assoc_test p-value column (#36 + #37 integration)
+test_that("as_display retains the pval column from assoc_test", {
+  d <- data.frame(TRT = factor(rep(c("A", "B"), each = 10)),
+                  G = factor(rep(c("g1", "g2"), 10)),
+                  RESP = factor(rep(c("N", "H"), 10)))
+  at <- assoc_test(fn = function(.d) fisher.test(table(.d$TRT, .d$RESP))$p.value,
+                   label = "p-value")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", by = "G", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d)
+  disp <- as_display(b)
+  expect_true("pval1" %in% names(disp))
+  labelled <- as_display(b, labels = TRUE)
+  expect_true("p-value" %in% names(labelled))
+})

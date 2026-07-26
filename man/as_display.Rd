@@ -9,8 +9,8 @@ as_display(x, labels = FALSE)
 \arguments{
 \item{x}{A data.frame produced by \code{\link{tplyr_build}}.}
 
-\item{labels}{Logical. When \code{TRUE}, the \code{res*} / \code{rdiff*}
-columns are renamed to their column-group header labels (their \code{label}
+\item{labels}{Logical. When \code{TRUE}, the \code{res*} / \code{rdiff*} /
+\code{pval*} columns are renamed to their header labels (their \code{label}
 attribute, as returned by \code{\link{get_data_labels}}); the row-label
 columns keep their names. Defaults to \code{FALSE}.}
 }
@@ -19,11 +19,11 @@ A data.frame of display columns.
 }
 \description{
 Returns just the display content of a \code{\link{tplyr_build}} result — the
-\code{rowlabel*}, \code{res*}, and \code{rdiff*} columns — and drops the
-internal ordering helpers (\code{ord_layer_index}, \code{ord_layer_*}) and
-the \code{row_id} metadata column, giving a frame ready to hand to a
-table-rendering package (clinify, flextable, gt, ...). The build output is
-already ordered, so no re-sorting is performed.
+\code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns — and
+drops the internal ordering helpers (\code{ord_layer_index},
+\code{ord_layer_*}) and the \code{row_id} metadata column, giving a frame
+ready to hand to a table-rendering package (clinify, flextable, gt, ...). The
+build output is already ordered, so no re-sorting is performed.
 }
 \examples{
 spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("SEX")))

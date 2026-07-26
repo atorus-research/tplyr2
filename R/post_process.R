@@ -528,15 +528,15 @@ replace_leading_whitespace <- function(x, replace_with = "\u00a0") {
 #' Extract a display-ready frame from a build result
 #'
 #' Returns just the display content of a \code{\link{tplyr_build}} result — the
-#' \code{rowlabel*}, \code{res*}, and \code{rdiff*} columns — and drops the
-#' internal ordering helpers (\code{ord_layer_index}, \code{ord_layer_*}) and
-#' the \code{row_id} metadata column, giving a frame ready to hand to a
-#' table-rendering package (clinify, flextable, gt, ...). The build output is
-#' already ordered, so no re-sorting is performed.
+#' \code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns — and
+#' drops the internal ordering helpers (\code{ord_layer_index},
+#' \code{ord_layer_*}) and the \code{row_id} metadata column, giving a frame
+#' ready to hand to a table-rendering package (clinify, flextable, gt, ...). The
+#' build output is already ordered, so no re-sorting is performed.
 #'
 #' @param x A data.frame produced by \code{\link{tplyr_build}}.
-#' @param labels Logical. When \code{TRUE}, the \code{res*} / \code{rdiff*}
-#'   columns are renamed to their column-group header labels (their \code{label}
+#' @param labels Logical. When \code{TRUE}, the \code{res*} / \code{rdiff*} /
+#'   \code{pval*} columns are renamed to their header labels (their \code{label}
 #'   attribute, as returned by \code{\link{get_data_labels}}); the row-label
 #'   columns keep their names. Defaults to \code{FALSE}.
 #'
@@ -552,11 +552,11 @@ as_display <- function(x, labels = FALSE) {
     stop("`x` must be a data.frame produced by tplyr_build()", call. = FALSE)
   }
 
-  keep <- str_detect(names(x), "^rowlabel\\d+$|^res\\d+$|^rdiff\\d+$")
+  keep <- str_detect(names(x), "^rowlabel\\d+$|^res\\d+$|^rdiff\\d+$|^pval\\d+$")
   out <- x[, names(x)[keep], drop = FALSE]
 
   if (isTRUE(labels)) {
-    res_cols <- str_subset(names(out), "^res\\d+$|^rdiff\\d+$")
+    res_cols <- str_subset(names(out), "^res\\d+$|^rdiff\\d+$|^pval\\d+$")
     for (col in res_cols) {
       lbl <- attr(x[[col]], "label")
       if (!is.null(lbl) && !is.na(lbl) && nzchar(lbl)) {

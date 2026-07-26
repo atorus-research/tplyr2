@@ -131,7 +131,14 @@ group_shift <- function(target_var, by = NULL, where = NULL, settings = layer_se
 #' If no \code{format_strings} are provided, \code{analyze_fn} must return a
 #' data.frame with \code{row_label} and \code{formatted} columns.
 #'
+#' Note that \code{analyze_fn} is called once per \code{cols} x \code{by}
+#' combination, so it only ever sees a single treatment column at a time — it
+#' cannot compute a statistic \emph{across} the treatment columns. For an
+#' omnibus association test that spans the columns (e.g. Fisher's exact or CMH
+#' on a count/shift layer), see \code{\link{assoc_test}}.
+#'
 #' @return A tplyr_analyze_layer object
+#' @seealso \code{\link{assoc_test}} for cross-column association tests.
 #' @export
 group_analyze <- function(target_var, by = NULL, where = NULL,
                           analyze_fn, settings = layer_settings()) {

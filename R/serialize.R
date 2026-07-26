@@ -182,6 +182,16 @@ serialize_settings <- function(settings) {
     }
   }
 
+  # assoc_test: function + f_str format + label
+  if (!is.null(settings$assoc_test)) {
+    at <- settings$assoc_test
+    out$assoc_test <- list(
+      fn = serialize_function(at$fn),
+      format = serialize_f_str(at$format),
+      label = at$label
+    )
+  }
+
   # missing_count: list with optional f_str format
   if (!is.null(settings$missing_count)) {
     mc <- settings$missing_count
@@ -448,6 +458,15 @@ deserialize_settings <- function(raw) {
   # Reconstruct risk_diff format
   if (!is.null(raw$risk_diff) && !is.null(raw$risk_diff$format)) {
     raw$risk_diff$format <- deserialize_f_str(raw$risk_diff$format)
+  }
+
+  # Reconstruct assoc_test
+  if (!is.null(raw$assoc_test)) {
+    raw$assoc_test <- assoc_test(
+      fn = deserialize_function(raw$assoc_test$fn),
+      format = deserialize_f_str(raw$assoc_test$format),
+      label = raw$assoc_test$label
+    )
   }
 
   # Reconstruct missing_count format
