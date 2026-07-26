@@ -129,6 +129,12 @@ validate_layer <- function(layer, index) {
          call. = FALSE)
   }
 
+  if (!is.null(layer$settings$assoc_test) &&
+      !inherits(layer$settings$assoc_test, "tplyr_assoc_test")) {
+    stop(str_glue("Layer {index}: assoc_test must be an assoc_test() object"),
+         call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 

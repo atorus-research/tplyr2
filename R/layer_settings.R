@@ -36,6 +36,7 @@
 #' | `result_order_var` | X | | | |
 #' | `outer_sort_position` | X | | | |
 #' | `risk_diff` | X | | | |
+#' | `assoc_test` | X | | X | |
 #' | `pct_lt` | X | | | |
 #' | `pct_gt` | X | | | |
 #' | `zero_count_display` | X | | | |
@@ -88,6 +89,8 @@
 #' @param result_order_var Character, which result variable for ordering
 #' @param outer_sort_position Character, outer sort direction
 #' @param risk_diff List with risk difference configuration
+#' @param assoc_test A \code{\link{assoc_test}} object attaching an omnibus
+#'   association-test p-value column (count and shift layers).
 #' @param pct_lt Numeric less-than threshold for count-layer percents. A cell
 #'   with a nonzero count whose percent would display below this value renders
 #'   the percent as \code{"<"} followed by the threshold (e.g. \code{pct_lt = 1}
@@ -131,6 +134,7 @@ layer_settings <- function(
     result_order_var = NULL,
     outer_sort_position = NULL,
     risk_diff = NULL,
+    assoc_test = NULL,
     pct_lt = NULL,
     pct_gt = NULL,
     zero_count_display = "full",
@@ -167,6 +171,7 @@ layer_settings <- function(
       result_order_var = result_order_var,
       outer_sort_position = outer_sort_position,
       risk_diff = risk_diff,
+      assoc_test = assoc_test,
       pct_lt = pct_lt,
       pct_gt = pct_gt,
       zero_count_display = zero_count_display,

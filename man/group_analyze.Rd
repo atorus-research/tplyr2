@@ -46,4 +46,13 @@ entry becomes one output row, with its name used as the row label.
 
 If no \code{format_strings} are provided, \code{analyze_fn} must return a
 data.frame with \code{row_label} and \code{formatted} columns.
+
+Note that \code{analyze_fn} is called once per \code{cols} x \code{by}
+combination, so it only ever sees a single treatment column at a time — it
+cannot compute a statistic \emph{across} the treatment columns. For an
+omnibus association test that spans the columns (e.g. Fisher's exact or CMH
+on a count/shift layer), see \code{\link{assoc_test}}.
+}
+\seealso{
+\code{\link{assoc_test}} for cross-column association tests.
 }
