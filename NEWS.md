@@ -21,6 +21,16 @@
   exact or CMH test can tabulate across the treatment columns, and lands the
   formatted result as a single trailing `pval1` column (one value per by-group,
   on the group's first row). Attach via `layer_settings(assoc_test = ...)`.
+- `assoc_test()` gains a pairwise / per-level mode for count layers (#40).
+  Supplying `comparisons` (with an optional `reference`, defaulting to the first
+  `cols` level) compares the reference arm to each named arm and emits one
+  `pval` column per comparison, each with a value on every target-level row
+  (like `risk_diff`'s `rdiff` columns) — the standard AE-by-SOC/PT layout. In
+  this mode the caller-supplied `fn` receives a 2x2 incidence matrix
+  `matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)` (distinct
+  counts/denominators when `distinct_by` is set) and returns a scalar p-value,
+  so any test — `fisher.test`, and beyond — can be used. `label` may be a
+  per-comparison vector; the default is `"<reference> vs <comparison>"`.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard

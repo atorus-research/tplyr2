@@ -2,44 +2,89 @@
 % Please edit documentation in R/assoc_test.R
 \name{assoc_test}
 \alias{assoc_test}
-\title{Association-test column for count and shift layers}
+\title{Association-test column(s) for count and shift layers}
 \usage{
-assoc_test(fn, format = f_str("x.xxx", "p"), label = "p-value")
+assoc_test(
+  fn,
+  format = f_str("x.xxx", "p"),
+  label = NULL,
+  reference = NULL,
+  comparisons = NULL
+)
 }
 \arguments{
-\item{fn}{A function of one argument. It is called with the source-data
-subset (a data.frame) for a single \code{by} group and must return a single
-numeric value (typically a p-value). Return \code{NA} to render a blank.}
+\item{fn}{A function of one argument. In omnibus mode it is called with the
+source-data subset (a data.frame) for a single \code{by} group; in pairwise
+mode it is called with a 2x2 numeric matrix (see Details). It must return a
+single numeric value (typically a p-value). Return \code{NA} to render a
+blank.}
 
 \item{format}{An \code{\link{f_str}} object formatting the returned value.
 The f_str must reference a single variable (any name; the returned scalar
 is passed positionally). Defaults to \code{f_str("x.xxx", "p")}.}
 
-\item{label}{Character string used as the result column's header label.
-Defaults to \code{"p-value"}.}
+\item{label}{Character string used as the result column's header label. In
+pairwise mode it may be a vector with one entry per comparison (or a single
+value recycled across comparisons); \code{NULL} generates a default
+\code{"<reference> vs <comparison>"} label per comparison. In omnibus mode
+defaults to \code{"p-value"}.}
+
+\item{reference}{Pairwise mode only. Character(1) naming the reference arm
+level of the first \code{cols} variable. \code{NULL} (default) uses that
+variable's first level at build time.}
+
+\item{comparisons}{Pairwise mode only. A character vector (or list of single
+levels) of arm levels, each compared to \code{reference} (e.g.
+\code{c("Low", "High")}). Supplying this switches on pairwise/per-level
+mode; \code{NULL} (default) keeps omnibus mode.}
 }
 \value{
 A \code{tplyr_assoc_test} object.
 }
 \description{
-Configures an omnibus association test that runs once per \code{by} group,
-\emph{across} the treatment columns, and lands its formatted result as a
-single trailing column beside the n(\\%) block. The supplied function receives
+Configures an association test and lands its formatted result beside the
+n(\\%) block. Two modes are supported, selected by whether \code{comparisons}
+is supplied:
+}
+\details{
+\strong{Omnibus mode} (\code{comparisons = NULL}, the default). Runs
+\code{fn} once per \code{by} group, \emph{across} the treatment columns, and
+lands its result as a single trailing column. The supplied function receives
 the raw source-data subset for the \code{by} group (all \code{cols} levels
 and all target/row levels), so a caller can tabulate and test naturally
 (e.g. \code{fisher.test(table(.data$TRT, .data$RESP))} or
-\code{coin::cmh_test(...)}).
-}
-\details{
-Attach it to a count or shift layer via
-\code{layer_settings(assoc_test = assoc_test(...))}. When the layer has no
-\code{by} variable the test runs once over the whole layer; otherwise once
-per \code{by} group, with the value placed on that group's first output row.
+\code{coin::cmh_test(...)}). When the layer has no \code{by} variable the
+test runs once over the whole layer; otherwise once per \code{by} group, with
+the value placed on that group's first output row.
+
+\strong{Pairwise / per-level mode} (\code{comparisons} non-\code{NULL}).
+Count layers only. Emits one \code{pval} column per comparison, each
+comparing an arm level of the first \code{cols} variable to \code{reference},
+with a value on \emph{every} target-level row (like \code{risk_diff}'s
+\code{rdiff} columns). Here \code{fn} receives, for one (target level,
+comparison) pair, a 2x2 contingency \strong{matrix}
+\code{matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)} --
+rows are (reference, comparison) arm, columns are (event, no event) -- where
+\code{n} is the cell count and \code{N} the population denominator for that
+arm. When the layer sets \code{distinct_by}, the distinct counts/denominators
+are used. \code{fn} must return a scalar p-value (\code{NA} renders a blank).
+
+Attach it to a layer via
+\code{layer_settings(assoc_test = assoc_test(...))}.
 }
 \examples{
+# Omnibus
 at <- assoc_test(
   fn = function(.data) fisher.test(table(.data$TRT, .data$RESP))$p.value,
   format = f_str("x.xxx", "p"),
   label = "p-value [1]"
+)
+
+# Pairwise per-level (count layer): Fisher on an incidence 2x2
+at2 <- assoc_test(
+  fn = function(m) fisher.test(m)$p.value,
+  reference = "Placebo",
+  comparisons = c("Low", "High"),
+  format = f_str("x.xxx", "p")
 )
 }
