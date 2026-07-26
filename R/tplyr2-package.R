@@ -7,7 +7,7 @@ NULL
 
 # Suppress R CMD check NOTEs for data.table column references
 utils::globalVariables(c(
-  ".", ".col_combo", ".comp_idx", ".idx", ".join_key", ".missing_sort",
+  ".", ".col_combo", ".comp_idx", ".disp", ".idx", ".join_key", ".missing_sort",
   ".nest_level", ".ord_tv", ".row_order", ".sort_inner", ".sort_key",
   ".sort_outer", ".total_sort", ".var_name",
   "analysis_id", "distinct_n", "distinct_pct", "distinct_total",

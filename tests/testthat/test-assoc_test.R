@@ -194,6 +194,83 @@ test_that("pairwise assoc_test reproduces the issue's Fisher p-values", {
   expect_equal(attr(b$pval2, "label"), "Placebo vs High")
 })
 
+test_that("format_assoc_return renders numeric, character, and blank returns", {
+  fmt <- f_str("x.xxx", "p")
+  # numeric -> formatted with the f_str
+  expect_equal(trimws(tplyr2:::format_assoc_return(0.0312, fmt)), "0.031")
+  # numeric NA -> blank
+  expect_identical(tplyr2:::format_assoc_return(NA_real_, fmt), "")
+  # character -> verbatim, format ignored (issue #47)
+  expect_identical(tplyr2:::format_assoc_return("0.031*", fmt), "0.031*")
+  expect_identical(tplyr2:::format_assoc_return(">.99", fmt), ">.99")
+  expect_identical(tplyr2:::format_assoc_return("NE", fmt), "NE")
+  expect_identical(tplyr2:::format_assoc_return("0.524 ", fmt), "0.524 ")
+  # character NA / logical NA -> blank
+  expect_identical(tplyr2:::format_assoc_return(NA_character_, fmt), "")
+  expect_identical(tplyr2:::format_assoc_return(NA, fmt), "")
+  # wrong length / empty -> blank
+  expect_identical(tplyr2:::format_assoc_return(c(1, 2), fmt), "")
+  expect_identical(tplyr2:::format_assoc_return(character(0), fmt), "")
+})
+
+test_that("pairwise assoc_test passes a character fn return through verbatim (#47)", {
+  dat <- .assoc_pairwise_data()
+  # AE-style display keyed on the raw p: '*' flag if p < .15, '>.99' ceiling,
+  # trailing space to align with flagged rows, blank when both arms have 0.
+  ae_disp <- function(m) {
+    if (sum(m[, 1]) == 0) return(NA_character_)
+    p <- fisher.test(m)$p.value
+    d <- formatC(round(p, 3), format = "f", digits = 3)
+    if (p > .99) ">.99" else if (p < .15) paste0(d, "*") else paste0(d, " ")
+  }
+  at <- assoc_test(
+    fn = ae_disp,
+    # format is intentionally different from the display to prove it is ignored
+    # for character returns
+    format = f_str("xxxxx", "p"),
+    reference = "Placebo", comparisons = c("Low", "High")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx", "distinct_n")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  disp <- as.data.frame(as_display(b))
+
+  hd <- disp[disp$rowlabel1 == "HEADACHE", ]
+  na <- disp[disp$rowlabel1 == "NAUSEA", ]
+  # p = 0.524 -> not flagged, trailing-space verbatim; p = 1.000 -> ">.99"
+  expect_identical(hd$pval1, "0.524 ")
+  expect_identical(hd$pval2, ">.99")
+  expect_identical(na$pval1, "0.524 ")
+  expect_identical(na$pval2, ">.99")
+})
+
+test_that("omnibus assoc_test passes a character fn return through verbatim (#47)", {
+  dat <- .assoc_pairwise_data()
+  at <- assoc_test(
+    fn = function(.data) {
+      p <- fisher.test(table(.data$TRT, .data$AEDECOD))$p.value
+      if (p > .99) ">.99" else paste0(formatC(p, format = "f", digits = 3), "*")
+    },
+    format = f_str("xxxxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(distinct_by = "USUBJID", assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  # the single omnibus value lands on the first row, verbatim
+  expect_true("pval1" %in% names(b))
+  first_val <- b$pval1[trimws(b$pval1) != ""][1]
+  expect_true(grepl("\\*$", first_val) || first_val == ">.99")
+})
+
 test_that("pairwise assoc_test respects custom labels and default reference", {
   dat <- .assoc_pairwise_data()
   # default reference = first level of TRT (factor level order)
@@ -331,16 +408,17 @@ test_that("compute_pairwise_assoc handles zero denominators and bad fn returns",
                    format = f_str("x.xxx", "p"))
   res <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
                                          character(0), NULL, at, "Placebo")
-  expect_true(is.na(res$p[res$AEDECOD == "A"]))
-  expect_false(is.na(res$p[res$AEDECOD == "B"]))
+  # Zero denominator -> blank display; valid cell -> formatted display
+  expect_identical(res$.disp[res$AEDECOD == "A"], "")
+  expect_true(trimws(res$.disp[res$AEDECOD == "B"]) != "")
 
-  # fn returning a non-scalar collapses to NA
+  # fn returning a non-scalar collapses to a blank
   at2 <- assoc_test(fn = function(m) c(1, 2),
                     reference = "Placebo", comparisons = "Low",
                     format = f_str("x.xxx", "p"))
   res2 <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
                                           character(0), NULL, at2, "Placebo")
-  expect_true(all(is.na(res2$p)))
+  expect_true(all(res2$.disp == ""))
 
   # resolve_assoc_reference guards against missing cols (no explicit reference)
   at_noref <- assoc_test(fn = function(m) 1, comparisons = "Low",

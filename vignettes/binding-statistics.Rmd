@@ -111,6 +111,29 @@ counts and denominators when `distinct_by` is set. Because it is just a matrix
 in and a scalar out, any 2x2 test (Fisher, chi-square, relative risk, ...)
 plugs in.
 
+**Returning the finished display string.** `fn` may return a **character**
+string instead of a number, and it is dropped into the cell verbatim (`format`
+then applies only to numeric returns). The function that computes the test can
+therefore also encode the display conventions clinical AE tables use — a
+significance flag, a `>.99`/`<.0001` ceiling, trailing-space alignment, or a
+`"NE"` sentinel — right where the raw p-value is in hand (`NA`, numeric or
+character, still renders a blank):
+
+```{r assoc-char, eval = FALSE}
+ae_pval <- function(m) {
+  if (sum(m[, 1]) == 0) return(NA_character_)          # both arms zero -> blank
+  p <- fisher.test(m)$p.value
+  d <- formatC(round(p, 3), format = "f", digits = 3)
+  if (p > .99) ">.99" else if (p < .15) paste0(d, "*") else paste0(d, " ")
+}
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+    assoc_test = assoc_test(fn = ae_pval,
+                            reference = "Placebo", comparisons = c("Low", "High"))))
+```
+
 ## Single-proportion confidence intervals
 
 Count layers can attach an exact or score confidence interval for each cell's
