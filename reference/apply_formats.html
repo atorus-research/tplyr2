@@ -82,7 +82,10 @@ returns a character vector of formatted strings.</p>
 <span>  precision <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  lt <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  gt <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  lt_gt_group <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  lt_gt_group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  width <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pad <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"right"</span>, <span class="st">"left"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -115,6 +118,26 @@ returns a character vector of formatted strings.</p>
 <dt id="arg-lt-gt-group">lt_gt_group<a class="anchor" aria-label="anchor" href="#arg-lt-gt-group"></a></dt>
 <dd><p>Optional integer index of the format group to which <code>lt</code>/<code>gt</code>
 apply (used by count layers to target the percent statistic). NULL disables.</p></dd>
+
+
+<dt id="arg-na">na<a class="anchor" aria-label="anchor" href="#arg-na"></a></dt>
+<dd><p>Optional string substituted for cells whose format-group inputs are
+all NA, used <em>instead of</em> the default blank-width fill. <code>na = ""</code> produces a
+truly empty cell (<code>nchar</code> 0); <code>na = "NE"</code> renders <code>"NE"</code>. The default <code>NULL</code>
+preserves the blank-width fill. This lets <code>apply_formats()</code> replace
+hand-rolled fixed-width formatters for externally row-bound statistics.</p></dd>
+
+
+<dt id="arg-width">width<a class="anchor" aria-label="anchor" href="#arg-width"></a></dt>
+<dd><p>Optional integer total width to pad each formatted token to,
+using <code><a href="https://stringr.tidyverse.org/reference/str_pad.html" class="external-link">stringr::str_pad()</a></code>. When the <code>na</code> substitution applies to a cell,
+<code>na</code> wins and that cell is <em>not</em> padded. The default <code>NULL</code> leaves tokens at
+their natural format width.</p></dd>
+
+
+<dt id="arg-pad">pad<a class="anchor" aria-label="anchor" href="#arg-pad"></a></dt>
+<dd><p>Side to pad on when <code>width</code> is set: <code>"right"</code> (default, trailing
+spaces) or <code>"left"</code> (leading spaces).</p></dd>
 
 </dl></div>
     <div class="section level2">

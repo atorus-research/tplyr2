@@ -4,6 +4,17 @@
 
 ### New features
 
+- [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  gains `na`, `width`, and `pad` arguments (#41). `na` is a string
+  substituted for cells whose format-group inputs are all NA, used
+  instead of the blank-width fill (`na = ""` yields a truly empty cell,
+  `nchar` 0; `na = "NE"` renders `"NE"`), letting
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  replace hand-rolled fixed-width formatters for externally row-bound
+  statistics. `width` pads each formatted token to a fixed total width
+  (`pad = "right"`/`"left"`); when the `na` substitution applies, it
+  wins and the cell is not padded. The defaults (`NULL`) preserve
+  existing behavior.
 - New
   [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
   helper returning a display-ready frame — the `rowlabel*`, `res*`, and
