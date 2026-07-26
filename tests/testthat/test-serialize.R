@@ -540,3 +540,30 @@ test_that("JSON roundtrip preserves denom_row / denom_row_label", {
   expect_true(s$denom_row)
   expect_equal(s$denom_row_label, "N assessed")
 })
+
+# --- Single-proportion CI settings roundtrip (#44) ---
+
+test_that("JSON roundtrip preserves ci_method / ci_level and CI keywords", {
+  spec <- tplyr_spec(
+    cols = "TRT",
+    layers = tplyr_layers(
+      group_count("VAL", settings = layer_settings(
+        distinct_by = "ID",
+        ci_method = "wilson",
+        ci_level = 0.90,
+        format_strings = list(n_counts = f_str(
+          "xx (xx.x%) [xx.x, xx.x]", "distinct_n", "distinct_pct",
+          "distinct_ci_lower", "distinct_ci_upper"))))
+    )
+  )
+  path <- file.path(scratch_dir, "count_ci.json")
+  tplyr_write_spec(spec, path)
+  spec2 <- tplyr_read_spec(path)
+
+  st <- spec2$layers[[1]]$settings
+  expect_equal(st$ci_method, "wilson")
+  expect_equal(st$ci_level, 0.90)
+  expect_equal(st$format_strings$n_counts$vars,
+               c("distinct_n", "distinct_pct", "distinct_ci_lower",
+                 "distinct_ci_upper"))
+})

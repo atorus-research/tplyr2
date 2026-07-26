@@ -139,6 +139,17 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     total_result <- NULL
   }
 
+  # --- Single-proportion confidence interval (computed lazily) ---
+  # Only when a format references a CI keyword. Applied to the main counts and
+  # every special-row table so a [CI] appears on Total/Missing rows just like
+  # pct does. Percentage scale (x100) to match pct/distinct_pct.
+  if (layer_uses_ci(settings)) {
+    add_count_ci(counts, settings)
+    add_count_ci(missing_row, settings)
+    add_count_ci(missing_subjects_row, settings)
+    add_count_ci(total_result, settings)
+  }
+
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
 
@@ -279,6 +290,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   pct_lt <- settings$pct_lt
   pct_gt <- settings$pct_gt
   zero_count_display <- settings$zero_count_display %||% "full"
+  uses_ci <- layer_uses_ci(settings)
 
   # Prepare denominator dataset (shared across levels)
   denom_dt <- data.table::copy(pop_dt %||% dt)
@@ -338,6 +350,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     counts <- complete_nested_level(counts, dt, cols, by_data_vars, level_tvs,
                                      limit_data_by, denom_group)
 
+    # Single-proportion confidence interval (lazy)
+    if (uses_ci) add_count_ci(counts, settings)
+
     # Format
     apply_count_formats(counts, fmts, pct_lt, pct_gt, zero_count_display)
 
@@ -383,6 +398,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     )
     missing_row <- missing_result$missing_row
 
+    if (uses_ci) add_count_ci(missing_row, settings)
     apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
 
     build_nested_row_labels_special(missing_row, by_labels, by_data_vars,
@@ -402,6 +418,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       total_missings, distinct_by, missing_count,
       get_nested_denom_group(settings$denoms_by, 1, cols), denom_dt
     )
+    if (uses_ci) add_count_ci(total_result, settings)
     apply_count_formats(total_result, fmts, pct_lt, pct_gt, zero_count_display)
 
     # Build row labels for total row

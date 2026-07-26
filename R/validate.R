@@ -135,6 +135,25 @@ validate_layer <- function(layer, index) {
          call. = FALSE)
   }
 
+  # Validate single-proportion CI settings (count layers)
+  ci_method <- layer$settings$ci_method
+  ci_methods <- c("clopper_pearson", "wilson", "wald", "agresti_coull",
+                  "jeffreys")
+  if (!is.null(ci_method) &&
+      (!is.character(ci_method) || length(ci_method) != 1 ||
+       !ci_method %in% ci_methods)) {
+    stop(str_glue("Layer {index}: ci_method must be one of ",
+                  "{str_c(ci_methods, collapse = ', ')}"),
+         call. = FALSE)
+  }
+  ci_level <- layer$settings$ci_level
+  if (!is.null(ci_level) &&
+      (!is.numeric(ci_level) || length(ci_level) != 1 ||
+       is.na(ci_level) || ci_level <= 0 || ci_level >= 1)) {
+    stop(str_glue("Layer {index}: ci_level must be a single number in (0, 1)"),
+         call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 
@@ -262,7 +281,8 @@ validate_build_data <- function(spec, dt) {
 #' @keywords internal
 validate_layer_stats <- function(layer, index) {
   count_stats <- c("n", "pct", "total", "distinct_n", "distinct_pct",
-                   "distinct_total")
+                   "distinct_total", "ci_lower", "ci_upper",
+                   "distinct_ci_lower", "distinct_ci_upper")
   desc_stats <- c("n", "n_records", "mean", "sd", "median", "var", "min", "max",
                   "iqr", "q1", "q3", "missing", "total", "pct")
 

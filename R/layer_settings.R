@@ -38,6 +38,8 @@
 #' | `result_order_var` | X | | | |
 #' | `outer_sort_position` | X | | | |
 #' | `risk_diff` | X | | | |
+#' | `ci_method` | X | | | |
+#' | `ci_level` | X | | | |
 #' | `assoc_test` | X | | X | |
 #' | `pct_lt` | X | | | |
 #' | `pct_gt` | X | | | |
@@ -98,6 +100,15 @@
 #' @param result_order_var Character, which result variable for ordering
 #' @param outer_sort_position Character, outer sort direction
 #' @param risk_diff List with risk difference configuration
+#' @param ci_method Method for the single-proportion confidence interval exposed
+#'   through the \code{ci_lower}/\code{ci_upper} (and
+#'   \code{distinct_ci_lower}/\code{distinct_ci_upper}) count-layer format
+#'   keywords. One of \code{"clopper_pearson"} (default, exact / SAS
+#'   \code{PROC FREQ EXACT} parity), \code{"wilson"} (score, matching
+#'   \code{stats::prop.test(correct = FALSE)}), \code{"wald"},
+#'   \code{"agresti_coull"}, or \code{"jeffreys"}. See \code{\link{proportion_ci}}.
+#' @param ci_level Numeric coverage probability for the single-proportion
+#'   confidence interval keywords. Defaults to \code{0.95}.
 #' @param assoc_test A \code{\link{assoc_test}} object attaching an omnibus
 #'   association-test p-value column (count and shift layers).
 #' @param pct_lt Numeric less-than threshold for count-layer percents. A cell
@@ -145,6 +156,9 @@ layer_settings <- function(
     result_order_var = NULL,
     outer_sort_position = NULL,
     risk_diff = NULL,
+    ci_method = c("clopper_pearson", "wilson", "wald", "agresti_coull",
+                  "jeffreys"),
+    ci_level = 0.95,
     assoc_test = NULL,
     pct_lt = NULL,
     pct_gt = NULL,
@@ -154,6 +168,7 @@ layer_settings <- function(
   zero_count_display <- match.arg(zero_count_display,
                                   c("full", "count_only", "blank"))
   shift_denom <- match.arg(shift_denom, c("total", "column"))
+  ci_method <- match.arg(ci_method)
   structure(
     list(
       format_strings = format_strings,
@@ -184,6 +199,8 @@ layer_settings <- function(
       result_order_var = result_order_var,
       outer_sort_position = outer_sort_position,
       risk_diff = risk_diff,
+      ci_method = ci_method,
+      ci_level = ci_level,
       assoc_test = assoc_test,
       pct_lt = pct_lt,
       pct_gt = pct_gt,

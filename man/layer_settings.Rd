@@ -33,6 +33,8 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  ci_method = c("clopper_pearson", "wilson", "wald", "agresti_coull", "jeffreys"),
+  ci_level = 0.95,
   assoc_test = NULL,
   pct_lt = NULL,
   pct_gt = NULL,
@@ -121,6 +123,17 @@ row. Defaults to \code{"n"}.}
 
 \item{risk_diff}{List with risk difference configuration}
 
+\item{ci_method}{Method for the single-proportion confidence interval exposed
+through the \code{ci_lower}/\code{ci_upper} (and
+\code{distinct_ci_lower}/\code{distinct_ci_upper}) count-layer format
+keywords. One of \code{"clopper_pearson"} (default, exact / SAS
+\code{PROC FREQ EXACT} parity), \code{"wilson"} (score, matching
+\code{stats::prop.test(correct = FALSE)}), \code{"wald"},
+\code{"agresti_coull"}, or \code{"jeffreys"}. See \code{\link{proportion_ci}}.}
+
+\item{ci_level}{Numeric coverage probability for the single-proportion
+confidence interval keywords. Defaults to \code{0.95}.}
+
 \item{assoc_test}{A \code{\link{assoc_test}} object attaching an omnibus
 association-test p-value column (count and shift layers).}
 
@@ -182,6 +195,8 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{result_order_var} \tab X \tab  \tab  \tab  \cr
    \code{outer_sort_position} \tab X \tab  \tab  \tab  \cr
    \code{risk_diff} \tab X \tab  \tab  \tab  \cr
+   \code{ci_method} \tab X \tab  \tab  \tab  \cr
+   \code{ci_level} \tab X \tab  \tab  \tab  \cr
    \code{assoc_test} \tab X \tab  \tab X \tab  \cr
    \code{pct_lt} \tab X \tab  \tab  \tab  \cr
    \code{pct_gt} \tab X \tab  \tab  \tab  \cr
