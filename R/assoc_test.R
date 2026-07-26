@@ -291,27 +291,23 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
                         c(row_vars, n_col, total_col), with = FALSE]
   data.table::setnames(ref_dt, c(n_col, total_col), c("n_ref", "N_ref"))
 
+  # A count layer always has a target variable, so row_vars is never empty.
   results <- imap(comparisons, function(cmp_level, ci_idx) {
     cmp_dt <- counts_long[get(col_var) == cmp_level,
                           c(row_vars, n_col, total_col), with = FALSE]
     data.table::setnames(cmp_dt, c(n_col, total_col), c("n_cmp", "N_cmp"))
 
-    if (length(row_vars) > 0) {
-      paired <- merge(ref_dt, cmp_dt, by = row_vars, all = TRUE)
-    } else {
-      paired <- cbind(ref_dt, cmp_dt)
-    }
+    paired <- merge(ref_dt, cmp_dt, by = row_vars, all = TRUE)
 
     p_vec <- map_dbl(seq_len(nrow(paired)), function(r) {
       run_one(paired$n_ref[r], paired$n_cmp[r],
               paired$N_ref[r], paired$N_cmp[r])
     })
 
-    out <- data.table::data.table(.comp_idx = ci_idx, p = p_vec)
-    if (length(row_vars) > 0) {
-      out <- cbind(paired[, row_vars, with = FALSE], out)
-    }
-    out
+    cbind(
+      paired[, row_vars, with = FALSE],
+      data.table::data.table(.comp_idx = ci_idx, p = p_vec)
+    )
   })
 
   data.table::rbindlist(results, fill = TRUE)

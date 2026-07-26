@@ -135,6 +135,23 @@ test_that("assoc_test constructor validates pairwise arguments", {
     assoc_test(fn = function(m) 1, comparisons = list(c("Low", "High"))),
     "single arm level"
   )
+  # omnibus label must be a single string
+  expect_error(assoc_test(fn = function(d) 1, label = c("a", "b")),
+               "single character string in omnibus")
+  # empty comparisons
+  expect_error(assoc_test(fn = function(m) 1, comparisons = character(0)),
+               "at least one arm level")
+  # reference must be scalar in pairwise mode
+  expect_error(
+    assoc_test(fn = function(m) 1, reference = c("A", "B"),
+               comparisons = "Low"),
+    "single arm level"
+  )
+  # comparisons supplied as a list of single levels normalizes to a vector
+  at_list <- assoc_test(fn = function(m) 1, reference = "Placebo",
+                        comparisons = list("Low", "High"))
+  expect_equal(at_list$comparisons, c("Low", "High"))
+
   # a valid pairwise object
   at <- assoc_test(fn = function(m) 1, reference = "Placebo",
                    comparisons = c("Low", "High"))
@@ -332,6 +349,34 @@ test_that("compute_pairwise_assoc handles zero denominators and bad fn returns",
     tplyr2:::resolve_assoc_reference(at_noref, data.frame(x = 1), character(0)),
     "at least one column variable"
   )
+
+  # compute_pairwise_assoc guards against missing cols
+  expect_error(
+    tplyr2:::compute_pairwise_assoc(counts, character(0), "AEDECOD",
+                                    character(0), NULL, at, "Placebo"),
+    "at least one column variable"
+  )
+})
+
+test_that("merge_pairwise_assoc emits blank labelled columns when there is no data", {
+  wide <- data.table::data.table(rowlabel1 = c("A", "B"), res1 = c("1", "2"))
+  at <- assoc_test(fn = function(m) 1, reference = "P",
+                   comparisons = c("Low", "High"), format = f_str("x.xxx", "p"))
+  tplyr2:::merge_pairwise_assoc(wide, NULL, at, "AEDECOD",
+                                character(0), character(0), "P")
+  expect_true(all(c("pval1", "pval2") %in% names(wide)))
+  expect_equal(attr(wide$pval1, "label"), "P vs Low")
+  expect_equal(attr(wide$pval2, "label"), "P vs High")
+  expect_true(all(wide$pval1 == "") && all(wide$pval2 == ""))
+
+  # No rowlabel columns present: returns early without error
+  wide2 <- data.table::data.table(res1 = "1")
+  ad <- data.table::data.table(.comp_idx = 1L, AEDECOD = "A", p = 0.5)
+  at1 <- assoc_test(fn = function(m) 1, reference = "P",
+                    comparisons = "Low", format = f_str("x.xxx", "p"))
+  out <- tplyr2:::merge_pairwise_assoc(wide2, ad, at1, "AEDECOD",
+                                       character(0), character(0), "P")
+  expect_identical(names(out), "res1")
 })
 
 test_that("pairwise assoc_test validation errors surface", {
