@@ -137,6 +137,12 @@
 
 ## Documentation
 
+- New vignette *"Comparative Statistics and Binding External Results"*
+  (`vignette("binding-statistics")`) — how to attach cross-arm comparisons
+  (`assoc_test()`, `risk_diff`, single-proportion CIs) and how to bind
+  externally-computed model results (MMRM/ANCOVA/Cox/logistic p-values,
+  LS-means, CIs) onto an assembled table via `apply_formats()` and
+  `as_display()`, plus where `group_analyze()` fits.
 - Clarified in `?layer_settings` and the denominators vignette that `denoms_by`
   **replaces** (does not augment) the default `cols`-based denominator
   grouping, so you must include the `cols` variable(s) to get per-column
