@@ -1,4 +1,4 @@
-# tplyr2 0.2.0.9000
+# tplyr2 0.2.0
 
 ## New features
 
@@ -15,19 +15,6 @@
   denominator (the `shift_denom = "column"` denominator) as an integer `n` row
   above the shift-to rows, instead of forcing callers to recompute it (#35).
   The label defaults to `"n"` (`denom_row_label`).
-
-## Bug fixes
-
-- `group_count()` `missing_count` now always emits the Missing row when set,
-  zero-filling every column/by group that has no missing values, so the row
-  reads `0 ( 0%)` throughout instead of being dropped (when the total missing
-  count is zero) or leaving empty cells (when only some columns have missings)
-  (#33). Matches classic Tplyr `set_missing_count()`.
-
-# tplyr2 0.2.0
-
-## New features
-
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard
@@ -57,6 +44,11 @@
 
 ## Bug fixes
 
+- `group_count()` `missing_count` now always emits the Missing row when set,
+  zero-filling every column/by group that has no missing values, so the row
+  reads `0 ( 0%)` throughout instead of being dropped (when the total missing
+  count is zero) or leaving empty cells (when only some columns have missings)
+  (#33). Matches classic Tplyr `set_missing_count()`.
 - `group_shift(shift_denom = "column")` with a `by` variable now scopes the
   column (from-group) denominator within each by-group instead of pooling it
   across them (#28). A shift-by-visit table now gets per-visit percentages.
