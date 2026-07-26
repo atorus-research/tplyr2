@@ -244,6 +244,13 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     )
   }
 
+  # --- Association-test p-value column (#37) ---
+  if (!is.null(settings$assoc_test)) {
+    assoc <- compute_assoc_test(dt, by_data_vars, settings$assoc_test)
+    by_rl_cols <- str_c("rowlabel", length(by_labels) + seq_along(by_data_vars))
+    merge_assoc_column(wide, assoc, by_rl_cols, by_data_vars, settings$assoc_test)
+  }
+
   # Attach numeric data snapshot
   data.table::setattr(wide, "numeric_data", as.data.frame(numeric_snapshot))
 

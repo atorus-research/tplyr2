@@ -1,3 +1,14 @@
+# tplyr2 0.2.0.9000
+
+## New features
+
+- New `assoc_test()` for count and shift layers — an omnibus association-test
+  column (#37). It runs a caller-supplied function once per `by` group over the
+  raw source-data subset for that group (all `cols` levels), so a Fisher's
+  exact or CMH test can tabulate across the treatment columns, and lands the
+  formatted result as a single trailing `pval1` column (one value per by-group,
+  on the group's first row). Attach via `layer_settings(assoc_test = ...)`.
+
 # tplyr2 0.2.0
 
 ## New features
