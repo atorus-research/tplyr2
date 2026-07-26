@@ -272,6 +272,68 @@ test_that("pairwise assoc_test blanks special (total) rows", {
   expect_equal(trimws(tot$pval2), "")
 })
 
+test_that("pairwise assoc_test places p-values per (by, level) with a by variable", {
+  set.seed(11)
+  d <- data.frame(
+    TRT = c(rep("Placebo", 8), rep("Active", 8)),
+    SOC = rep(c("CARDIAC", "GI"), each = 4, times = 2),
+    AEDECOD = rep(c("A", "B"), times = 8),
+    stringsAsFactors = FALSE
+  )
+  pop <- data.frame(TRT = c(rep("Placebo", 10), rep("Active", 10)),
+                    stringsAsFactors = FALSE)
+  # single label -> recycled across the (one) comparison
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    reference = "Placebo", comparisons = "Active",
+    format = f_str("x.xxx", "p"), label = "P vs A"
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD", by = "SOC",
+      settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx", "n")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, d, pop_data = pop)
+  expect_true("pval1" %in% names(b))
+  expect_equal(attr(b$pval1, "label"), "P vs A")
+  disp <- as.data.frame(as_display(b))
+  # a value on every target-level row (all SOC x PT combinations)
+  expect_true(all(trimws(disp$pval1) != ""))
+})
+
+test_that("compute_pairwise_assoc handles zero denominators and bad fn returns", {
+  counts <- data.table::data.table(
+    TRT = c("Placebo", "Low", "Placebo", "Low"),
+    AEDECOD = c("A", "A", "B", "B"),
+    n = c(2, 1, 1, 0), total = c(4, 0, 4, 5)  # A/Low has total 0 -> NA
+  )
+  at <- assoc_test(fn = function(m) fisher.test(m)$p.value,
+                   reference = "Placebo", comparisons = "Low",
+                   format = f_str("x.xxx", "p"))
+  res <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
+                                         character(0), NULL, at, "Placebo")
+  expect_true(is.na(res$p[res$AEDECOD == "A"]))
+  expect_false(is.na(res$p[res$AEDECOD == "B"]))
+
+  # fn returning a non-scalar collapses to NA
+  at2 <- assoc_test(fn = function(m) c(1, 2),
+                    reference = "Placebo", comparisons = "Low",
+                    format = f_str("x.xxx", "p"))
+  res2 <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
+                                          character(0), NULL, at2, "Placebo")
+  expect_true(all(is.na(res2$p)))
+
+  # resolve_assoc_reference guards against missing cols (no explicit reference)
+  at_noref <- assoc_test(fn = function(m) 1, comparisons = "Low",
+                         format = f_str("x.xxx", "p"))
+  expect_error(
+    tplyr2:::resolve_assoc_reference(at_noref, data.frame(x = 1), character(0)),
+    "at least one column variable"
+  )
+})
+
 test_that("pairwise assoc_test validation errors surface", {
   # no cols -> error at validate time
   at <- assoc_test(fn = function(m) 1, reference = "A",
