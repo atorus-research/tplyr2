@@ -9,7 +9,8 @@ assoc_test(
   format = f_str("x.xxx", "p"),
   label = NULL,
   reference = NULL,
-  comparisons = NULL
+  comparisons = NULL,
+  total_row = TRUE
 )
 }
 \arguments{
@@ -43,6 +44,12 @@ variable's first level at build time.}
 levels) of arm levels, each compared to \code{reference} (e.g.
 \code{c("Low", "High")}). Supplying this switches on pairwise/per-level
 mode; \code{NULL} (default) keeps omnibus mode.}
+
+\item{total_row}{Pairwise mode only. Logical(1); when the layer also emits a
+total row (\code{layer_settings(total_row = TRUE)}), \code{TRUE} (default)
+computes the pairwise p-value on that row too -- for a nested AE layer the
+grand-total ("any event anywhere") 2x2 -- while \code{FALSE} leaves it
+blank. Missing rows are always left blank.}
 }
 \value{
 A \code{tplyr_assoc_test} object.
@@ -67,7 +74,11 @@ the value placed on that group's first output row.
 Count layers only. Emits one \code{pval} column per comparison, each
 comparing an arm level of the first \code{cols} variable to \code{reference},
 with a value on \emph{every} target-level row (like \code{risk_diff}'s
-\code{rdiff} columns). Here \code{fn} receives, for one (target level,
+\code{rdiff} columns). On a \strong{nested} count layer it emits a value on
+every row of every level -- each inner (e.g. preferred-term) row and each
+outer (e.g. system-organ-class subtotal) row, each row's 2x2 built from that
+row's own counts -- and, when the layer has a total row, on the grand-total
+row too (see \code{total_row}). Here \code{fn} receives, for one (row,
 comparison) pair, a 2x2 contingency \strong{matrix}
 \code{matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)} --
 rows are (reference, comparison) arm, columns are (event, no event) -- where

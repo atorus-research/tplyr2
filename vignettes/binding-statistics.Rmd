@@ -111,6 +111,16 @@ counts and denominators when `distinct_by` is set. Because it is just a matrix
 in and a scalar out, any 2x2 test (Fisher, chi-square, relative risk, ...)
 plugs in.
 
+**Nested layers** — the AE-by-SOC/PT case — work the same way: give
+`group_count()` a nested target such as `c("AEBODSYS", "AEDECOD")` and the
+`pval` columns land on **every** row of **every** level. Each preferred-term row
+and each system-organ-class subtotal row gets its own 2x2, built from that row's
+counts (the subtotal uses the SOC-level "any event in that class" subject count)
+and the population denominators — the standard per-row Fisher column. When the
+layer carries a total row, the grand-total ("any event anywhere") p-value is
+computed too; pass `assoc_test(..., total_row = FALSE)` to leave it blank.
+Missing rows are always blank.
+
 **Returning the finished display string.** `fn` may return a **character**
 string instead of a number, and it is dropped into the cell verbatim (`format`
 then applies only to numeric returns). The function that computes the test can
