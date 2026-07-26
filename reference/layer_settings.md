@@ -36,6 +36,8 @@ layer_settings(
   result_order_var = NULL,
   outer_sort_position = NULL,
   risk_diff = NULL,
+  ci_method = c("clopper_pearson", "wilson", "wald", "agresti_coull", "jeffreys"),
+  ci_level = 0.95,
   assoc_test = NULL,
   pct_lt = NULL,
   pct_gt = NULL,
@@ -180,6 +182,22 @@ layer_settings(
 
   List with risk difference configuration
 
+- ci_method:
+
+  Method for the single-proportion confidence interval exposed through
+  the `ci_lower`/`ci_upper` (and
+  `distinct_ci_lower`/`distinct_ci_upper`) count-layer format keywords.
+  One of `"clopper_pearson"` (default, exact / SAS `PROC FREQ EXACT`
+  parity), `"wilson"` (score, matching
+  `stats::prop.test(correct = FALSE)`), `"wald"`, `"agresti_coull"`, or
+  `"jeffreys"`. See
+  [`proportion_ci`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md).
+
+- ci_level:
+
+  Numeric coverage probability for the single-proportion confidence
+  interval keywords. Defaults to `0.95`.
+
 - assoc_test:
 
   A
@@ -251,6 +269,8 @@ settings are applicable for each of the four layer types:
 | `result_order_var`         | X     |      |       |         |
 | `outer_sort_position`      | X     |      |       |         |
 | `risk_diff`                | X     |      |       |         |
+| `ci_method`                | X     |      |       |         |
+| `ci_level`                 | X     |      |       |         |
 | `assoc_test`               | X     |      | X     |         |
 | `pct_lt`                   | X     |      |       |         |
 | `pct_gt`                   | X     |      |       |         |

@@ -23,6 +23,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/authors.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/index.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/news/index.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/add_count_ci.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_count_formats.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/apply_custom_groups.html</loc></url>
@@ -100,6 +101,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/is_tplyr_spec.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/label.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/layer_settings.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/layer_uses_ci.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_eq_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_in_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_missing_filter.html</loc></url>
@@ -113,6 +115,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_string.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/pop_data.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/prepare_cast_column.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/proportion_ci.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/reconstruct_layer_from_ard.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/rename_ord_columns.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.html</loc></url>

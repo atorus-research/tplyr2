@@ -33,6 +33,8 @@ Creating layers and adding them to a spec
   : Create layer settings
 - [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
   : Association-test column(s) for count and shift layers
+- [`proportion_ci()`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md)
+  : Confidence interval for a single binomial proportion
 
 ## Formatting
 

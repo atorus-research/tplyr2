@@ -236,6 +236,8 @@ cat(json_content, sep = "\n")
 #>         "missing_subjects": false,
 #>         "missing_subjects_label": "Missing",
 #>         "stats_as_columns": false,
+#>         "ci_method": "clopper_pearson",
+#>         "ci_level": 0.95,
 #>         "zero_count_display": "full"
 #>       }
 #>     },
@@ -276,6 +278,8 @@ cat(json_content, sep = "\n")
 #>         "missing_subjects": false,
 #>         "missing_subjects_label": "Missing",
 #>         "stats_as_columns": false,
+#>         "ci_method": "clopper_pearson",
+#>         "ci_level": 0.95,
 #>         "zero_count_display": "full"
 #>       }
 #>     }

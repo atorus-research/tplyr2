@@ -4,6 +4,24 @@
 
 ### New features
 
+- New single-proportion confidence-interval statistic for count layers
+  (#44). Four `f_str` keywords — `ci_lower`/`ci_upper` (from
+  `n`/`total`) and `distinct_ci_lower`/`distinct_ci_upper` (from
+  `distinct_n`/`distinct_total`) — are computed per
+  column-by-target-level cell on the percentage scale, so an incidence
+  CI drops straight into a count-layer format string, e.g.
+  `f_str("xx (xx.x%) [xx.x, xx.x]", "distinct_n", "distinct_pct", "distinct_ci_lower", "distinct_ci_upper")`.
+  Two new
+  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  controls choose the method and coverage: `ci_method`
+  (`"clopper_pearson"` default / exact, matching SAS `PROC FREQ EXACT`
+  and [`stats::binom.test()`](https://rdrr.io/r/stats/binom.test.html);
+  plus `"wilson"`, `"wald"`, `"agresti_coull"`, `"jeffreys"`) and
+  `ci_level` (default `0.95`). The bounds are computed lazily (only when
+  a format references a CI keyword) and appear on Total/Missing rows
+  just like `pct`. The underlying vectorized helper,
+  [`proportion_ci()`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md),
+  is also exported.
 - [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
   gains `na`, `width`, and `pad` arguments (#41). `na` is a string
   substituted for cells whose format-group inputs are all NA, used

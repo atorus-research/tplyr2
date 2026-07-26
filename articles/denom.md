@@ -287,6 +287,74 @@ total event count. The denominators for `distinct_n` and `distinct_pct`
 are the total number of distinct subjects per treatment arm (rather than
 the total number of event rows).
 
+## Confidence Intervals for the Single Proportion
+
+AE-incidence and response tables often display a confidence interval for
+the single proportion alongside each `n (%)` cell. tplyr2 exposes this
+as four count-layer `f_str` keywords, computed per
+column-by-target-level cell on the same percentage scale as `pct`:
+
+- `ci_lower` / `ci_upper` – from the event-level `n` / `total`
+- `distinct_ci_lower` / `distinct_ci_upper` – from the subject-level
+  `distinct_n` / `distinct_total`
+
+Two
+[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+controls choose how the interval is built: `ci_method` (the estimation
+method) and `ci_level` (the coverage, default `0.95`). The default
+method, `"clopper_pearson"`, is the exact interval that matches SAS
+`PROC FREQ ... EXACT` and
+[`stats::binom.test()`](https://rdrr.io/r/stats/binom.test.html) – the
+usual clinical convention. The other methods are `"wilson"` (score
+interval, matching `stats::prop.test(correct = FALSE)`), `"wald"`,
+`"agresti_coull"`, and `"jeffreys"`.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        ci_method   = "clopper_pearson",
+        ci_level    = 0.95,
+        format_strings = list(
+          n_counts = f_str("xx (xx.x%) [xx.x, xx.x]",
+                           "distinct_n", "distinct_pct",
+                           "distinct_ci_lower", "distinct_ci_upper")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae)
+kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 8))
+```
+
+| rowlabel1 | res1 | res2 | res3 |
+|:---|:---|:---|:---|
+| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0.0, 10.9\] | 0 ( 0.0%) \[ 0.0, 8.2\] | 1 ( 2.0%) \[ 0.1, 10.6\] |
+| AGITATION | 0 ( 0.0%) \[ 0.0, 10.9\] | 0 ( 0.0%) \[ 0.0, 8.2\] | 1 ( 2.0%) \[ 0.1, 10.6\] |
+| ANXIETY | 0 ( 0.0%) \[ 0.0, 10.9\] | 0 ( 0.0%) \[ 0.0, 8.2\] | 1 ( 2.0%) \[ 0.1, 10.6\] |
+| APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 0.1, 16.2\] | 3 ( 7.0%) \[ 1.5, 19.1\] | 2 ( 4.0%) \[ 0.5, 13.7\] |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0.0, 10.9\] | 3 ( 7.0%) \[ 1.5, 19.1\] | 4 ( 8.0%) \[ 2.2, 19.2\] |
+| APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 0.1, 16.2\] | 3 ( 7.0%) \[ 1.5, 19.1\] | 2 ( 4.0%) \[ 0.5, 13.7\] |
+| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0.0, 10.9\] | 1 ( 2.3%) \[ 0.1, 12.3\] | 0 ( 0.0%) \[ 0.0, 7.1\] |
+| APPLICATION SITE PRURITUS | 4 (12.5%) \[ 3.5, 29.0\] | 6 (14.0%) \[ 5.3, 27.9\] | 5 (10.0%) \[ 3.3, 21.8\] |
+
+Each cell now shows `n (%) [lower, upper]`, where the bracketed bounds
+are the confidence limits on the percentage scale. Because these are
+ordinary format keywords, they also compose with `stat_columns` (one
+`n (%)` column and one `[CI]` column) and appear on Total/Missing rows
+just like the percentage does. The bounds are only computed when a
+format string actually references one of the four keywords, so layers
+that do not display a CI incur no extra cost. The vectorized engine
+behind the keywords,
+[`proportion_ci()`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md),
+is exported for standalone use.
+
 ## Denominators with Population Data
 
 In many clinical studies, the analysis data contains only a subset of

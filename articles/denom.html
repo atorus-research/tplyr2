@@ -671,6 +671,130 @@ total event count. The denominators for <code>distinct_n</code> and
 treatment arm (rather than the total number of event rows).</p>
 </div>
 <div class="section level2">
+<h2 id="confidence-intervals-for-the-single-proportion">Confidence Intervals for the Single Proportion<a class="anchor" aria-label="anchor" href="#confidence-intervals-for-the-single-proportion"></a>
+</h2>
+<p>AE-incidence and response tables often display a confidence interval
+for the single proportion alongside each <code>n (%)</code> cell. tplyr2
+exposes this as four count-layer <code>f_str</code> keywords, computed
+per column-by-target-level cell on the same percentage scale as
+<code>pct</code>:</p>
+<ul>
+<li>
+<code>ci_lower</code> / <code>ci_upper</code> – from the event-level
+<code>n</code> / <code>total</code>
+</li>
+<li>
+<code>distinct_ci_lower</code> / <code>distinct_ci_upper</code> –
+from the subject-level <code>distinct_n</code> /
+<code>distinct_total</code>
+</li>
+</ul>
+<p>Two <code><a href="../reference/layer_settings.html">layer_settings()</a></code> controls choose how the interval is
+built: <code>ci_method</code> (the estimation method) and
+<code>ci_level</code> (the coverage, default <code>0.95</code>). The
+default method, <code>"clopper_pearson"</code>, is the exact interval
+that matches SAS <code>PROC FREQ ... EXACT</code> and
+<code><a href="https://rdrr.io/r/stats/binom.test.html" class="external-link">stats::binom.test()</a></code> – the usual clinical convention. The
+other methods are <code>"wilson"</code> (score interval, matching
+<code>stats::prop.test(correct = FALSE)</code>), <code>"wald"</code>,
+<code>"agresti_coull"</code>, and <code>"jeffreys"</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AEDECOD"</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
+<span>        ci_method   <span class="op">=</span> <span class="st">"clopper_pearson"</span>,</span>
+<span>        ci_level    <span class="op">=</span> <span class="fl">0.95</span>,</span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%) [xx.x, xx.x]"</span>,</span>
+<span>                           <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span>,</span>
+<span>                           <span class="st">"distinct_ci_lower"</span>, <span class="st">"distinct_ci_upper"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="28%">
+<col width="23%">
+<col width="23%">
+<col width="23%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">res1</th>
+<th align="left">res2</th>
+<th align="left">res3</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">ABDOMINAL PAIN</td>
+<td align="left">0 ( 0.0%) [ 0.0, 10.9]</td>
+<td align="left">0 ( 0.0%) [ 0.0, 8.2]</td>
+<td align="left">1 ( 2.0%) [ 0.1, 10.6]</td>
+</tr>
+<tr class="even">
+<td align="left">AGITATION</td>
+<td align="left">0 ( 0.0%) [ 0.0, 10.9]</td>
+<td align="left">0 ( 0.0%) [ 0.0, 8.2]</td>
+<td align="left">1 ( 2.0%) [ 0.1, 10.6]</td>
+</tr>
+<tr class="odd">
+<td align="left">ANXIETY</td>
+<td align="left">0 ( 0.0%) [ 0.0, 10.9]</td>
+<td align="left">0 ( 0.0%) [ 0.0, 8.2]</td>
+<td align="left">1 ( 2.0%) [ 0.1, 10.6]</td>
+</tr>
+<tr class="even">
+<td align="left">APPLICATION SITE DERMATITIS</td>
+<td align="left">1 ( 3.1%) [ 0.1, 16.2]</td>
+<td align="left">3 ( 7.0%) [ 1.5, 19.1]</td>
+<td align="left">2 ( 4.0%) [ 0.5, 13.7]</td>
+</tr>
+<tr class="odd">
+<td align="left">APPLICATION SITE ERYTHEMA</td>
+<td align="left">0 ( 0.0%) [ 0.0, 10.9]</td>
+<td align="left">3 ( 7.0%) [ 1.5, 19.1]</td>
+<td align="left">4 ( 8.0%) [ 2.2, 19.2]</td>
+</tr>
+<tr class="even">
+<td align="left">APPLICATION SITE IRRITATION</td>
+<td align="left">1 ( 3.1%) [ 0.1, 16.2]</td>
+<td align="left">3 ( 7.0%) [ 1.5, 19.1]</td>
+<td align="left">2 ( 4.0%) [ 0.5, 13.7]</td>
+</tr>
+<tr class="odd">
+<td align="left">APPLICATION SITE PAIN</td>
+<td align="left">0 ( 0.0%) [ 0.0, 10.9]</td>
+<td align="left">1 ( 2.3%) [ 0.1, 12.3]</td>
+<td align="left">0 ( 0.0%) [ 0.0, 7.1]</td>
+</tr>
+<tr class="even">
+<td align="left">APPLICATION SITE PRURITUS</td>
+<td align="left">4 (12.5%) [ 3.5, 29.0]</td>
+<td align="left">6 (14.0%) [ 5.3, 27.9]</td>
+<td align="left">5 (10.0%) [ 3.3, 21.8]</td>
+</tr>
+</tbody>
+</table>
+<p>Each cell now shows <code>n (%) [lower, upper]</code>, where the
+bracketed bounds are the confidence limits on the percentage scale.
+Because these are ordinary format keywords, they also compose with
+<code>stat_columns</code> (one <code>n (%)</code> column and one
+<code>[CI]</code> column) and appear on Total/Missing rows just like the
+percentage does. The bounds are only computed when a format string
+actually references one of the four keywords, so layers that do not
+display a CI incur no extra cost. The vectorized engine behind the
+keywords, <code><a href="../reference/proportion_ci.html">proportion_ci()</a></code>, is exported for standalone
+use.</p>
+</div>
+<div class="section level2">
 <h2 id="denominators-with-population-data">Denominators with Population Data<a class="anchor" aria-label="anchor" href="#denominators-with-population-data"></a>
 </h2>
 <p>In many clinical studies, the analysis data contains only a subset of
@@ -682,7 +806,7 @@ population.</p>
 tplyr2 to draw denominators from a separate population dataset. When
 <code>pop_data</code> is specified, the denominator for each treatment
 arm comes from the population dataset rather than the analysis data.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01P"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -769,7 +893,7 @@ data column name (<code>TRT01P</code>). This mapping is necessary when
 the column variables have different names across datasets.</p>
 <p>You can also retrieve the population-level N values used in column
 headers:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="../reference/tplyr_header_n.html">tplyr_header_n</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <thead><tr class="header">
@@ -798,7 +922,7 @@ headers:</p>
 <p>When using population data, some subjects in the population may not
 appear in the analysis data at all. The <code>missing_subjects</code>
 parameter adds a row that counts these absent subjects.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01P"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -857,7 +981,7 @@ subjects against.</p>
 layer. Here is a more complete adverse event summary that uses
 population-based denominators, distinct subject counts, and a missing
 subjects row:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01P"</span><span class="op">)</span><span class="op">)</span>,</span>
