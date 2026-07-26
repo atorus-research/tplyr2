@@ -2,6 +2,14 @@
 
 ## New features
 
+- `apply_formats()` gains `na`, `width`, and `pad` arguments (#41). `na` is a
+  string substituted for cells whose format-group inputs are all NA, used
+  instead of the blank-width fill (`na = ""` yields a truly empty cell, `nchar`
+  0; `na = "NE"` renders `"NE"`), letting `apply_formats()` replace hand-rolled
+  fixed-width formatters for externally row-bound statistics. `width` pads each
+  formatted token to a fixed total width (`pad = "right"`/`"left"`); when the
+  `na` substitution applies, it wins and the cell is not padded. The defaults
+  (`NULL`) preserve existing behavior.
 - New `as_display()` helper returning a display-ready frame — the `rowlabel*`,
   `res*`, and `rdiff*` columns only, with the internal `ord*` (and `row_id`)
   columns dropped, ready to hand to a table-rendering package (#36). Pass
