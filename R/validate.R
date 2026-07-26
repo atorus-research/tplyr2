@@ -25,7 +25,7 @@ validate_spec <- function(spec) {
       stop(str_glue("Layer {i} is not a tplyr_layer object (class: {str_c(class(layer), collapse = ', ')})"),
            call. = FALSE)
     }
-    validate_layer(layer, i)
+    validate_layer(layer, i, cols = spec$cols)
   })
 
   validate_stat_columns_alignment(spec$layers)
@@ -67,9 +67,11 @@ validate_stat_columns_alignment <- function(layers) {
 #'
 #' @param layer A tplyr_layer object
 #' @param index Integer layer index (for error messages)
+#' @param cols Character vector of spec column variables (for cross-checks such
+#'   as pairwise assoc_test); may be NULL when validating a layer in isolation.
 #' @return Invisible TRUE if valid
 #' @keywords internal
-validate_layer <- function(layer, index) {
+validate_layer <- function(layer, index, cols = NULL) {
   if (!is.character(layer$target_var) || length(layer$target_var) == 0) {
     stop(str_glue("Layer {index}: target_var must be a non-empty character vector"),
          call. = FALSE)
@@ -133,6 +135,22 @@ validate_layer <- function(layer, index) {
       !inherits(layer$settings$assoc_test, "tplyr_assoc_test")) {
     stop(str_glue("Layer {index}: assoc_test must be an assoc_test() object"),
          call. = FALSE)
+  }
+
+  # Pairwise assoc_test cross-checks: needs a column variable and, when a
+  # reference is supplied explicitly, it should differ from the comparisons.
+  at <- layer$settings$assoc_test
+  if (inherits(at, "tplyr_assoc_test") && isTRUE(at$pairwise)) {
+    if (!is.null(cols) && length(cols) == 0) {
+      stop(str_glue("Layer {index}: pairwise assoc_test (comparisons = ...) ",
+                    "requires at least one column variable (cols)"),
+           call. = FALSE)
+    }
+    if (!is.null(at$reference) && at$reference %in% at$comparisons) {
+      stop(str_glue("Layer {index}: assoc_test reference ",
+                    "(\"{at$reference}\") must not also appear in comparisons"),
+           call. = FALSE)
+    }
   }
 
   invisible(TRUE)
