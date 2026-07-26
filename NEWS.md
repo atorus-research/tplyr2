@@ -1,4 +1,4 @@
-# tplyr2 0.2.0.9000
+# tplyr2 0.2.0
 
 ## New features
 
@@ -8,11 +8,6 @@
   exact or CMH test can tabulate across the treatment columns, and lands the
   formatted result as a single trailing `pval1` column (one value per by-group,
   on the group's first row). Attach via `layer_settings(assoc_test = ...)`.
-
-# tplyr2 0.2.0
-
-## New features
-
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard
