@@ -2,6 +2,19 @@
 
 ## New features
 
+- New single-proportion confidence-interval statistic for count layers (#44).
+  Four `f_str` keywords — `ci_lower`/`ci_upper` (from `n`/`total`) and
+  `distinct_ci_lower`/`distinct_ci_upper` (from `distinct_n`/`distinct_total`) —
+  are computed per column-by-target-level cell on the percentage scale, so an
+  incidence CI drops straight into a count-layer format string, e.g.
+  `f_str("xx (xx.x%) [xx.x, xx.x]", "distinct_n", "distinct_pct", "distinct_ci_lower", "distinct_ci_upper")`.
+  Two new `layer_settings()` controls choose the method and coverage:
+  `ci_method` (`"clopper_pearson"` default / exact, matching SAS `PROC FREQ
+  EXACT` and `stats::binom.test()`; plus `"wilson"`, `"wald"`,
+  `"agresti_coull"`, `"jeffreys"`) and `ci_level` (default `0.95`). The bounds
+  are computed lazily (only when a format references a CI keyword) and appear on
+  Total/Missing rows just like `pct`. The underlying vectorized helper,
+  `proportion_ci()`, is also exported.
 - `apply_formats()` gains `na`, `width`, and `pad` arguments (#41). `na` is a
   string substituted for cells whose format-group inputs are all NA, used
   instead of the blank-width fill (`na = ""` yields a truly empty cell, `nchar`

@@ -241,3 +241,46 @@ test_that("valid pct thresholds and zero_count_display pass validation", {
       pct_lt = 1, pct_gt = 99, zero_count_display = "count_only"))))
   expect_true(tplyr2:::validate_spec(ok))
 })
+
+# --- Single-proportion CI settings (#44) ---
+
+test_that("layer_settings rejects an unknown ci_method", {
+  expect_error(
+    layer_settings(ci_method = "bootstrap"),
+    "should be one of"
+  )
+})
+
+test_that("validate_layer rejects an out-of-range ci_level", {
+  bad_settings <- layer_settings()
+  bad_settings$ci_level <- 1.5
+  bad_layer <- structure(
+    list(target_var = "VAL", by = NULL, where = NULL,
+         settings = bad_settings, layer_type = "count"),
+    class = c("tplyr_count_layer", "tplyr_layer")
+  )
+  expect_error(
+    tplyr2:::validate_layer(bad_layer, 1),
+    "ci_level must be a single number in \\(0, 1\\)"
+  )
+})
+
+test_that("validate_layer rejects an unknown ci_method set post hoc", {
+  bad_settings <- layer_settings()
+  bad_settings$ci_method <- "not_a_method"
+  bad_layer <- structure(
+    list(target_var = "VAL", by = NULL, where = NULL,
+         settings = bad_settings, layer_type = "count"),
+    class = c("tplyr_count_layer", "tplyr_layer")
+  )
+  expect_error(
+    tplyr2:::validate_layer(bad_layer, 3),
+    "ci_method must be one of"
+  )
+})
+
+test_that("validate_layer accepts a valid CI count layer", {
+  layer <- group_count("VAL", settings = layer_settings(
+    ci_method = "wilson", ci_level = 0.90))
+  expect_true(tplyr2:::validate_layer(layer, 1))
+})

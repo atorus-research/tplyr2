@@ -559,3 +559,146 @@ test_that("missing_count zero-fills columns with no missings when only some have
   expect_equal(trimws(miss$res1), "1 ( 25%)")   # A has one missing
   expect_equal(trimws(miss$res2), "0 (  0%)")   # B has none -> zero-filled
 })
+
+# --- Single-proportion confidence interval keywords (#44) ---
+
+test_that("count layer ci_lower/ci_upper match binom.test on the cell counts", {
+  d <- data.frame(
+    TRT = rep(c("A", "B"), each = 40),
+    V = c(rep("Y", 12), rep("N", 28), rep("Y", 20), rep("N", 20))
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      ci_method = "clopper_pearson",
+      format_strings = list(n_counts = f_str(
+        "xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")))))), d)
+
+  # Y row: A has 12/40, B has 20/40
+  yrow <- b[b$rowlabel1 == "Y", ]
+  bt_a <- binom.test(12, 40)$conf.int * 100
+  expect_match(yrow$res1,
+               sprintf("\\[\\s*%s,\\s*%s\\]", formatC(bt_a[1], format = "f", digits = 1),
+                       formatC(bt_a[2], format = "f", digits = 1)))
+  bt_b <- binom.test(20, 40)$conf.int * 100
+  expect_match(yrow$res2,
+               sprintf("\\[\\s*%s,\\s*%s\\]", formatC(bt_b[1], format = "f", digits = 1),
+                       formatC(bt_b[2], format = "f", digits = 1)))
+})
+
+test_that("count layer wilson keyword matches prop.test", {
+  d <- data.frame(TRT = rep("A", 40),
+                  V = c(rep("Y", 12), rep("N", 28)))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      ci_method = "wilson",
+      format_strings = list(n_counts = f_str(
+        "xx [xx.x, xx.x]", "n", "ci_lower", "ci_upper")))))), d)
+  yrow <- b[b$rowlabel1 == "Y", ]
+  pt <- prop.test(12, 40, correct = FALSE)$conf.int * 100
+  expect_match(yrow$res1,
+               sprintf("\\[\\s*%s,\\s*%s\\]", formatC(pt[1], format = "f", digits = 1),
+                       formatC(pt[2], format = "f", digits = 1)))
+})
+
+test_that("distinct_ci keywords use distinct_n / distinct_total", {
+  d <- data.frame(
+    TRT = rep("A", 6),
+    ID = c("s1", "s1", "s2", "s3", "s4", "s5"),   # 5 distinct subjects
+    V = c("Y", "Y", "Y", "N", "N", "N")           # Y: subjects s1,s2 -> 2/5
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      distinct_by = "ID",
+      ci_method = "clopper_pearson",
+      format_strings = list(n_counts = f_str(
+        "xx [xx.x, xx.x]", "distinct_n", "distinct_ci_lower",
+        "distinct_ci_upper")))))), d)
+  yrow <- b[b$rowlabel1 == "Y", ]
+  bt <- binom.test(2, 5)$conf.int * 100
+  expect_match(yrow$res1,
+               sprintf("\\[\\s*%s,\\s*%s\\]",
+                       formatC(bt[1], format = "f", digits = 1),
+                       formatC(bt[2], format = "f", digits = 1)))
+})
+
+test_that("ci_level = 0.90 flows through to the displayed bounds", {
+  d <- data.frame(TRT = rep("A", 40), V = c(rep("Y", 12), rep("N", 28)))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      ci_method = "clopper_pearson", ci_level = 0.90,
+      format_strings = list(n_counts = f_str(
+        "xx [xx.x, xx.x]", "n", "ci_lower", "ci_upper")))))), d)
+  yrow <- b[b$rowlabel1 == "Y", ]
+  bt <- binom.test(12, 40, conf.level = 0.90)$conf.int * 100
+  expect_match(yrow$res1,
+               sprintf("\\[\\s*%s,\\s*%s\\]", formatC(bt[1], format = "f", digits = 1),
+                       formatC(bt[2], format = "f", digits = 1)))
+})
+
+test_that("zero-count and 100% cells format the CI sanely", {
+  d <- data.frame(TRT = c(rep("A", 40), rep("B", 40)),
+                  V = c(rep("Y", 40), rep("N", 40)))  # A all Y, B all N
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      ci_method = "clopper_pearson",
+      format_strings = list(n_counts = f_str(
+        "xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")))))), d)
+  yrow <- b[b$rowlabel1 == "Y", ]
+  # A: 40/40 -> upper 100.0, lower ~91.2 ; B: 0/40 -> lower 0.0
+  expect_match(yrow$res1, "\\[91\\.2, 100\\.0\\]")
+  expect_match(yrow$res2, "\\[ 0\\.0, ")
+})
+
+test_that("Total row carries a CI just like pct", {
+  d <- data.frame(TRT = rep("A", 40),
+                  V = c(rep("Y", 12), rep("Z", 8), rep("N", 20)))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      total_row = TRUE, ci_method = "clopper_pearson",
+      format_strings = list(n_counts = f_str(
+        "xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")))))), d)
+  trow <- b[b$rowlabel1 == "Total", ]
+  expect_equal(nrow(trow), 1)
+  # Total is 40/40 -> 100% with an upper bound of 100.0
+  expect_match(trow$res1, "\\[91\\.2, 100\\.0\\]")
+})
+
+test_that("CI keywords work in stat_columns layout", {
+  d <- data.frame(TRT = rep("A", 40), V = c(rep("Y", 12), rep("N", 28)))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      ci_method = "clopper_pearson",
+      stat_columns = list(
+        "n (%)" = f_str("xx (xx.x%)", "n", "pct"),
+        "95% CI" = f_str("[xx.x, xx.x]", "ci_lower", "ci_upper")))))), d)
+  yrow <- b[b$rowlabel1 == "Y", ]
+  bt <- binom.test(12, 40)$conf.int * 100
+  expect_match(yrow$res2,
+               sprintf("\\[\\s*%s,\\s*%s\\]", formatC(bt[1], format = "f", digits = 1),
+                       formatC(bt[2], format = "f", digits = 1)))
+})
+
+test_that("CI is not computed when no format references a CI keyword", {
+  d <- data.frame(TRT = rep("A", 40), V = c(rep("Y", 12), rep("N", 28)))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))))))
+  b <- tplyr_build(spec, d)
+  nd <- attr(b, "numeric_data")[["1"]]
+  expect_false("ci_lower" %in% names(nd))
+})
+
+test_that("nested count layer supports CI keywords", {
+  d <- data.frame(
+    TRT = rep("A", 40),
+    BODSYS = rep(c("SYS1", "SYS2"), each = 20),
+    PT = c(rep("PT1", 12), rep("PT2", 8), rep("PT3", 10), rep("PT4", 10))
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("BODSYS", "PT"), settings = layer_settings(
+      ci_method = "clopper_pearson",
+      format_strings = list(n_counts = f_str(
+        "xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")))))), d)
+  # All cells should carry a bracketed CI
+  expect_true(all(grepl("\\[", b$res1[nzchar(trimws(b$res1))])))
+})

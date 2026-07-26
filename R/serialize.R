@@ -151,6 +151,7 @@ serialize_settings <- function(settings) {
                       "precision_by", "precision_on", "precision_cap",
                       "order_count_method", "ordering_cols",
                       "result_order_var", "outer_sort_position",
+                      "ci_method", "ci_level",
                       "pct_lt", "pct_gt", "zero_count_display", "name")
   for (f in simple_fields) {
     if (!is.null(settings[[f]])) {

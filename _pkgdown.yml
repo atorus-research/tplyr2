@@ -32,6 +32,7 @@ reference:
     - label
     - layer_settings
     - assoc_test
+    - proportion_ci
 
 - title: Formatting
   desc: Controlling the display of numeric results
