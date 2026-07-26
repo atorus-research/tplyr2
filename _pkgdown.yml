@@ -134,6 +134,7 @@ articles:
   contents:
     - riskdiff
     - analyze
+    - binding-statistics
     - serialization
     - ard
 

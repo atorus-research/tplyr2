@@ -1,0 +1,267 @@
+---
+title: "Comparative Statistics and Binding External Results"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+vignette: >
+  %\VignetteIndexEntry{Comparative Statistics and Binding External Results}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(tplyr2)
+library(knitr)
+data(tplyr_adsl, package = "tplyr2")
+```
+
+# Where statistics come from in tplyr2
+
+tplyr2 is a *grammar for building clinical summary tables*, not a statistical
+modeling engine. Every number in a table arrives through one of four routes,
+and knowing which to reach for is most of the work:
+
+| You need | Use | Notes |
+|---|---|---|
+| A descriptive summary (mean, SD, quantiles, ...) | **`group_desc()`** built-in stats | See `vignette("desc")` |
+| Counts / incidence, `n (%)` | **`group_count()`** built-in stats | See `vignette("count")` |
+| A test or interval computed **across the treatment columns** *from the cell counts* | **`risk_diff`**, **`assoc_test()`**, single-proportion CIs | This vignette |
+| A statistic computed by a **model fit** (MMRM, ANCOVA, Cox, logistic, ...) | fit it **externally** and **bind** the formatted result on | This vignette |
+| A fully custom in-spec statistic computed *within* one column | **`group_analyze()`** | See `vignette("analyze")` |
+
+The dividing line is simple: if the statistic can be built from the assembled
+cell counts (or the raw rows) *across arms*, tplyr2 can compute it natively. If
+it requires fitting a model, tplyr2's job is to build the descriptive block and
+give you a clean seam to attach the model result. This vignette covers the last
+two rows of that table.
+
+# Native comparisons across the treatment columns
+
+These are computed by the layer itself, so the comparison shares one source of
+truth with the `n (%)` / summary block beside it.
+
+## Risk difference
+
+`risk_diff` emits pairwise, per-level difference-in-proportion columns
+(`rdiff1`, `rdiff2`, ... — one per comparison, a value on every target-level
+row) via `stats::prop.test()`. It has its own vignette,
+`vignette("riskdiff")`; reach for it when you want an asymptotic risk
+difference with a confidence interval.
+
+## Association tests with `assoc_test()`
+
+`assoc_test()` attaches an **arbitrary** test — you supply the function, so
+Fisher's exact, a chi-square, or a `coin::cmh_test()` all drop in. It has two
+modes.
+
+**Omnibus mode** (the default) runs your function once per `by` group over the
+**raw source rows** for that group (all treatment columns at once), and lands a
+single value on the group's first output row. This is the shape for a
+per-analyte test that collapses across arms:
+
+```{r assoc-omnibus}
+fisher_p <- function(.data) {
+  suppressWarnings(fisher.test(table(.data$TRT01P, .data$SEX))$p.value)
+}
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX",
+      settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")),
+        assoc_test = assoc_test(fn = fisher_p,
+                                format = f_str("x.xxx", "p"),
+                                label = "Fisher p")))))
+
+b <- tplyr_build(spec, tplyr_adsl)
+kable(as_display(b))
+```
+
+The p-value sits in the trailing `pval1` column on the first row. Your `fn`
+receives the raw rows, so any test that works on a data frame works here.
+
+**Pairwise / per-level mode** (new in 0.2.0) is switched on by supplying
+`comparisons`. It compares a `reference` arm to each other arm, emits one
+`pval<k>` column per comparison with a value on **every** target-level row, and
+hands your `fn` a ready-made incidence 2x2 per (level, comparison) built from
+the assembled counts *and* population denominators:
+
+```{r assoc-pairwise, eval = FALSE}
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+    assoc_test = assoc_test(
+      fn          = function(m) fisher.test(m)$p.value,  # m = 2x2 count matrix
+      reference   = "Placebo",
+      comparisons = c("Low", "High"),
+      format      = f_str("x.xxx", "p"),
+      label       = c("Placebo vs Low", "Placebo vs High"))))
+#>   rowlabel1       res1       res2       res3 pval1 pval2
+#> 1  HEADACHE  3 (50.0%)  1 (20.0%)  2 (50.0%) 0.524 1.000
+#> 2    NAUSEA  2 (33.3%)  3 (60.0%)  1 (25.0%) 0.524 1.000
+```
+
+The `fn` receives
+`matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)` — rows are the
+(reference, comparison) arm, columns are (event, no-event) — using distinct
+counts and denominators when `distinct_by` is set. Because it is just a matrix
+in and a scalar out, any 2x2 test (Fisher, chi-square, relative risk, ...)
+plugs in.
+
+## Single-proportion confidence intervals
+
+Count layers can attach an exact or score confidence interval for each cell's
+proportion (new in 0.2.0). Set `ci_method` / `ci_level` and reference the
+`ci_lower` / `ci_upper` (or `distinct_ci_lower` / `distinct_ci_upper`) keywords
+in a format string:
+
+```{r prop-ci, eval = FALSE}
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    ci_method   = "clopper_pearson",     # also: wilson, wald, agresti_coull, jeffreys
+    format_strings = list(
+      n_counts = f_str("xx (xx.x%) [xx.x, xx.x]",
+                       "distinct_n", "distinct_pct",
+                       "distinct_ci_lower", "distinct_ci_upper"))))
+#>   rowlabel1                       res1
+#> 1  HEADACHE  12 (30.0%) [16.6, 46.5]
+```
+
+`clopper_pearson` matches SAS `PROC FREQ ... EXACT` (and `stats::binom.test`);
+`wilson` matches `stats::prop.test(correct = FALSE)`.
+
+# Bringing your own statistics
+
+Model-based results — MMRM/ANCOVA p-values, LS-means, hazard ratios, odds
+ratios, confidence-interval strings — are computed by a dedicated package
+(`emmeans`, `mmrm`, `survival`, `rbmi`, ...) and **bound onto** the assembled
+table. The workflow is always the same five steps:
+
+1. **Build** the descriptive block with tplyr2 and pull the display frame with
+   `as_display()` (drops the internal `ord_*` columns; the build is already
+   ordered).
+2. **Compute** the statistic with whatever package you like.
+3. **Format** the result into character cells with `apply_formats()` (the same
+   `f_str()` spec, rounding, and alignment as the rest of the table).
+4. **Align** it to the table — as a new *column* (join on the row label) or a
+   new *row* (`rbind`), matching the `rowlabel*` / `res*` shape.
+5. **Hand off** to your table-rendering package.
+
+## Attach a statistic as a column
+
+Here we compute a per-level p-value ourselves and bind it beside the `n (%)`
+block. (We use base R so the vignette stays dependency-free; swap in your own
+model.)
+
+```{r bind-column}
+# 1. descriptive block
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("SEX",
+      settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))))))
+disp <- as_display(tplyr_build(spec, tplyr_adsl))
+
+# 2. compute a statistic per row (here: chi-square of SEX x TRT for each SEX
+#    level vs the rest). Substitute any model here.
+pval <- vapply(disp$rowlabel1, function(lvl) {
+  tab <- table(tplyr_adsl$TRT01P, tplyr_adsl$SEX == lvl)
+  suppressWarnings(chisq.test(tab)$p.value)
+}, numeric(1))
+
+# 3. format with the SAME machinery as the table
+disp$pval <- apply_formats(f_str("x.xxx", "p"), pval)
+
+# 4. it is already aligned row-for-row (as_display() preserves build order)
+kable(disp)
+```
+
+Formatting the external value through `apply_formats()` — rather than
+`sprintf()` or `format()` — keeps rounding (including the IBM half-up option)
+and width identical to the layer-computed cells.
+
+## Attach a statistic as a row
+
+For a p-value that belongs *under* a descriptive block (e.g. an ANCOVA of a
+continuous endpoint), format one cell and `rbind` a labelled row:
+
+```{r bind-row}
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(n = f_str("xx", "n"),
+                              "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"))))))
+disp <- as_display(tplyr_build(spec, tplyr_adsl))
+
+# an overall test across arms (substitute lm()/emmeans()/mmrm() as needed)
+p <- anova(lm(AGE ~ TRT01P, tplyr_adsl))[["Pr(>F)"]][1]
+
+# build a matching row: label + one p-value cell in the first result column,
+# blank in the rest, then bind it on
+res_cols <- grep("^res", names(disp), value = TRUE)
+p_row <- disp[1, ]                                   # a row of the right shape
+p_row$rowlabel1 <- "p-value"
+p_row[res_cols] <- ""
+p_row[[res_cols[1]]] <- apply_formats(f_str("x.xxx", "p"), p)
+
+out <- rbind(disp, p_row)
+rownames(out) <- NULL
+kable(out)
+```
+
+## Missing or non-estimable results
+
+When a model does not converge or a cell is not estimable, the statistic is
+`NA`. `apply_formats()` gains an `na` argument (new in 0.2.0) so a missing value
+collapses to a truly empty string rather than a run of spaces — which keeps
+`is.na()` / `nzchar()` checks and downstream trimming honest:
+
+```{r na-arg, eval = FALSE}
+apply_formats(f_str("xx.x", "x"), c(2.3, NA, 12.7), na = "")
+#> [1] " 2.3" ""     "12.7"
+
+apply_formats(f_str("xx.x", "x"), NA_real_, na = "NE")   # or any placeholder
+#> [1] "NE"
+```
+
+An optional `width =` (with `pad = "right"`/`"left"`) pads the token to a fixed
+total width for monospace alignment when the renderer does not own it.
+
+## `group_analyze()` for in-spec custom statistics
+
+`group_analyze()` runs a function you supply *inside the spec*, so a custom
+statistic travels with the layer, ordering, and metadata. It is the right tool
+for a bespoke *descriptive* statistic (a trimmed mean, a custom responder
+definition, a formatted median with a non-standard CI). See
+`vignette("analyze")` for the full contract.
+
+One boundary is worth stating here: `analyze_fn` is called **once per
+`cols` x `by` combination**, so it only ever sees a *single* treatment column
+at a time. It therefore cannot compute a statistic that compares *across* arms
+— for that, use `assoc_test()` (which sees all columns) or the external-binding
+pattern above.
+
+# Handing off to a table package
+
+`as_display()` returns the display columns only (`rowlabel*`, `res*`, `rdiff*`,
+`pval*`), already ordered, ready for `clinify`, `flextable`, `gt`, or
+`huxtable`. Pass `labels = TRUE` to rename the result columns to their
+column-group headers, and see `vignette("post_processing")` for row masking and
+label collapsing.
+
+```{r as-display-labels}
+b <- tplyr_build(
+  tplyr_spec(cols = "TRT01P",
+             layers = tplyr_layers(group_count("SEX",
+               settings = layer_settings(
+                 format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))),
+  tplyr_adsl)
+kable(as_display(b, labels = TRUE))
+```
