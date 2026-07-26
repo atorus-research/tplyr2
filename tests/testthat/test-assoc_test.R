@@ -203,6 +203,28 @@ test_that("pairwise assoc_test respects custom labels and default reference", {
   expect_equal(trimws(hd$pval1), "0.524")
 })
 
+test_that("pairwise assoc_test defaults reference to first level of a character col", {
+  dat <- .assoc_pairwise_data()  # TRT is character: Placebo appears first
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    comparisons = c("Low", "High"),  # no reference -> first appearance = Placebo
+    format = f_str("x.xxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  expect_equal(attr(b$pval1, "label"), "Placebo vs Low")
+  disp <- as.data.frame(as_display(b))
+  hd <- disp[disp$rowlabel1 == "HEADACHE", ]
+  expect_equal(trimws(hd$pval1), "0.524")
+})
+
 test_that("pairwise assoc_test uses non-distinct counts when distinct_by absent", {
   # With one record per subject, non-distinct n == distinct n, but exercise the
   # n/total path explicitly. The fn captures the 2x2 it receives.
