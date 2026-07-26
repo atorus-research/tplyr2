@@ -1,7 +1,7 @@
 # Compute the association-test result per by-group
 
 Runs `config$fn` once per `by` group over the source-data subset for
-that group, and returns the formatted scalar keyed by the by variables.
+that group, and returns the display string keyed by the by variables.
 
 ## Usage
 

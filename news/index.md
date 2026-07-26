@@ -73,6 +73,16 @@
   scalar p-value, so any test — `fisher.test`, and beyond — can be used.
   `label` may be a per-comparison vector; the default is
   `"<reference> vs <comparison>"`.
+- [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)’s
+  `fn` may now return a **character** string, passed through to the
+  `pval` cell verbatim (#47); `format` applies only when `fn` returns a
+  numeric. This completes the arbitrary-`fn` design — the function that
+  computes the test can also supply the finished display, so conditional
+  p-value conventions (a significance flag like `0.031*`, a
+  `>.99`/`<.0001` ceiling/floor, an `"NE"`/`"N/A"` sentinel,
+  trailing-space alignment) all live in the `fn`. Works in both omnibus
+  and pairwise modes; `NA` (numeric or character) still renders a blank.
+  Existing numeric-returning fns are unaffected.
 - New `shift_denom` setting for shift layers (#18).
   `shift_denom = "column"` computes percentages column-wise — out of
   each shift column group (the “from”/baseline group) within the

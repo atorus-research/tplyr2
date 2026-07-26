@@ -21,16 +21,22 @@ assoc_test(
 
   A function of one argument. In omnibus mode it is called with the
   source-data subset (a data.frame) for a single `by` group; in pairwise
-  mode it is called with a 2x2 numeric matrix (see Details). It must
-  return a single numeric value (typically a p-value). Return `NA` to
-  render a blank.
+  mode it is called with a 2x2 numeric matrix (see Details). It returns
+  a single value that is rendered into the cell one of two ways: a
+  **numeric** (typically a p-value) is formatted with `format`, or a
+  **character** string is passed through *verbatim* – letting the
+  function that computes an arbitrary test also supply the finished
+  display, e.g. a significance flag (`"0.031*"`), a ceiling/floor
+  (`">.99"`, `"<.0001"`), or a sentinel (`"NE"`). Return `NA` (numeric
+  or character) to render a blank.
 
 - format:
 
   An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
-  object formatting the returned value. The f_str must reference a
-  single variable (any name; the returned scalar is passed
-  positionally). Defaults to `f_str("x.xxx", "p")`.
+  object formatting a **numeric** return; it is ignored when `fn`
+  returns a character string. The f_str must reference a single variable
+  (any name; the returned scalar is passed positionally). Defaults to
+  `f_str("x.xxx", "p")`.
 
 - label:
 
@@ -79,7 +85,8 @@ receives, for one (target level, comparison) pair, a 2x2 contingency
 are (reference, comparison) arm, columns are (event, no event) – where
 `n` is the cell count and `N` the population denominator for that arm.
 When the layer sets `distinct_by`, the distinct counts/denominators are
-used. `fn` must return a scalar p-value (`NA` renders a blank).
+used. `fn` returns a scalar p-value – numeric (formatted with `format`)
+or a verbatim character display string (`NA` renders a blank).
 
 Attach it to a layer via `layer_settings(assoc_test = assoc_test(...))`.
 

@@ -96,15 +96,21 @@ is supplied:</p>
 <dl><dt id="arg-fn">fn<a class="anchor" aria-label="anchor" href="#arg-fn"></a></dt>
 <dd><p>A function of one argument. In omnibus mode it is called with the
 source-data subset (a data.frame) for a single <code>by</code> group; in pairwise
-mode it is called with a 2x2 numeric matrix (see Details). It must return a
-single numeric value (typically a p-value). Return <code>NA</code> to render a
-blank.</p></dd>
+mode it is called with a 2x2 numeric matrix (see Details). It returns a
+single value that is rendered into the cell one of two ways: a
+<strong>numeric</strong> (typically a p-value) is formatted with <code>format</code>, or a
+<strong>character</strong> string is passed through <em>verbatim</em> – letting the
+function that computes an arbitrary test also supply the finished display,
+e.g. a significance flag (<code>"0.031*"</code>), a ceiling/floor
+(<code>"&gt;.99"</code>, <code>"&lt;.0001"</code>), or a sentinel (<code>"NE"</code>). Return
+<code>NA</code> (numeric or character) to render a blank.</p></dd>
 
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
-<dd><p>An <code><a href="f_str.html">f_str</a></code> object formatting the returned value.
-The f_str must reference a single variable (any name; the returned scalar
-is passed positionally). Defaults to <code>f_str("x.xxx", "p")</code>.</p></dd>
+<dd><p>An <code><a href="f_str.html">f_str</a></code> object formatting a <strong>numeric</strong>
+return; it is ignored when <code>fn</code> returns a character string. The f_str
+must reference a single variable (any name; the returned scalar is passed
+positionally). Defaults to <code>f_str("x.xxx", "p")</code>.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -153,7 +159,9 @@ comparison) pair, a 2x2 contingency <strong>matrix</strong>
 rows are (reference, comparison) arm, columns are (event, no event) – where
 <code>n</code> is the cell count and <code>N</code> the population denominator for that
 arm. When the layer sets <code>distinct_by</code>, the distinct counts/denominators
-are used. <code>fn</code> must return a scalar p-value (<code>NA</code> renders a blank).</p>
+are used. <code>fn</code> returns a scalar p-value – numeric (formatted with
+<code>format</code>) or a verbatim character display string (<code>NA</code> renders a
+blank).</p>
 <p>Attach it to a layer via
 <code>layer_settings(assoc_test = assoc_test(...))</code>.</p>
     </div>

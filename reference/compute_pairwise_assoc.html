@@ -135,7 +135,10 @@ distinct counts/denominators when non-NULL.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data.table with one row per target level per comparison, holding
-the row variables, <code>.comp_idx</code>, and the scalar p-value <code>p</code>.</p>
+the row variables, <code>.comp_idx</code>, and the formatted display string
+<code>.disp</code>. Numeric <code>fn</code> returns are formatted with
+<code>config$format</code>; a character <code>fn</code> return is passed through
+verbatim (issue #47); <code>NA</code> and a zero denominator render a blank.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

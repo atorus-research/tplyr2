@@ -58,4 +58,7 @@ compute_pairwise_assoc(
 ## Value
 
 A data.table with one row per target level per comparison, holding the
-row variables, `.comp_idx`, and the scalar p-value `p`.
+row variables, `.comp_idx`, and the formatted display string `.disp`.
+Numeric `fn` returns are formatted with `config$format`; a character
+`fn` return is passed through verbatim (issue \#47); `NA` and a zero
+denominator render a blank.
