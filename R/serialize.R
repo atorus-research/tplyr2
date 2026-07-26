@@ -189,7 +189,9 @@ serialize_settings <- function(settings) {
     out$assoc_test <- list(
       fn = serialize_function(at$fn),
       format = serialize_f_str(at$format),
-      label = at$label
+      label = at$label,
+      reference = at$reference,
+      comparisons = at$comparisons
     )
   }
 
@@ -463,10 +465,18 @@ deserialize_settings <- function(raw) {
 
   # Reconstruct assoc_test
   if (!is.null(raw$assoc_test)) {
+    # tplyr_read_spec() reads with simplifyVector = FALSE, so JSON arrays return
+    # as lists; flatten the vector-valued fields back to character vectors.
+    comparisons <- raw$assoc_test$comparisons
+    if (!is.null(comparisons)) comparisons <- as.character(unlist(comparisons))
+    label <- raw$assoc_test$label
+    if (!is.null(label)) label <- as.character(unlist(label))
     raw$assoc_test <- assoc_test(
       fn = deserialize_function(raw$assoc_test$fn),
       format = deserialize_f_str(raw$assoc_test$format),
-      label = raw$assoc_test$label
+      label = label,
+      reference = raw$assoc_test$reference,
+      comparisons = comparisons
     )
   }
 

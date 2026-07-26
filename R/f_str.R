@@ -39,11 +39,23 @@ f_str <- function(format_string, ..., empty = NULL) {
 #'   `lt_gt_group`: values in `(gt, 100)` render as `">" gt`.
 #' @param lt_gt_group Optional integer index of the format group to which `lt`/`gt`
 #'   apply (used by count layers to target the percent statistic). NULL disables.
+#' @param na Optional string substituted for cells whose format-group inputs are
+#'   all NA, used *instead of* the default blank-width fill. `na = ""` produces a
+#'   truly empty cell (`nchar` 0); `na = "NE"` renders `"NE"`. The default `NULL`
+#'   preserves the blank-width fill. This lets `apply_formats()` replace
+#'   hand-rolled fixed-width formatters for externally row-bound statistics.
+#' @param width Optional integer total width to pad each formatted token to,
+#'   using [stringr::str_pad()]. When the `na` substitution applies to a cell,
+#'   `na` wins and that cell is *not* padded. The default `NULL` leaves tokens at
+#'   their natural format width.
+#' @param pad Side to pad on when `width` is set: `"right"` (default, trailing
+#'   spaces) or `"left"` (leading spaces).
 #'
 #' @return Character vector of formatted values
 #' @export
 apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
-                          lt_gt_group = NULL) {
+                          lt_gt_group = NULL, na = NULL, width = NULL,
+                          pad = c("right", "left")) {
   if (is.character(fmt)) {
     # Parse on the fly for standalone use
     fmt <- f_str(fmt, ...)
@@ -91,6 +103,18 @@ apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
     if (".overall" %in% names(fmt$empty)) {
       result[all_na] <- fmt$empty[[".overall"]]
     }
+  }
+
+  # Optional fixed total-width padding of the whole token
+  if (!is.null(width)) {
+    result <- str_pad(result, width = width, side = match.arg(pad))
+  }
+
+  # NA substitution: rows whose format-group inputs are all NA render as `na`.
+  # Applied last so it wins over both the blank-width fill and width padding.
+  if (!is.null(na)) {
+    all_na <- Reduce(`&`, map(args, is.na))
+    result[all_na] <- na
   }
 
   result

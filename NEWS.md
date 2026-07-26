@@ -15,7 +15,14 @@
   are computed lazily (only when a format references a CI keyword) and appear on
   Total/Missing rows just like `pct`. The underlying vectorized helper,
   `proportion_ci()`, is also exported.
-
+- `apply_formats()` gains `na`, `width`, and `pad` arguments (#41). `na` is a
+  string substituted for cells whose format-group inputs are all NA, used
+  instead of the blank-width fill (`na = ""` yields a truly empty cell, `nchar`
+  0; `na = "NE"` renders `"NE"`), letting `apply_formats()` replace hand-rolled
+  fixed-width formatters for externally row-bound statistics. `width` pads each
+  formatted token to a fixed total width (`pad = "right"`/`"left"`); when the
+  `na` substitution applies, it wins and the cell is not padded. The defaults
+  (`NULL`) preserve existing behavior.
 - New `as_display()` helper returning a display-ready frame — the `rowlabel*`,
   `res*`, and `rdiff*` columns only, with the internal `ord*` (and `row_id`)
   columns dropped, ready to hand to a table-rendering package (#36). Pass
@@ -35,6 +42,16 @@
   exact or CMH test can tabulate across the treatment columns, and lands the
   formatted result as a single trailing `pval1` column (one value per by-group,
   on the group's first row). Attach via `layer_settings(assoc_test = ...)`.
+- `assoc_test()` gains a pairwise / per-level mode for count layers (#40).
+  Supplying `comparisons` (with an optional `reference`, defaulting to the first
+  `cols` level) compares the reference arm to each named arm and emits one
+  `pval` column per comparison, each with a value on every target-level row
+  (like `risk_diff`'s `rdiff` columns) — the standard AE-by-SOC/PT layout. In
+  this mode the caller-supplied `fn` receives a 2x2 incidence matrix
+  `matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)` (distinct
+  counts/denominators when `distinct_by` is set) and returns a scalar p-value,
+  so any test — `fisher.test`, and beyond — can be used. `label` may be a
+  per-comparison vector; the default is `"<reference> vs <comparison>"`.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard

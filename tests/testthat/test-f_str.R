@@ -50,6 +50,56 @@ test_that("apply_formats handles NA values", {
   expect_match(result[2], "^\\s+$")
 })
 
+test_that("apply_formats na= renders NA as an empty string", {
+  # na = "" -> truly empty cell (nchar 0), not blank-width fill
+  res <- apply_formats(f_str("xx.x", "x"), NA_real_, na = "")
+  expect_identical(res, "")
+  expect_equal(nchar(res), 0L)
+})
+
+test_that("apply_formats na= substitutes only all-NA cells in a vector", {
+  res <- apply_formats(f_str("xx.x", "x"), c(2.3, NA, 12.7), na = "")
+  expect_identical(res, c(" 2.3", "", "12.7"))
+})
+
+test_that("apply_formats na= accepts a non-empty replacement string", {
+  res <- apply_formats(f_str("xx.x", "x"), c(NA_real_, 2.3), na = "NE")
+  expect_identical(res, c("NE", " 2.3"))
+})
+
+test_that("apply_formats width= pads the token to a fixed total width", {
+  res <- apply_formats(f_str("xxxx.xxxx", "x"), 2.3291, width = 12)
+  expect_identical(res, "   2.3291   ")
+  expect_equal(nchar(res), 12L)
+})
+
+test_that("apply_formats width= respects pad side", {
+  res <- apply_formats(f_str("xxxx.xxxx", "x"), 2.3291, width = 12, pad = "left")
+  expect_identical(res, "      2.3291")
+  expect_equal(nchar(res), 12L)
+})
+
+test_that("apply_formats na= wins over width= (empty cell is not padded)", {
+  res <- apply_formats(f_str("xx.x", "x"), NA_real_, na = "", width = 12)
+  expect_identical(res, "")
+  expect_equal(nchar(res), 0L)
+})
+
+test_that("apply_formats na= only fires when all format-group inputs are NA", {
+  fmt <- f_str("xx (xx.x%)", "n", "pct")
+  res <- apply_formats(fmt, c(NA_real_, 5), c(NA_real_, 50), na = "")
+  expect_identical(res[1], "")            # both inputs NA -> na
+  expect_identical(res[2], " 5 (50.0%)") # neither NA -> formatted normally
+})
+
+test_that("apply_formats NULL na/width defaults preserve blank-width behavior", {
+  fmt <- f_str("xx.xx", "sd")
+  expect_identical(
+    apply_formats(fmt, c(8.59, NA_real_)),
+    apply_formats(fmt, c(8.59, NA_real_), na = NULL, width = NULL)
+  )
+})
+
 test_that("format_number_vec handles zero decimal width", {
   group <- list(int = list(width = 3L, auto = FALSE, offset = 0L, hug = FALSE),
                 dec = list(width = 0L, auto = FALSE, offset = 0L, hug = FALSE),

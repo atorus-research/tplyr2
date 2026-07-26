@@ -97,3 +97,320 @@ test_that("assoc_test survives JSON serialization", {
   expect_equal(s$label, "p-value [1]")
   expect_true(is.function(s$fn))
 })
+
+# --- pairwise / per-level mode (#40) ---
+
+# Shared inline data mirroring the issue reprex
+.assoc_pairwise_data <- function() {
+  adsl <- data.frame(
+    USUBJID = sprintf("S%02d", 1:15),
+    TRT = c(rep("Placebo", 4), rep("Low", 5), rep("High", 6)),
+    stringsAsFactors = FALSE
+  )
+  adae <- data.frame(
+    USUBJID = c("S01", "S02", "S03", "S05", "S06", "S07", "S08",
+                "S10", "S11", "S12", "S13", "S14"),
+    TRT = c("Placebo", "Placebo", "Placebo", "Low", "Low", "Low", "Low",
+            "High", "High", "High", "High", "High"),
+    AEDECOD = c("HEADACHE", "HEADACHE", "NAUSEA", "HEADACHE", "NAUSEA",
+                "NAUSEA", "NAUSEA", "HEADACHE", "HEADACHE", "HEADACHE",
+                "NAUSEA", "NAUSEA"),
+    stringsAsFactors = FALSE
+  )
+  list(adsl = adsl, adae = adae)
+}
+
+test_that("assoc_test constructor validates pairwise arguments", {
+  # reference outside pairwise mode is rejected
+  expect_error(assoc_test(fn = function(m) 1, reference = "A"),
+               "only used in pairwise")
+  # label length must match comparisons
+  expect_error(
+    assoc_test(fn = function(m) 1, comparisons = c("Low", "High"),
+               label = c("a", "b", "c")),
+    "one string per comparison"
+  )
+  # list comparisons with multi-element entry
+  expect_error(
+    assoc_test(fn = function(m) 1, comparisons = list(c("Low", "High"))),
+    "single arm level"
+  )
+  # omnibus label must be a single string
+  expect_error(assoc_test(fn = function(d) 1, label = c("a", "b")),
+               "single character string in omnibus")
+  # empty comparisons
+  expect_error(assoc_test(fn = function(m) 1, comparisons = character(0)),
+               "at least one arm level")
+  # reference must be scalar in pairwise mode
+  expect_error(
+    assoc_test(fn = function(m) 1, reference = c("A", "B"),
+               comparisons = "Low"),
+    "single arm level"
+  )
+  # comparisons supplied as a list of single levels normalizes to a vector
+  at_list <- assoc_test(fn = function(m) 1, reference = "Placebo",
+                        comparisons = list("Low", "High"))
+  expect_equal(at_list$comparisons, c("Low", "High"))
+
+  # a valid pairwise object
+  at <- assoc_test(fn = function(m) 1, reference = "Placebo",
+                   comparisons = c("Low", "High"))
+  expect_true(at$pairwise)
+  expect_equal(at$comparisons, c("Low", "High"))
+  expect_null(at$label)
+  expect_output(print(at), "pairwise association test")
+})
+
+test_that("pairwise assoc_test reproduces the issue's Fisher p-values", {
+  dat <- .assoc_pairwise_data()
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    reference = "Placebo", comparisons = c("Low", "High"),
+    format = f_str("x.xxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  disp <- as.data.frame(as_display(b))
+
+  expect_true(all(c("pval1", "pval2") %in% names(disp)))
+  hd <- disp[disp$rowlabel1 == "HEADACHE", ]
+  na <- disp[disp$rowlabel1 == "NAUSEA", ]
+  expect_equal(trimws(hd$pval1), "0.524")
+  expect_equal(trimws(hd$pval2), "1.000")
+  expect_equal(trimws(na$pval1), "0.524")
+  expect_equal(trimws(na$pval2), "1.000")
+  # value on EVERY target-level row
+  expect_true(all(trimws(disp$pval1) != ""))
+  expect_true(all(trimws(disp$pval2) != ""))
+  # default per-comparison labels
+  expect_equal(attr(b$pval1, "label"), "Placebo vs Low")
+  expect_equal(attr(b$pval2, "label"), "Placebo vs High")
+})
+
+test_that("pairwise assoc_test respects custom labels and default reference", {
+  dat <- .assoc_pairwise_data()
+  # default reference = first level of TRT (factor level order)
+  dat$adae$TRT <- factor(dat$adae$TRT, levels = c("Placebo", "Low", "High"))
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    comparisons = c("Low", "High"),
+    label = c("P vs L", "P vs H"),
+    format = f_str("x.xxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  expect_equal(attr(b$pval1, "label"), "P vs L")
+  expect_equal(attr(b$pval2, "label"), "P vs H")
+  disp <- as.data.frame(as_display(b))
+  hd <- disp[disp$rowlabel1 == "HEADACHE", ]
+  expect_equal(trimws(hd$pval1), "0.524")
+})
+
+test_that("pairwise assoc_test defaults reference to first level of a character col", {
+  dat <- .assoc_pairwise_data()  # TRT is character: Placebo appears first
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    comparisons = c("Low", "High"),  # no reference -> first appearance = Placebo
+    format = f_str("x.xxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  expect_equal(attr(b$pval1, "label"), "Placebo vs Low")
+  disp <- as.data.frame(as_display(b))
+  hd <- disp[disp$rowlabel1 == "HEADACHE", ]
+  expect_equal(trimws(hd$pval1), "0.524")
+})
+
+test_that("pairwise assoc_test uses non-distinct counts when distinct_by absent", {
+  # With one record per subject, non-distinct n == distinct n, but exercise the
+  # n/total path explicitly. The fn captures the 2x2 it receives.
+  captured <- new.env()
+  at <- assoc_test(
+    fn = function(m) { captured$m <- m; fisher.test(m)$p.value },
+    reference = "Placebo", comparisons = "Low",
+    format = f_str("x.xxx", "p")
+  )
+  d <- data.frame(
+    TRT = c(rep("Placebo", 4), rep("Low", 5)),
+    AEDECOD = c("HEADACHE", "HEADACHE", "NAUSEA", "OTHER",
+                "HEADACHE", "NAUSEA", "NAUSEA", "NAUSEA", "OTHER"),
+    stringsAsFactors = FALSE
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      assoc_test = at))))
+  b <- tplyr_build(spec, d)
+  expect_true("pval1" %in% names(b))
+  # 2x2 dims: rows = arms, cols = event/no-event
+  expect_equal(dim(captured$m), c(2L, 2L))
+})
+
+test_that("pairwise assoc_test blanks special (total) rows", {
+  dat <- .assoc_pairwise_data()
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    reference = "Placebo", comparisons = c("Low", "High"),
+    format = f_str("x.xxx", "p")
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID", total_row = TRUE,
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, dat$adae, pop_data = dat$adsl)
+  disp <- as.data.frame(as_display(b))
+  tot <- disp[disp$rowlabel1 == "Total", ]
+  expect_equal(trimws(tot$pval1), "")
+  expect_equal(trimws(tot$pval2), "")
+})
+
+test_that("pairwise assoc_test places p-values per (by, level) with a by variable", {
+  set.seed(11)
+  d <- data.frame(
+    TRT = c(rep("Placebo", 8), rep("Active", 8)),
+    SOC = rep(c("CARDIAC", "GI"), each = 4, times = 2),
+    AEDECOD = rep(c("A", "B"), times = 8),
+    stringsAsFactors = FALSE
+  )
+  pop <- data.frame(TRT = c(rep("Placebo", 10), rep("Active", 10)),
+                    stringsAsFactors = FALSE)
+  # single label -> recycled across the (one) comparison
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    reference = "Placebo", comparisons = "Active",
+    format = f_str("x.xxx", "p"), label = "P vs A"
+  )
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count("AEDECOD", by = "SOC",
+      settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx", "n")),
+        assoc_test = at)))
+  )
+  b <- tplyr_build(spec, d, pop_data = pop)
+  expect_true("pval1" %in% names(b))
+  expect_equal(attr(b$pval1, "label"), "P vs A")
+  disp <- as.data.frame(as_display(b))
+  # a value on every target-level row (all SOC x PT combinations)
+  expect_true(all(trimws(disp$pval1) != ""))
+})
+
+test_that("compute_pairwise_assoc handles zero denominators and bad fn returns", {
+  counts <- data.table::data.table(
+    TRT = c("Placebo", "Low", "Placebo", "Low"),
+    AEDECOD = c("A", "A", "B", "B"),
+    n = c(2, 1, 1, 0), total = c(4, 0, 4, 5)  # A/Low has total 0 -> NA
+  )
+  at <- assoc_test(fn = function(m) fisher.test(m)$p.value,
+                   reference = "Placebo", comparisons = "Low",
+                   format = f_str("x.xxx", "p"))
+  res <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
+                                         character(0), NULL, at, "Placebo")
+  expect_true(is.na(res$p[res$AEDECOD == "A"]))
+  expect_false(is.na(res$p[res$AEDECOD == "B"]))
+
+  # fn returning a non-scalar collapses to NA
+  at2 <- assoc_test(fn = function(m) c(1, 2),
+                    reference = "Placebo", comparisons = "Low",
+                    format = f_str("x.xxx", "p"))
+  res2 <- tplyr2:::compute_pairwise_assoc(counts, "TRT", "AEDECOD",
+                                          character(0), NULL, at2, "Placebo")
+  expect_true(all(is.na(res2$p)))
+
+  # resolve_assoc_reference guards against missing cols (no explicit reference)
+  at_noref <- assoc_test(fn = function(m) 1, comparisons = "Low",
+                         format = f_str("x.xxx", "p"))
+  expect_error(
+    tplyr2:::resolve_assoc_reference(at_noref, data.frame(x = 1), character(0)),
+    "at least one column variable"
+  )
+
+  # compute_pairwise_assoc guards against missing cols
+  expect_error(
+    tplyr2:::compute_pairwise_assoc(counts, character(0), "AEDECOD",
+                                    character(0), NULL, at, "Placebo"),
+    "at least one column variable"
+  )
+})
+
+test_that("merge_pairwise_assoc emits blank labelled columns when there is no data", {
+  wide <- data.table::data.table(rowlabel1 = c("A", "B"), res1 = c("1", "2"))
+  at <- assoc_test(fn = function(m) 1, reference = "P",
+                   comparisons = c("Low", "High"), format = f_str("x.xxx", "p"))
+  tplyr2:::merge_pairwise_assoc(wide, NULL, at, "AEDECOD",
+                                character(0), character(0), "P")
+  expect_true(all(c("pval1", "pval2") %in% names(wide)))
+  expect_equal(attr(wide$pval1, "label"), "P vs Low")
+  expect_equal(attr(wide$pval2, "label"), "P vs High")
+  expect_true(all(wide$pval1 == "") && all(wide$pval2 == ""))
+
+  # No rowlabel columns present: returns early without error
+  wide2 <- data.table::data.table(res1 = "1")
+  ad <- data.table::data.table(.comp_idx = 1L, AEDECOD = "A", p = 0.5)
+  at1 <- assoc_test(fn = function(m) 1, reference = "P",
+                    comparisons = "Low", format = f_str("x.xxx", "p"))
+  out <- tplyr2:::merge_pairwise_assoc(wide2, ad, at1, "AEDECOD",
+                                       character(0), character(0), "P")
+  expect_identical(names(out), "res1")
+})
+
+test_that("pairwise assoc_test validation errors surface", {
+  # no cols -> error at validate time
+  at <- assoc_test(fn = function(m) 1, reference = "A",
+                   comparisons = "B")
+  spec <- tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_count("V", settings = layer_settings(assoc_test = at))))
+  expect_error(tplyr2:::validate_spec(spec), "at least one column variable")
+
+  # reference appearing in comparisons
+  at2 <- assoc_test(fn = function(m) 1, reference = "A",
+                    comparisons = c("A", "B"))
+  spec2 <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(assoc_test = at2))))
+  expect_error(tplyr2:::validate_spec(spec2), "must not also appear")
+})
+
+test_that("pairwise assoc_test survives JSON serialization", {
+  scratch <- file.path(tempdir(), "tplyr2_assoc_pw"); dir.create(scratch, showWarnings = FALSE)
+  at <- assoc_test(
+    fn = function(m) fisher.test(m)$p.value,
+    reference = "Placebo", comparisons = c("Low", "High"),
+    format = f_str("x.xxx", "p"), label = c("P vs L", "P vs H")
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(assoc_test = at))))
+  path <- file.path(scratch, "assoc_pw.json")
+  tplyr_write_spec(spec, path)
+  s <- tplyr_read_spec(path)$layers[[1]]$settings$assoc_test
+  expect_s3_class(s, "tplyr_assoc_test")
+  expect_true(s$pairwise)
+  expect_equal(s$reference, "Placebo")
+  expect_equal(s$comparisons, c("Low", "High"))
+  expect_equal(s$label, c("P vs L", "P vs H"))
+  expect_true(is.function(s$fn))
+})

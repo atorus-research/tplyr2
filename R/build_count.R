@@ -159,6 +159,17 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     rd_data <- compute_risk_diff(counts, cols, tv, by_data_vars, settings$risk_diff)
   }
 
+  # --- Compute pairwise per-level association test (before special rows) ---
+  assoc_pairwise <- NULL
+  assoc_reference <- NULL
+  if (!is.null(settings$assoc_test) && isTRUE(settings$assoc_test$pairwise)) {
+    assoc_reference <- resolve_assoc_reference(settings$assoc_test, dt, cols)
+    assoc_pairwise <- compute_pairwise_assoc(
+      counts, cols, tv, by_data_vars, distinct_by,
+      settings$assoc_test, assoc_reference
+    )
+  }
+
   # --- Format (main counts + special rows all carry the full stat set) ---
   fmts <- get_count_formats(settings)
   pct_lt <- settings$pct_lt
@@ -255,11 +266,21 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     )
   }
 
-  # --- Association-test p-value column (#37) ---
+  # --- Association-test p-value column(s) (#37, #40) ---
   if (!is.null(settings$assoc_test)) {
-    assoc <- compute_assoc_test(dt, by_data_vars, settings$assoc_test)
-    by_rl_cols <- str_c("rowlabel", length(by_labels) + seq_along(by_data_vars))
-    merge_assoc_column(wide, assoc, by_rl_cols, by_data_vars, settings$assoc_test)
+    if (isTRUE(settings$assoc_test$pairwise)) {
+      # Pairwise per-level mode: one pval column per comparison, value on
+      # every target-level row (#40)
+      merge_pairwise_assoc(
+        wide, assoc_pairwise, settings$assoc_test, tv, by_data_vars,
+        by_labels, assoc_reference
+      )
+    } else {
+      # Omnibus mode: single trailing column on each by-group's first row (#37)
+      assoc <- compute_assoc_test(dt, by_data_vars, settings$assoc_test)
+      by_rl_cols <- str_c("rowlabel", length(by_labels) + seq_along(by_data_vars))
+      merge_assoc_column(wide, assoc, by_rl_cols, by_data_vars, settings$assoc_test)
+    }
   }
 
   # Attach numeric data snapshot
