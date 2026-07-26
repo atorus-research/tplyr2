@@ -10,7 +10,10 @@ apply_formats(
   precision = NULL,
   lt = NULL,
   gt = NULL,
-  lt_gt_group = NULL
+  lt_gt_group = NULL,
+  na = NULL,
+  width = NULL,
+  pad = c("right", "left")
 )
 }
 \arguments{
@@ -28,6 +31,20 @@ apply_formats(
 
 \item{lt_gt_group}{Optional integer index of the format group to which \code{lt}/\code{gt}
 apply (used by count layers to target the percent statistic). NULL disables.}
+
+\item{na}{Optional string substituted for cells whose format-group inputs are
+all NA, used \emph{instead of} the default blank-width fill. \code{na = ""} produces a
+truly empty cell (\code{nchar} 0); \code{na = "NE"} renders \code{"NE"}. The default \code{NULL}
+preserves the blank-width fill. This lets \code{apply_formats()} replace
+hand-rolled fixed-width formatters for externally row-bound statistics.}
+
+\item{width}{Optional integer total width to pad each formatted token to,
+using \code{\link[stringr:str_pad]{stringr::str_pad()}}. When the \code{na} substitution applies to a cell,
+\code{na} wins and that cell is \emph{not} padded. The default \code{NULL} leaves tokens at
+their natural format width.}
+
+\item{pad}{Side to pad on when \code{width} is set: \code{"right"} (default, trailing
+spaces) or \code{"left"} (leading spaces).}
 }
 \value{
 Character vector of formatted values
