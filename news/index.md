@@ -150,6 +150,14 @@
 
 ### Bug fixes
 
+- `group_shift(denom_row = TRUE)` no longer renders the literal string
+  `"NA"` for a baseline (shift-column) group that is absent within a
+  `by` group (#55); an absent group’s denominator is zero, so the cell
+  now reads `0` (consistent with `zero_count_display` on the shift-to
+  rows). A new `denom_row_format` setting also lets the denominator row
+  carry its own `f_str` width independent of the `n_counts` cells
+  (e.g. `denom_row_format = f_str("xx", "n")` for a plain narrow
+  integer) instead of inheriting their padding.
 - Omnibus
   [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
   no longer lets

@@ -14,6 +14,7 @@ layer_settings(
   shift_denom = "total",
   denom_row = FALSE,
   denom_row_label = "n",
+  denom_row_format = NULL,
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -93,6 +94,17 @@ layer_settings(
 
   Character string, the row label for the `denom_row` row. Defaults to
   `"n"`.
+
+- denom_row_format:
+
+  An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  object formatting the `denom_row` cells, shift layers only. Lets the
+  denominator row carry its own width independent of the `n_counts`
+  format (e.g. `f_str("xx", "n")` for a plain narrow integer). The f_str
+  must reference a single variable (the denominator count is passed
+  positionally). `NULL` (default) keeps the legacy behavior of padding
+  the integer to the width of the shift cells. An absent baseline group
+  renders as `0` either way.
 
 - denom_where:
 
@@ -249,6 +261,7 @@ settings are applicable for each of the four layer types:
 | `shift_denom`              |       |      | X     |         |
 | `denom_row`                |       |      | X     |         |
 | `denom_row_label`          |       |      | X     |         |
+| `denom_row_format`         |       |      | X     |         |
 | `denom_where`              | X     | X    | X     |         |
 | `denom_ignore`             | X     |      | X     |         |
 | `distinct_by`              | X     |      | X     |         |
