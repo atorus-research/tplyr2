@@ -675,3 +675,121 @@ test_that("pairwise assoc_test survives JSON serialization", {
   expect_equal(s$label, c("P vs L", "P vs H"))
   expect_true(is.function(s$fn))
 })
+
+# --- desc layer (omnibus only, #51) ---
+
+.desc_assoc_data <- function() {
+  set.seed(1)
+  data.frame(
+    TRT = factor(rep(c("Placebo", "Low", "High"), each = 20),
+                 levels = c("Placebo", "Low", "High")),
+    AGE = c(rnorm(20, 75, 8), rnorm(20, 74, 8), rnorm(20, 76, 8)),
+    SEX = sample(c("M", "F"), 60, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("desc assoc_test places one omnibus p-value on the first stat row (#51)", {
+  d <- .desc_assoc_data()
+  aov_fn <- function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1]
+  at <- assoc_test(fn = aov_fn, format = f_str("x.xxx", "p"), label = "ANOVA p")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), SD = f_str("xx.xx", "sd")),
+      assoc_test = at)))), d)
+
+  expect_true("pval1" %in% names(b))
+  expect_equal(attr(b$pval1, "label"), "ANOVA p")
+  disp <- as.data.frame(as_display(b))
+  # value on the first (Mean) row, blank on the rest
+  expect_equal(sum(trimws(disp$pval1) != ""), 1L)
+  expect_true(trimws(disp$pval1[disp$rowlabel1 == "Mean"]) != "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "SD"]), "")
+  # matches a direct ANOVA on the whole layer
+  expected <- anova(lm(AGE ~ TRT, d))[["Pr(>F)"]][1]
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "Mean"]),
+               trimws(apply_formats(f_str("x.xxx", "p"), expected)))
+})
+
+test_that("desc assoc_test emits one p-value per by-group (#51)", {
+  d <- .desc_assoc_data()
+  # long demographics-style frame: two continuous characteristics stacked
+  d2 <- rbind(
+    data.frame(TRT = d$TRT, VAL = d$AGE, CHAR = "Age"),
+    data.frame(TRT = d$TRT, VAL = rnorm(60, 25, 4), CHAR = "BMI")
+  )
+  at <- assoc_test(fn = function(.data) anova(lm(VAL ~ TRT, .data))[["Pr(>F)"]][1],
+                   format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("VAL", by = "CHAR", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), SD = f_str("xx.xx", "sd")),
+      assoc_test = at)))), d2)
+  disp <- as.data.frame(as_display(b))
+
+  # one non-blank p-value per characteristic, on that group's first row
+  age <- disp[disp$rowlabel1 == "Age", ]
+  bmi <- disp[disp$rowlabel1 == "BMI", ]
+  expect_equal(sum(trimws(age$pval1) != ""), 1L)
+  expect_equal(sum(trimws(bmi$pval1) != ""), 1L)
+  expect_true(trimws(age$pval1[1]) != "")
+  # each group's value matches its own ANOVA
+  exp_age <- anova(lm(VAL ~ TRT, d2[d2$CHAR == "Age", ]))[["Pr(>F)"]][1]
+  expect_equal(trimws(age$pval1[trimws(age$pval1) != ""]),
+               trimws(apply_formats(f_str("x.xxx", "p"), exp_age)))
+})
+
+test_that("desc assoc_test passes a character fn return through verbatim (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(
+    fn = function(.data) {
+      p <- anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1]
+      if (p < 0.05) sprintf("%.3f*", p) else sprintf("%.3f ", p)
+    },
+    format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")),
+      assoc_test = at)))), d)
+  val <- b$pval1[trimws(b$pval1) != ""][1]
+  expect_true(grepl("\\*$", val) || grepl("\\d $", val))
+})
+
+test_that("desc assoc_test renders NA as blank (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(fn = function(.data) NA_real_)
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")),
+      assoc_test = at)))), d)
+  expect_true(all(trimws(b$pval1) == ""))
+})
+
+test_that("pairwise assoc_test is rejected on a desc layer (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(fn = function(m) 1, reference = "Placebo",
+                   comparisons = c("Low", "High"))
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_desc("AGE", settings = layer_settings(assoc_test = at)))), d),
+    "only supported on count layers"
+  )
+})
+
+test_that("count and desc assoc p-values share one pval column in a spec (#51)", {
+  d <- .desc_assoc_data()
+  count_at <- assoc_test(
+    fn = function(.data) chisq.test(table(.data$TRT, .data$SEX))$p.value,
+    format = f_str("x.xxx", "p"))
+  desc_at <- assoc_test(
+    fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
+    format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")), assoc_test = desc_at)),
+    group_count("SEX", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = count_at)))), d)
+
+  expect_true("pval1" %in% names(b))
+  # both layers contribute a value into the shared column
+  expect_gte(sum(trimws(b$pval1) != ""), 2L)
+})

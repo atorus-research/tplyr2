@@ -76,6 +76,17 @@
   2x2 denominator is taken from `pop_data` (subjects at risk), so a sparse or
   empty **reference** arm still yields a valid `0`-vs-`k` test on every row
   instead of blanking the column.
+- `assoc_test()` now works on **`group_desc`** layers in omnibus mode (#51),
+  giving a continuous-variable comparison across arms — ANOVA, Kruskal-Wallis,
+  a t-test — a native home. Same contract as count/shift: `fn` receives the
+  by-group's raw source subset (all `cols` levels) and returns a scalar p
+  (formatted by `format`) or a verbatim character string (#47), placed on the
+  by-group's first statistic row (`NA` → blank). A demographics table can now
+  produce its comparison p-values — continuous *and* categorical characteristics
+  sharing one `pval` column — entirely through tplyr2 instead of a hand-rolled
+  `aov`/`kruskal.test` side pipeline. Pairwise/per-level mode remains count-layer
+  only; supplying `comparisons` on a desc layer is now a clear error rather than
+  silently ignored.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard

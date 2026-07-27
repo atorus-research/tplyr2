@@ -160,6 +160,14 @@ validate_layer <- function(layer, index, cols = NULL) {
   # reference is supplied explicitly, it should differ from the comparisons.
   at <- layer$settings$assoc_test
   if (inherits(at, "tplyr_assoc_test") && isTRUE(at$pairwise)) {
+    # Pairwise/per-level mode builds a per-target-level 2x2, which only a count
+    # layer has. Desc (and other non-count) layers support omnibus mode only.
+    if (!inherits(layer, "tplyr_count_layer")) {
+      stop(str_glue("Layer {index}: pairwise assoc_test (comparisons = ...) is ",
+                    "only supported on count layers; use omnibus mode ",
+                    "(no comparisons) on a {layer$layer_type} layer"),
+           call. = FALSE)
+    }
     if (!is.null(cols) && length(cols) == 0) {
       stop(str_glue("Layer {index}: pairwise assoc_test (comparisons = ...) ",
                     "requires at least one column variable (cols)"),

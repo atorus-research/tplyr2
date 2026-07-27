@@ -1,8 +1,8 @@
-#' Association-test column(s) for count and shift layers
+#' Association-test column(s) for count, shift, and desc layers
 #'
 #' Configures an association test and lands its formatted result beside the
-#' n(\%) block. Two modes are supported, selected by whether \code{comparisons}
-#' is supplied:
+#' n(\%) (or statistic) block. Two modes are supported, selected by whether
+#' \code{comparisons} is supplied:
 #'
 #' \strong{Omnibus mode} (\code{comparisons = NULL}, the default). Runs
 #' \code{fn} once per \code{by} group, \emph{across} the treatment columns, and
@@ -12,7 +12,12 @@
 #' (e.g. \code{fisher.test(table(.data$TRT, .data$RESP))} or
 #' \code{coin::cmh_test(...)}). When the layer has no \code{by} variable the
 #' test runs once over the whole layer; otherwise once per \code{by} group, with
-#' the value placed on that group's first output row.
+#' the value placed on that group's first output row. This mode works on
+#' \strong{count}, \strong{shift}, and \strong{desc} layers -- on a desc layer
+#' it is the natural home for a continuous-variable comparison across arms
+#' (ANOVA / Kruskal-Wallis / t-test), e.g.
+#' \code{fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1]}, with
+#' one p-value per \code{by} group on that group's first statistic row.
 #'
 #' \strong{Pairwise / per-level mode} (\code{comparisons} non-\code{NULL}).
 #' Count layers only. Emits one \code{pval} column per comparison, each
@@ -81,6 +86,12 @@
 #'   fn = function(m) fisher.test(m)$p.value,
 #'   reference = "Placebo",
 #'   comparisons = c("Low", "High"),
+#'   format = f_str("x.xxx", "p")
+#' )
+#'
+#' # Omnibus on a desc layer: continuous comparison across arms (ANOVA)
+#' at3 <- assoc_test(
+#'   fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
 #'   format = f_str("x.xxx", "p")
 #' )
 #' @export
