@@ -675,3 +675,223 @@ test_that("pairwise assoc_test survives JSON serialization", {
   expect_equal(s$label, c("P vs L", "P vs H"))
   expect_true(is.function(s$fn))
 })
+
+# --- desc layer (omnibus only, #51) ---
+
+.desc_assoc_data <- function() {
+  set.seed(1)
+  data.frame(
+    TRT = factor(rep(c("Placebo", "Low", "High"), each = 20),
+                 levels = c("Placebo", "Low", "High")),
+    AGE = c(rnorm(20, 75, 8), rnorm(20, 74, 8), rnorm(20, 76, 8)),
+    SEX = sample(c("M", "F"), 60, replace = TRUE),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("desc assoc_test places one omnibus p-value on the first stat row (#51)", {
+  d <- .desc_assoc_data()
+  aov_fn <- function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1]
+  at <- assoc_test(fn = aov_fn, format = f_str("x.xxx", "p"), label = "ANOVA p")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), SD = f_str("xx.xx", "sd")),
+      assoc_test = at)))), d)
+
+  expect_true("pval1" %in% names(b))
+  expect_equal(attr(b$pval1, "label"), "ANOVA p")
+  disp <- as.data.frame(as_display(b))
+  # value on the first (Mean) row, blank on the rest
+  expect_equal(sum(trimws(disp$pval1) != ""), 1L)
+  expect_true(trimws(disp$pval1[disp$rowlabel1 == "Mean"]) != "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "SD"]), "")
+  # matches a direct ANOVA on the whole layer
+  expected <- anova(lm(AGE ~ TRT, d))[["Pr(>F)"]][1]
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "Mean"]),
+               trimws(apply_formats(f_str("x.xxx", "p"), expected)))
+})
+
+test_that("desc assoc_test emits one p-value per by-group (#51)", {
+  d <- .desc_assoc_data()
+  # long demographics-style frame: two continuous characteristics stacked
+  d2 <- rbind(
+    data.frame(TRT = d$TRT, VAL = d$AGE, CHAR = "Age"),
+    data.frame(TRT = d$TRT, VAL = rnorm(60, 25, 4), CHAR = "BMI")
+  )
+  at <- assoc_test(fn = function(.data) anova(lm(VAL ~ TRT, .data))[["Pr(>F)"]][1],
+                   format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("VAL", by = "CHAR", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean"), SD = f_str("xx.xx", "sd")),
+      assoc_test = at)))), d2)
+  disp <- as.data.frame(as_display(b))
+
+  # one non-blank p-value per characteristic, on that group's first row
+  age <- disp[disp$rowlabel1 == "Age", ]
+  bmi <- disp[disp$rowlabel1 == "BMI", ]
+  expect_equal(sum(trimws(age$pval1) != ""), 1L)
+  expect_equal(sum(trimws(bmi$pval1) != ""), 1L)
+  expect_true(trimws(age$pval1[1]) != "")
+  # each group's value matches its own ANOVA
+  exp_age <- anova(lm(VAL ~ TRT, d2[d2$CHAR == "Age", ]))[["Pr(>F)"]][1]
+  expect_equal(trimws(age$pval1[trimws(age$pval1) != ""]),
+               trimws(apply_formats(f_str("x.xxx", "p"), exp_age)))
+})
+
+test_that("desc assoc_test passes a character fn return through verbatim (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(
+    fn = function(.data) {
+      p <- anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1]
+      if (p < 0.05) sprintf("%.3f*", p) else sprintf("%.3f ", p)
+    },
+    format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")),
+      assoc_test = at)))), d)
+  val <- b$pval1[trimws(b$pval1) != ""][1]
+  expect_true(grepl("\\*$", val) || grepl("\\d $", val))
+})
+
+test_that("desc assoc_test renders NA as blank (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(fn = function(.data) NA_real_)
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")),
+      assoc_test = at)))), d)
+  expect_true(all(trimws(b$pval1) == ""))
+})
+
+test_that("pairwise assoc_test is rejected on a desc layer (#51)", {
+  d <- .desc_assoc_data()
+  at <- assoc_test(fn = function(m) 1, reference = "Placebo",
+                   comparisons = c("Low", "High"))
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_desc("AGE", settings = layer_settings(assoc_test = at)))), d),
+    "only supported on count layers"
+  )
+})
+
+test_that("count and desc assoc p-values share one pval column in a spec (#51)", {
+  d <- .desc_assoc_data()
+  count_at <- assoc_test(
+    fn = function(.data) chisq.test(table(.data$TRT, .data$SEX))$p.value,
+    format = f_str("x.xxx", "p"))
+  desc_at <- assoc_test(
+    fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
+    format = f_str("x.xxx", "p"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(Mean = f_str("xx.x", "mean")), assoc_test = desc_at)),
+    group_count("SEX", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = count_at)))), d)
+
+  expect_true("pval1" %in% names(b))
+  # both layers contribute a value into the shared column
+  expect_gte(sum(trimws(b$pval1) != ""), 2L)
+})
+
+# --- #53: total_group / custom_group rows must not leak into fn ---
+
+test_that("omnibus assoc_test excludes total_group duplicate rows from fn (#53)", {
+  adsl <- data.frame(
+    USUBJID = 1:40,
+    TRT01P = factor(rep(c("Placebo", "Low", "High", "Xtra"), each = 10),
+                    levels = c("Placebo", "Low", "High", "Xtra")),
+    AGEGR1 = c(rep("<65", 6), rep(">=65", 4), rep("<65", 3), rep(">=65", 7),
+               rep("<65", 8), rep(">=65", 2), rep("<65", 5), rep(">=65", 5)),
+    stringsAsFactors = FALSE)
+
+  seen <- NULL
+  chi_fn <- function(.data) {
+    seen <<- .data
+    sprintf("%.4f", suppressWarnings(
+      chisq.test(table(.data$TRT01P, .data$AGEGR1))$p.value))
+  }
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P",
+    total_groups = list(total_group("TRT01P")),
+    layers = tplyr_layers(group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      assoc_test = assoc_test(fn = chi_fn, format = f_str("x.xxxx", "p")))))), adsl)
+
+  # fn saw only the 40 real rows, no synthetic "Total" arm, no marker column
+  expect_equal(nrow(seen), 40L)
+  expect_false("Total" %in% as.character(seen$TRT01P))
+  expect_false("Total" %in% levels(seen$TRT01P))   # phantom level dropped too
+  expect_false(".tplyr_synthetic" %in% names(seen))
+  # and the reported p equals a direct test on the real data
+  expected <- sprintf("%.4f", suppressWarnings(
+    chisq.test(table(adsl$TRT01P, adsl$AGEGR1))$p.value))
+  expect_equal(trimws(b$pval1[b$pval1 != ""][1]), expected)
+})
+
+test_that("omnibus assoc_test excludes custom_group duplicate rows from fn (#53)", {
+  d <- data.frame(
+    TRT = factor(rep(c("Placebo", "Low", "High"), each = 10),
+                 levels = c("Placebo", "Low", "High")),
+    RESP = factor(rep(c("N", "Y"), 15), levels = c("N", "Y")),
+    stringsAsFactors = FALSE)
+  seen_n <- NULL
+  b <- tplyr_build(tplyr_spec(cols = "TRT",
+    custom_groups = list(custom_group("TRT", "Active" = c("Low", "High"))),
+    layers = tplyr_layers(group_count("RESP", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      assoc_test = assoc_test(
+        fn = function(.data) { seen_n <<- nrow(.data); 0.5 },
+        format = f_str("x.xxx", "p")))))), d)
+  # the "Active" duplicates (20 rows) are excluded -> fn sees only the 30 real
+  expect_equal(seen_n, 30L)
+})
+
+# --- #54: omnibus value lands on the first DISPLAY row, not the pre-sort row ---
+
+test_that("omnibus assoc_test places the value on the first display row (#54)", {
+  d2 <- data.frame(
+    TRT = factor(rep(c("A", "B"), each = 15), levels = c("A", "B")),
+    AGEGR1 = factor(c(rep("<65", 8), rep("65-80", 4), rep(">80", 3),
+                      rep("<65", 3), rep("65-80", 9), rep(">80", 3)),
+                    levels = c("<65", "65-80", ">80")),
+    stringsAsFactors = FALSE)
+  at <- assoc_test(
+    fn = function(.data) suppressWarnings(
+      chisq.test(table(.data$TRT, .data$AGEGR1))$p.value),
+    format = f_str("x.xxx", "p"))
+  disp <- as.data.frame(as_display(tplyr_build(tplyr_spec(cols = "TRT",
+    layers = tplyr_layers(group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      order_count_method = "byfactor", assoc_test = at)))), d2)))
+
+  # value on the first factor-order row (<65), blank on the rest
+  expect_true(trimws(disp$pval1[disp$rowlabel1 == "<65"]) != "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "65-80"]), "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == ">80"]), "")
+})
+
+test_that("omnibus assoc_test lands on each by-group's first display row (#54)", {
+  set.seed(9)
+  d <- data.frame(
+    TRT = factor(rep(c("A", "B"), each = 30), levels = c("A", "B")),
+    PARAM = factor(rep(c("ALT", "AST"), 30), levels = c("ALT", "AST")),
+    GR = factor(sample(c("Hi", "Lo", "Mid"), 60, replace = TRUE),
+                levels = c("Lo", "Mid", "Hi")),
+    stringsAsFactors = FALSE)
+  at <- assoc_test(
+    fn = function(.data) suppressWarnings(
+      chisq.test(table(.data$TRT, .data$GR))$p.value),
+    format = f_str("x.xxx", "p"))
+  disp <- as.data.frame(as_display(tplyr_build(tplyr_spec(cols = "TRT",
+    layers = tplyr_layers(group_count("GR", by = "PARAM", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      order_count_method = "byfactor", assoc_test = at)))), d)))
+
+  # within each PARAM, exactly one value and it is on the first factor row (Lo)
+  for (p in c("ALT", "AST")) {
+    grp <- disp[disp$rowlabel1 == p, ]
+    grp <- grp[order(match(grp$rowlabel2, c("Lo", "Mid", "Hi"))), ]
+    expect_equal(sum(trimws(grp$pval1) != ""), 1L)
+    expect_true(trimws(grp$pval1[grp$rowlabel2 == "Lo"]) != "")
+  }
+})

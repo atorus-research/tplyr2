@@ -40,7 +40,7 @@
 #' | `risk_diff` | X | | | |
 #' | `ci_method` | X | | | |
 #' | `ci_level` | X | | | |
-#' | `assoc_test` | X | | X | |
+#' | `assoc_test` | X | X | X | |
 #' | `pct_lt` | X | | | |
 #' | `pct_gt` | X | | | |
 #' | `zero_count_display` | X | | | |
@@ -109,8 +109,10 @@
 #'   \code{"agresti_coull"}, or \code{"jeffreys"}. See \code{\link{proportion_ci}}.
 #' @param ci_level Numeric coverage probability for the single-proportion
 #'   confidence interval keywords. Defaults to \code{0.95}.
-#' @param assoc_test A \code{\link{assoc_test}} object attaching an omnibus
-#'   association-test p-value column (count and shift layers).
+#' @param assoc_test A \code{\link{assoc_test}} object attaching an
+#'   association-test p-value column. Omnibus mode works on count, shift, and
+#'   desc layers (a desc layer's continuous comparison, e.g. ANOVA/Kruskal);
+#'   pairwise/per-level mode is count layers only.
 #' @param pct_lt Numeric less-than threshold for count-layer percents. A cell
 #'   with a nonzero count whose percent would display below this value renders
 #'   the percent as \code{"<"} followed by the threshold (e.g. \code{pct_lt = 1}

@@ -134,8 +134,10 @@ keywords. One of \code{"clopper_pearson"} (default, exact / SAS
 \item{ci_level}{Numeric coverage probability for the single-proportion
 confidence interval keywords. Defaults to \code{0.95}.}
 
-\item{assoc_test}{A \code{\link{assoc_test}} object attaching an omnibus
-association-test p-value column (count and shift layers).}
+\item{assoc_test}{A \code{\link{assoc_test}} object attaching an
+association-test p-value column. Omnibus mode works on count, shift, and
+desc layers (a desc layer's continuous comparison, e.g. ANOVA/Kruskal);
+pairwise/per-level mode is count layers only.}
 
 \item{pct_lt}{Numeric less-than threshold for count-layer percents. A cell
 with a nonzero count whose percent would display below this value renders
@@ -197,7 +199,7 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{risk_diff} \tab X \tab  \tab  \tab  \cr
    \code{ci_method} \tab X \tab  \tab  \tab  \cr
    \code{ci_level} \tab X \tab  \tab  \tab  \cr
-   \code{assoc_test} \tab X \tab  \tab X \tab  \cr
+   \code{assoc_test} \tab X \tab X \tab X \tab  \cr
    \code{pct_lt} \tab X \tab  \tab  \tab  \cr
    \code{pct_gt} \tab X \tab  \tab  \tab  \cr
    \code{zero_count_display} \tab X \tab  \tab  \tab  \cr

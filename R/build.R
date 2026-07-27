@@ -261,6 +261,12 @@ apply_total_groups <- function(dt, total_groups) {
     total_rows <- data.table::copy(dt)
     total_rows[, (col_var) := label]
 
+    # Mark the duplicates so a statistical test (assoc_test) can exclude them —
+    # they are a display construct for the count columns and would otherwise
+    # double-count every subject (#53). Originals default to FALSE.
+    if (!".tplyr_synthetic" %in% names(dt)) dt[, .tplyr_synthetic := FALSE]
+    total_rows[, .tplyr_synthetic := TRUE]
+
     dt <- data.table::rbindlist(list(dt, total_rows), use.names = TRUE, fill = TRUE)
   }
 
@@ -287,6 +293,10 @@ apply_custom_groups <- function(dt, custom_groups) {
       if (nrow(matching) > 0) {
         group_rows <- data.table::copy(matching)
         group_rows[, (col_var) := group_name]
+        # Mark the duplicates so assoc_test can exclude them (see
+        # apply_total_groups); originals default to FALSE.
+        if (!".tplyr_synthetic" %in% names(dt)) dt[, .tplyr_synthetic := FALSE]
+        group_rows[, .tplyr_synthetic := TRUE]
         dt <- data.table::rbindlist(list(dt, group_rows), use.names = TRUE, fill = TRUE)
       }
     }

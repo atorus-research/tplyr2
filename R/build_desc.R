@@ -41,6 +41,20 @@ build_desc_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt 
     result <- transpose_stats_to_columns(result)
   }
 
+  # --- Omnibus association-test p-value column (#51) ---
+  # Desc layers support the omnibus contract only: `fn` runs once per by-group
+  # over that group's raw source-data subset (all `cols` levels) and its scalar
+  # (or verbatim character) result lands on the group's first output row; NA
+  # renders a blank. This is the same contract used by count/shift omnibus mode
+  # and is what a continuous-variable comparison (ANOVA / Kruskal / t-test)
+  # needs. Pairwise/per-level mode is count-layer only (rejected in validation).
+  if (!is.null(settings$assoc_test) && !isTRUE(settings$assoc_test$pairwise)) {
+    assoc <- compute_assoc_test(dt, by_data_vars, settings$assoc_test)
+    by_rl_cols <- str_c("rowlabel", length(by_labels) + seq_along(by_data_vars))
+    merge_assoc_column(result, assoc, by_rl_cols, by_data_vars,
+                       settings$assoc_test)
+  }
+
   result
 }
 
