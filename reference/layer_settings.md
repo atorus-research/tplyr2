@@ -202,8 +202,10 @@ layer_settings(
 
   A
   [`assoc_test`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
-  object attaching an omnibus association-test p-value column (count and
-  shift layers).
+  object attaching an association-test p-value column. Omnibus mode
+  works on count, shift, and desc layers (a desc layer's continuous
+  comparison, e.g. ANOVA/Kruskal); pairwise/per-level mode is count
+  layers only.
 
 - pct_lt:
 
@@ -271,7 +273,7 @@ settings are applicable for each of the four layer types:
 | `risk_diff`                | X     |      |       |         |
 | `ci_method`                | X     |      |       |         |
 | `ci_level`                 | X     |      |       |         |
-| `assoc_test`               | X     |      | X     |         |
+| `assoc_test`               | X     | X    | X     |         |
 | `pct_lt`                   | X     |      |       |         |
 | `pct_gt`                   | X     |      |       |         |
 | `zero_count_display`       | X     |      |       |         |

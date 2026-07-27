@@ -77,12 +77,39 @@ The p-value sits in the trailing `pval1` column on the first row. Your
 `fn` receives the raw rows, so any test that works on a data frame works
 here.
 
-**Pairwise / per-level mode** (new in 0.2.0) is switched on by supplying
-`comparisons`. It compares a `reference` arm to each other arm, emits
-one `pval<k>` column per comparison with a value on **every**
-target-level row, and hands your `fn` a ready-made incidence 2x2 per
-(level, comparison) built from the assembled counts *and* population
-denominators:
+Omnibus mode also works on a **`group_desc`** layer — the natural home
+for a **continuous** comparison across arms (ANOVA, Kruskal-Wallis, a
+t-test). The contract is identical (one p per `by` group, on that
+group’s first statistic row), so a demographics table gets its
+continuous p-values the same way its categorical ones do, sharing a
+single `pval1` column:
+
+``` r
+
+spec_age <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(Mean = f_str("xx.x", "mean"), SD = f_str("xx.xx", "sd")),
+        assoc_test = assoc_test(
+          fn = function(.data) anova(lm(AGE ~ TRT01P, .data))[["Pr(>F)"]][1],
+          format = f_str("x.xxx", "p"), label = "ANOVA p")))))
+
+kable(as_display(tplyr_build(spec_age, tplyr_adsl)))
+```
+
+| rowlabel1 | res1 | res2 | res3 | pval1 |
+|:----------|:-----|:-----|:-----|:------|
+| Mean      | 75.2 | 74.4 | 75.7 | 0.593 |
+| SD        | 8.59 | 7.89 | 8.29 |       |
+
+**Pairwise / per-level mode** (new in 0.2.0, count layers only) is
+switched on by supplying `comparisons`. It compares a `reference` arm to
+each other arm, emits one `pval<k>` column per comparison with a value
+on **every** target-level row, and hands your `fn` a ready-made
+incidence 2x2 per (level, comparison) built from the assembled counts
+*and* population denominators:
 
 ``` r
 

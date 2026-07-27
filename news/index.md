@@ -103,6 +103,19 @@
   `pop_data` (subjects at risk), so a sparse or empty **reference** arm
   still yields a valid `0`-vs-`k` test on every row instead of blanking
   the column.
+- [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  now works on **`group_desc`** layers in omnibus mode (#51), giving a
+  continuous-variable comparison across arms — ANOVA, Kruskal-Wallis, a
+  t-test — a native home. Same contract as count/shift: `fn` receives
+  the by-group’s raw source subset (all `cols` levels) and returns a
+  scalar p (formatted by `format`) or a verbatim character string (#47),
+  placed on the by-group’s first statistic row (`NA` → blank). A
+  demographics table can now produce its comparison p-values —
+  continuous *and* categorical characteristics sharing one `pval` column
+  — entirely through tplyr2 instead of a hand-rolled
+  `aov`/`kruskal.test` side pipeline. Pairwise/per-level mode remains
+  count-layer only; supplying `comparisons` on a desc layer is now a
+  clear error rather than silently ignored.
 - New `shift_denom` setting for shift layers (#18).
   `shift_denom = "column"` computes percentages column-wise — out of
   each shift column group (the “from”/baseline group) within the
@@ -137,6 +150,28 @@
 
 ### Bug fixes
 
+- Omnibus
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  no longer lets
+  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  /
+  [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+  duplicate rows leak into the `fn`’s `.data` (#53). Those rows are a
+  display construct for the count columns; including them double-counted
+  every subject and silently returned a wrong p-value (no error, no
+  warning). The synthetic rows — and their now-unused factor levels
+  (e.g. a phantom `"Total"` level that made
+  [`chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) return
+  `NaN`) — are dropped before `fn` runs, so it sees only the real
+  observations.
+- Omnibus
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  now places its p-value on the layer’s **first display row**, not the
+  arbitrary pre-sort (dcast) row (#54). The value was written before the
+  `ord*` reorder (e.g. `order_count_method = "byfactor"`), so it could
+  strand on the wrong category (landing on `65-80` instead of `<65`,
+  etc.); placement is now derived from the ordering columns, per
+  by-group.
 - [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
   `missing_count` now always emits the Missing row when set,
   zero-filling every column/by group that has no missing values, so the
