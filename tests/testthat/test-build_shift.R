@@ -467,3 +467,74 @@ test_that("group_shift denom_row emits an n row above the shift-to rows", {
   expect_equal(trimws(b[[n_col]][1]), "8")
   expect_equal(trimws(b[[h_col]][1]), "4")
 })
+
+# Issue #55: absent baseline group must render 0 (not literal "NA"), and the
+# denom row can carry its own format independent of the n_counts width.
+.denom_row_absent_data <- function() {
+  d <- data.frame(
+    TRTP   = factor(rep(c("Pbo", "Act"), each = 8), levels = c("Pbo", "Act")),
+    PARAM  = rep(c("A", "B"), 8),
+    BNRIND = factor(c("N","N","H","N","N","N","H","N", "N","N","H","N","N","N","H","N"),
+                    levels = c("N", "H")),
+    ANRIND = factor(c("N","H","H","N","N","H","N","N", "N","H","H","N","N","H","N","N"),
+                    levels = c("N", "H")),
+    stringsAsFactors = FALSE)
+  d$BNRIND[d$PARAM == "B"] <- "N"   # PARAM B: baseline High entirely absent
+  d
+}
+
+test_that("denom_row zero-fills an absent baseline group instead of NA (#55)", {
+  d <- .denom_row_absent_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_shift(c(row = "ANRIND", column = "BNRIND"), by = "PARAM",
+      settings = layer_settings(
+        shift_denom = "column", zero_count_display = "count_only",
+        format_strings = list(n_counts = f_str("xx(xxx%)", "n", "pct")),
+        denom_row = TRUE, denom_row_label = "n")))), d)
+
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  denom <- b[trimws(b$rowlabel2) == "n", ]
+  cells <- unlist(lapply(res_cols, function(rc) trimws(denom[[rc]])))
+  # never the literal string "NA"; the absent (PARAM B, High) group reads 0
+  expect_false(any(cells == "NA"))
+  b_row <- denom[trimws(denom$rowlabel1) == "B", ]
+  expect_true(any(vapply(res_cols, function(rc) trimws(b_row[[rc]]) == "0", logical(1))))
+})
+
+test_that("denom_row_format gives the n row its own width (#55)", {
+  d <- .denom_row_absent_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+    group_shift(c(row = "ANRIND", column = "BNRIND"), by = "PARAM",
+      settings = layer_settings(
+        shift_denom = "column", zero_count_display = "count_only",
+        format_strings = list(n_counts = f_str("xx(xxx%)", "n", "pct")),
+        denom_row = TRUE, denom_row_label = "n",
+        denom_row_format = f_str("xx", "n"))))), d)
+
+  res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  denom <- b[trimws(b$rowlabel2) == "n", ]
+  # 2-char field (independent of the 8-char n_counts cells), right-justified
+  widths <- unlist(lapply(res_cols, function(rc) nchar(denom[[rc]])))
+  expect_true(all(widths == 2))
+  b_row <- denom[trimws(denom$rowlabel1) == "B", ]
+  vals <- vapply(res_cols, function(rc) b_row[[rc]], character(1))
+  expect_true(all(vals %in% c(" 2", " 4", " 0")))
+})
+
+test_that("denom_row_format must be a single-variable f_str (#55)", {
+  d <- .denom_row_absent_data()
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+      group_shift(c(row = "ANRIND", column = "BNRIND"),
+        settings = layer_settings(denom_row = TRUE,
+          denom_row_format = "xx")))), d),
+    "denom_row_format must be an f_str"
+  )
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRTP", layers = tplyr_layers(
+      group_shift(c(row = "ANRIND", column = "BNRIND"),
+        settings = layer_settings(denom_row = TRUE,
+          denom_row_format = f_str("xx (xx)", "n", "pct"))))), d),
+    "exactly one"
+  )
+})

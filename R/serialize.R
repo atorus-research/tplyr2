@@ -141,6 +141,11 @@ serialize_settings <- function(settings) {
     out$stat_columns <- map(settings$stat_columns, serialize_f_str)
   }
 
+  # denom_row_format: a single f_str
+  if (!is.null(settings$denom_row_format)) {
+    out$denom_row_format <- serialize_f_str(settings$denom_row_format)
+  }
+
   # Simple pass-through fields
   simple_fields <- c("denoms_by", "shift_denom", "denom_row", "denom_row_label",
                       "denom_ignore", "distinct_by",
@@ -447,6 +452,11 @@ deserialize_settings <- function(raw) {
   # Reconstruct stat_columns
   if (!is.null(raw$stat_columns)) {
     raw$stat_columns <- map(raw$stat_columns, deserialize_f_str)
+  }
+
+  # Reconstruct denom_row_format
+  if (!is.null(raw$denom_row_format)) {
+    raw$denom_row_format <- deserialize_f_str(raw$denom_row_format)
   }
 
   # Reconstruct denom_where
