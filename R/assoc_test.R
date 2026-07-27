@@ -220,6 +220,23 @@ format_assoc_return <- function(raw, format) {
 #'   empty, a single-row table with only \code{.assoc_p}.
 #' @keywords internal
 compute_assoc_test <- function(source_dt, by_data_vars, config) {
+  # total_group()/custom_group() duplicate rows are a display construct for the
+  # count columns; they must not enter a statistical test or they double-count
+  # every subject and silently return a wrong p-value (#53). Drop them (and the
+  # internal marker) so `fn` sees only the real observations.
+  if (".tplyr_synthetic" %in% names(source_dt)) {
+    keep <- setdiff(names(source_dt), ".tplyr_synthetic")
+    source_dt <- source_dt[.tplyr_synthetic %in% c(FALSE, NA), keep, with = FALSE]
+    # Assigning the total/custom label to a factor column left its level behind;
+    # after dropping the synthetic rows those levels are globally unused, so drop
+    # them or a test that tabulates on the factor sees a phantom all-zero level
+    # (a chi-square then returns NaN) (#53).
+    fct_cols <- names(source_dt)[map_lgl(source_dt, is.factor)]
+    for (fc in fct_cols) {
+      data.table::set(source_dt, j = fc, value = droplevels(source_dt[[fc]]))
+    }
+  }
+
   run_one <- function(sub) {
     raw <- tryCatch(config$fn(as.data.frame(sub)), error = function(e) NA_real_)
     format_assoc_return(raw, config$format)
@@ -251,20 +268,34 @@ compute_assoc_test <- function(source_dt, by_data_vars, config) {
 merge_assoc_column <- function(wide, assoc, by_rl_cols, by_data_vars, config) {
   wide[, pval1 := ""]
 
+  # The omnibus value belongs on the first row of the layer's FINAL display
+  # order, but merge runs before the top-level sort by the ord* columns. Placing
+  # it on the current (dcast) first row would strand it on an arbitrary category
+  # once the rows are reordered (e.g. order_count_method = "byfactor"), so derive
+  # the display order here from the ord* columns (#54).
+  ord_cols <- sort_by_numeric_suffix(str_subset(names(wide), "^ord\\d+$"))
+  disp_rank <- if (length(ord_cols) > 0 && nrow(wide) > 0) {
+    do.call(order, lapply(ord_cols, function(oc) wide[[oc]]))
+  } else {
+    seq_len(nrow(wide))
+  }
+
   if (length(by_rl_cols) > 0) {
     # Key each wide row by its by-group (trimmed rowlabel values) and match to
-    # the computed results; place the value on the first row of each group.
+    # the computed results; place the value on the first row of each group in
+    # display order.
     wide_key <- do.call(paste, c(lapply(by_rl_cols, function(c) trimws(wide[[c]])),
                                  sep = "\r"))
     assoc_key <- do.call(paste, c(lapply(by_data_vars, function(c) trimws(assoc[[c]])),
                                   sep = "\r"))
     lookup <- setNames(assoc$.assoc_p, assoc_key)
-    first <- !duplicated(wide_key)
-    wide[first, pval1 := lookup[wide_key[first]]]
+    # First appearance of each by-group key when rows are walked in display order
+    first_in_disp <- disp_rank[!duplicated(wide_key[disp_rank])]
+    wide[first_in_disp, pval1 := lookup[wide_key[first_in_disp]]]
     wide[is.na(pval1), pval1 := ""]
   } else {
-    # No by variable: a single result on the first row
-    if (nrow(wide) > 0) wide[1L, pval1 := assoc$.assoc_p[1]]
+    # No by variable: a single result on the first row in display order
+    if (nrow(wide) > 0) wide[disp_rank[1], pval1 := assoc$.assoc_p[1]]
   }
 
   data.table::setattr(wide[["pval1"]], "label", config$label)

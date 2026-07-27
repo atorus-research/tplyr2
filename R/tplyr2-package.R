@@ -9,7 +9,7 @@ NULL
 utils::globalVariables(c(
   ".", ".col_combo", ".comp_idx", ".disp", ".idx", ".join_key", ".missing_sort",
   ".nest_level", ".ord_tv", ".row_order", ".sort_inner", ".sort_key",
-  ".sort_outer", ".total_sort", ".var_name",
+  ".sort_outer", ".total_sort", ".tplyr_synthetic", ".var_name",
   "analysis_id", "distinct_n", "distinct_pct", "distinct_total",
   "formatted", "formatted_rd", "i..sort_inner", "i.formatted_rd",
   "id", "max_dec", "max_int", "median", "n", "og_row", "ord1",

@@ -793,3 +793,105 @@ test_that("count and desc assoc p-values share one pval column in a spec (#51)",
   # both layers contribute a value into the shared column
   expect_gte(sum(trimws(b$pval1) != ""), 2L)
 })
+
+# --- #53: total_group / custom_group rows must not leak into fn ---
+
+test_that("omnibus assoc_test excludes total_group duplicate rows from fn (#53)", {
+  adsl <- data.frame(
+    USUBJID = 1:40,
+    TRT01P = factor(rep(c("Placebo", "Low", "High", "Xtra"), each = 10),
+                    levels = c("Placebo", "Low", "High", "Xtra")),
+    AGEGR1 = c(rep("<65", 6), rep(">=65", 4), rep("<65", 3), rep(">=65", 7),
+               rep("<65", 8), rep(">=65", 2), rep("<65", 5), rep(">=65", 5)),
+    stringsAsFactors = FALSE)
+
+  seen <- NULL
+  chi_fn <- function(.data) {
+    seen <<- .data
+    sprintf("%.4f", suppressWarnings(
+      chisq.test(table(.data$TRT01P, .data$AGEGR1))$p.value))
+  }
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P",
+    total_groups = list(total_group("TRT01P")),
+    layers = tplyr_layers(group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      assoc_test = assoc_test(fn = chi_fn, format = f_str("x.xxxx", "p")))))), adsl)
+
+  # fn saw only the 40 real rows, no synthetic "Total" arm, no marker column
+  expect_equal(nrow(seen), 40L)
+  expect_false("Total" %in% as.character(seen$TRT01P))
+  expect_false("Total" %in% levels(seen$TRT01P))   # phantom level dropped too
+  expect_false(".tplyr_synthetic" %in% names(seen))
+  # and the reported p equals a direct test on the real data
+  expected <- sprintf("%.4f", suppressWarnings(
+    chisq.test(table(adsl$TRT01P, adsl$AGEGR1))$p.value))
+  expect_equal(trimws(b$pval1[b$pval1 != ""][1]), expected)
+})
+
+test_that("omnibus assoc_test excludes custom_group duplicate rows from fn (#53)", {
+  d <- data.frame(
+    TRT = factor(rep(c("Placebo", "Low", "High"), each = 10),
+                 levels = c("Placebo", "Low", "High")),
+    RESP = factor(rep(c("N", "Y"), 15), levels = c("N", "Y")),
+    stringsAsFactors = FALSE)
+  seen_n <- NULL
+  b <- tplyr_build(tplyr_spec(cols = "TRT",
+    custom_groups = list(custom_group("TRT", "Active" = c("Low", "High"))),
+    layers = tplyr_layers(group_count("RESP", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      assoc_test = assoc_test(
+        fn = function(.data) { seen_n <<- nrow(.data); 0.5 },
+        format = f_str("x.xxx", "p")))))), d)
+  # the "Active" duplicates (20 rows) are excluded -> fn sees only the 30 real
+  expect_equal(seen_n, 30L)
+})
+
+# --- #54: omnibus value lands on the first DISPLAY row, not the pre-sort row ---
+
+test_that("omnibus assoc_test places the value on the first display row (#54)", {
+  d2 <- data.frame(
+    TRT = factor(rep(c("A", "B"), each = 15), levels = c("A", "B")),
+    AGEGR1 = factor(c(rep("<65", 8), rep("65-80", 4), rep(">80", 3),
+                      rep("<65", 3), rep("65-80", 9), rep(">80", 3)),
+                    levels = c("<65", "65-80", ">80")),
+    stringsAsFactors = FALSE)
+  at <- assoc_test(
+    fn = function(.data) suppressWarnings(
+      chisq.test(table(.data$TRT, .data$AGEGR1))$p.value),
+    format = f_str("x.xxx", "p"))
+  disp <- as.data.frame(as_display(tplyr_build(tplyr_spec(cols = "TRT",
+    layers = tplyr_layers(group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      order_count_method = "byfactor", assoc_test = at)))), d2)))
+
+  # value on the first factor-order row (<65), blank on the rest
+  expect_true(trimws(disp$pval1[disp$rowlabel1 == "<65"]) != "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == "65-80"]), "")
+  expect_equal(trimws(disp$pval1[disp$rowlabel1 == ">80"]), "")
+})
+
+test_that("omnibus assoc_test lands on each by-group's first display row (#54)", {
+  set.seed(9)
+  d <- data.frame(
+    TRT = factor(rep(c("A", "B"), each = 30), levels = c("A", "B")),
+    PARAM = factor(rep(c("ALT", "AST"), 30), levels = c("ALT", "AST")),
+    GR = factor(sample(c("Hi", "Lo", "Mid"), 60, replace = TRUE),
+                levels = c("Lo", "Mid", "Hi")),
+    stringsAsFactors = FALSE)
+  at <- assoc_test(
+    fn = function(.data) suppressWarnings(
+      chisq.test(table(.data$TRT, .data$GR))$p.value),
+    format = f_str("x.xxx", "p"))
+  disp <- as.data.frame(as_display(tplyr_build(tplyr_spec(cols = "TRT",
+    layers = tplyr_layers(group_count("GR", by = "PARAM", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")),
+      order_count_method = "byfactor", assoc_test = at)))), d)))
+
+  # within each PARAM, exactly one value and it is on the first factor row (Lo)
+  for (p in c("ALT", "AST")) {
+    grp <- disp[disp$rowlabel1 == p, ]
+    grp <- grp[order(match(grp$rowlabel2, c("Lo", "Mid", "Hi"))), ]
+    expect_equal(sum(trimws(grp$pval1) != ""), 1L)
+    expect_true(trimws(grp$pval1[grp$rowlabel2 == "Lo"]) != "")
+  }
+})

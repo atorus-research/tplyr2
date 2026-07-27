@@ -116,6 +116,18 @@
 
 ## Bug fixes
 
+- Omnibus `assoc_test()` no longer lets `total_group()` / `custom_group()`
+  duplicate rows leak into the `fn`'s `.data` (#53). Those rows are a display
+  construct for the count columns; including them double-counted every subject
+  and silently returned a wrong p-value (no error, no warning). The synthetic
+  rows — and their now-unused factor levels (e.g. a phantom `"Total"` level that
+  made `chisq.test()` return `NaN`) — are dropped before `fn` runs, so it sees
+  only the real observations.
+- Omnibus `assoc_test()` now places its p-value on the layer's **first display
+  row**, not the arbitrary pre-sort (dcast) row (#54). The value was written
+  before the `ord*` reorder (e.g. `order_count_method = "byfactor"`), so it could
+  strand on the wrong category (landing on `65-80` instead of `<65`, etc.);
+  placement is now derived from the ordering columns, per by-group.
 - `group_count()` `missing_count` now always emits the Missing row when set,
   zero-filling every column/by group that has no missing values, so the row
   reads `0 ( 0%)` throughout instead of being dropped (when the total missing
