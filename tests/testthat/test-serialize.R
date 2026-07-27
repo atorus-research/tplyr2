@@ -541,6 +541,19 @@ test_that("JSON roundtrip preserves denom_row / denom_row_label", {
   expect_equal(s$denom_row_label, "N assessed")
 })
 
+test_that("JSON roundtrip preserves denom_row_format f_str (#55)", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_shift(c(row = "BR", column = "AR"), settings = layer_settings(
+      shift_denom = "column", denom_row = TRUE,
+      denom_row_format = f_str("xx", "n")))))
+  path <- file.path(scratch_dir, "denom_row_format.json")
+  tplyr_write_spec(spec, path)
+  s <- tplyr_read_spec(path)$layers[[1]]$settings
+  expect_s3_class(s$denom_row_format, "tplyr_f_str")
+  expect_equal(s$denom_row_format$format_string, "xx")
+  expect_equal(s$denom_row_format$vars, "n")
+})
+
 # --- Single-proportion CI settings roundtrip (#44) ---
 
 test_that("JSON roundtrip preserves ci_method / ci_level and CI keywords", {

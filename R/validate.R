@@ -137,6 +137,20 @@ validate_layer <- function(layer, index, cols = NULL) {
          call. = FALSE)
   }
 
+  # denom_row_format (shift layers): a single-variable f_str
+  drf <- layer$settings$denom_row_format
+  if (!is.null(drf)) {
+    if (!inherits(drf, "tplyr_f_str")) {
+      stop(str_glue("Layer {index}: denom_row_format must be an f_str() object"),
+           call. = FALSE)
+    }
+    if (length(drf$vars) != 1) {
+      stop(str_glue("Layer {index}: denom_row_format must reference exactly one ",
+                    "variable (the denominator count)"),
+           call. = FALSE)
+    }
+  }
+
   # Validate single-proportion CI settings (count layers)
   ci_method <- layer$settings$ci_method
   ci_methods <- c("clopper_pearson", "wilson", "wald", "agresti_coull",

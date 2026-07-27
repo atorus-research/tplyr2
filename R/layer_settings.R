@@ -16,6 +16,7 @@
 #' | `shift_denom` | | | X | |
 #' | `denom_row` | | | X | |
 #' | `denom_row_label` | | | X | |
+#' | `denom_row_format` | | | X | |
 #' | `denom_where` | X | X | X | |
 #' | `denom_ignore` | X | | X | |
 #' | `distinct_by` | X | | X | |
@@ -78,6 +79,14 @@
 #'   \code{shift_denom = "column"}. Defaults to \code{FALSE}.
 #' @param denom_row_label Character string, the row label for the \code{denom_row}
 #'   row. Defaults to \code{"n"}.
+#' @param denom_row_format An \code{\link{f_str}} object formatting the
+#'   \code{denom_row} cells, shift layers only. Lets the denominator row carry
+#'   its own width independent of the \code{n_counts} format (e.g.
+#'   \code{f_str("xx", "n")} for a plain narrow integer). The f_str must
+#'   reference a single variable (the denominator count is passed positionally).
+#'   \code{NULL} (default) keeps the legacy behavior of padding the integer to
+#'   the width of the shift cells. An absent baseline group renders as \code{0}
+#'   either way.
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting
@@ -136,6 +145,7 @@ layer_settings <- function(
     shift_denom = "total",
     denom_row = FALSE,
     denom_row_label = "n",
+    denom_row_format = NULL,
     denom_where = NULL,
     denom_ignore = NULL,
     distinct_by = NULL,
@@ -179,6 +189,7 @@ layer_settings <- function(
       shift_denom = shift_denom,
       denom_row = denom_row,
       denom_row_label = denom_row_label,
+      denom_row_format = denom_row_format,
       denom_where = denom_where,
       denom_ignore = denom_ignore,
       distinct_by = distinct_by,

@@ -151,8 +151,21 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
     denom_label <- settings$denom_row_label %||% "n"
     dr <- unique(counts[, c(all_cols, by_data_vars, "total"), with = FALSE])
     dr[, (row_var) := denom_label]
-    fmt_w <- max(nchar(counts[["formatted"]]), na.rm = TRUE)
-    dr[, formatted := formatC(total, format = "d", width = fmt_w)]
+    # A baseline (shift-column) group that is absent for a by-group has no
+    # denominator row in `denoms`, so completion leaves `total` NA. Its
+    # denominator is zero, not unknown; zero-fill it so the cell renders 0
+    # rather than the literal string "NA" (#55).
+    dr[is.na(total), total := 0L]
+    denom_fmt <- settings$denom_row_format
+    if (!is.null(denom_fmt)) {
+      # Format the denominator with its own f_str (passed positionally), so the
+      # row's width is independent of the n_counts cells (#55).
+      dr[, formatted := apply_formats(denom_fmt, total)]
+    } else {
+      # Legacy behavior: right-align the integer to the shift-cell width.
+      fmt_w <- max(nchar(counts[["formatted"]]), na.rm = TRUE)
+      dr[, formatted := formatC(total, format = "d", width = fmt_w)]
+    }
     build_shift_row_labels(dr, by_labels, by_data_vars, row_var)
     dr[, .row_order := 0L]
     for (bv in by_data_vars) {

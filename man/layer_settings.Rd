@@ -11,6 +11,7 @@ layer_settings(
   shift_denom = "total",
   denom_row = FALSE,
   denom_row_label = "n",
+  denom_row_format = NULL,
   denom_where = NULL,
   denom_ignore = NULL,
   distinct_by = NULL,
@@ -78,6 +79,15 @@ threshold/normal-range shift table. Pairs naturally with
 
 \item{denom_row_label}{Character string, the row label for the \code{denom_row}
 row. Defaults to \code{"n"}.}
+
+\item{denom_row_format}{An \code{\link{f_str}} object formatting the
+\code{denom_row} cells, shift layers only. Lets the denominator row carry
+its own width independent of the \code{n_counts} format (e.g.
+\code{f_str("xx", "n")} for a plain narrow integer). The f_str must
+reference a single variable (the denominator count is passed positionally).
+\code{NULL} (default) keeps the legacy behavior of padding the integer to
+the width of the shift cells. An absent baseline group renders as \code{0}
+either way.}
 
 \item{denom_where}{Expression for separate denominator filter}
 
@@ -175,6 +185,7 @@ settings are applicable for each of the four layer types:\tabular{lllll}{
    \code{shift_denom} \tab  \tab  \tab X \tab  \cr
    \code{denom_row} \tab  \tab  \tab X \tab  \cr
    \code{denom_row_label} \tab  \tab  \tab X \tab  \cr
+   \code{denom_row_format} \tab  \tab  \tab X \tab  \cr
    \code{denom_where} \tab X \tab X \tab X \tab  \cr
    \code{denom_ignore} \tab X \tab  \tab X \tab  \cr
    \code{distinct_by} \tab X \tab  \tab X \tab  \cr
