@@ -11,7 +11,8 @@ assoc_test(
   format = f_str("x.xxx", "p"),
   label = NULL,
   reference = NULL,
-  comparisons = NULL
+  comparisons = NULL,
+  total_row = TRUE
 )
 ```
 
@@ -59,6 +60,14 @@ assoc_test(
   Supplying this switches on pairwise/per-level mode; `NULL` (default)
   keeps omnibus mode.
 
+- total_row:
+
+  Pairwise mode only. Logical(1); when the layer also emits a total row
+  (`layer_settings(total_row = TRUE)`), `TRUE` (default) computes the
+  pairwise p-value on that row too – for a nested AE layer the
+  grand-total ("any event anywhere") 2x2 – while `FALSE` leaves it
+  blank. Missing rows are always left blank.
+
 ## Value
 
 A `tplyr_assoc_test` object.
@@ -78,9 +87,13 @@ group's first output row.
 **Pairwise / per-level mode** (`comparisons` non-`NULL`). Count layers
 only. Emits one `pval` column per comparison, each comparing an arm
 level of the first `cols` variable to `reference`, with a value on
-*every* target-level row (like `risk_diff`'s `rdiff` columns). Here `fn`
-receives, for one (target level, comparison) pair, a 2x2 contingency
-**matrix**
+*every* target-level row (like `risk_diff`'s `rdiff` columns). On a
+**nested** count layer it emits a value on every row of every level –
+each inner (e.g. preferred-term) row and each outer (e.g.
+system-organ-class subtotal) row, each row's 2x2 built from that row's
+own counts – and, when the layer has a total row, on the grand-total row
+too (see `total_row`). Here `fn` receives, for one (row, comparison)
+pair, a 2x2 contingency **matrix**
 `matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)` – rows
 are (reference, comparison) arm, columns are (event, no event) – where
 `n` is the cell count and `N` the population denominator for that arm.

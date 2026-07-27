@@ -66,6 +66,7 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_counts.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_missing_subjects.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc_nested.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_risk_diff.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_total_row.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/compute_var_order.html</loc></url>
@@ -111,7 +112,9 @@
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/make_not_na_filter.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_assoc_column.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_pairwise_assoc.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_pairwise_assoc_nested.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/merge_risk_diff_columns.html</loc></url>
+<url><loc>https://github.com/mstackhouse/tplyr2/reference/pairwise_cell_disp.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_group.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_part.html</loc></url>
 <url><loc>https://github.com/mstackhouse/tplyr2/reference/parse_format_string.html</loc></url>

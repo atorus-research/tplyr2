@@ -85,7 +85,8 @@ is supplied:</p>
 <span>  format <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"x.xxx"</span>, <span class="st">"p"</span><span class="op">)</span>,</span>
 <span>  label <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reference <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  comparisons <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  comparisons <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  total_row <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -133,6 +134,14 @@ levels) of arm levels, each compared to <code>reference</code> (e.g.
 <code>c("Low", "High")</code>). Supplying this switches on pairwise/per-level
 mode; <code>NULL</code> (default) keeps omnibus mode.</p></dd>
 
+
+<dt id="arg-total-row">total_row<a class="anchor" aria-label="anchor" href="#arg-total-row"></a></dt>
+<dd><p>Pairwise mode only. Logical(1); when the layer also emits a
+total row (<code>layer_settings(total_row = TRUE)</code>), <code>TRUE</code> (default)
+computes the pairwise p-value on that row too – for a nested AE layer the
+grand-total ("any event anywhere") 2x2 – while <code>FALSE</code> leaves it
+blank. Missing rows are always left blank.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -153,7 +162,11 @@ the value placed on that group's first output row.</p>
 Count layers only. Emits one <code>pval</code> column per comparison, each
 comparing an arm level of the first <code>cols</code> variable to <code>reference</code>,
 with a value on <em>every</em> target-level row (like <code>risk_diff</code>'s
-<code>rdiff</code> columns). Here <code>fn</code> receives, for one (target level,
+<code>rdiff</code> columns). On a <strong>nested</strong> count layer it emits a value on
+every row of every level – each inner (e.g. preferred-term) row and each
+outer (e.g. system-organ-class subtotal) row, each row's 2x2 built from that
+row's own counts – and, when the layer has a total row, on the grand-total
+row too (see <code>total_row</code>). Here <code>fn</code> receives, for one (row,
 comparison) pair, a 2x2 contingency <strong>matrix</strong>
 <code>matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)</code> –
 rows are (reference, comparison) arm, columns are (event, no event) – where
