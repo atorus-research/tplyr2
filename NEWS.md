@@ -72,7 +72,10 @@
   ("any event anywhere") row; set `total_row = FALSE` to leave it blank.
   Missing rows are always blank. Combined with the character-return display
   (#47), the `fn` can supply the exact `* / >.99 / trailing-space / blank`
-  cell text on every nested row.
+  cell text on every nested row. A zero-event arm is handled correctly: its
+  2x2 denominator is taken from `pop_data` (subjects at risk), so a sparse or
+  empty **reference** arm still yields a valid `0`-vs-`k` test on every row
+  instead of blanking the column.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard

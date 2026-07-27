@@ -491,6 +491,55 @@ test_that("nested pairwise total_row toggles the grand-total p-value (#49)", {
   expect_true(all(trimws(cat_off$pval1) != ""))
 })
 
+test_that("nested pairwise assoc_test handles a zero-event reference arm (#49)", {
+  # Placebo has NO events at all: its 2x2 is 0-vs-k, still a valid test. The
+  # reference arm's denominator must come from pop_data, not the (empty)
+  # observed counts, so every SOC/PT/total row still gets a p-value.
+  adsl <- data.frame(
+    USUBJID = sprintf("S%02d", 1:15),
+    TRT = factor(c(rep("Placebo", 4), rep("Low", 5), rep("High", 6)),
+                 levels = c("Placebo", "Low", "High")),
+    stringsAsFactors = FALSE
+  )
+  adae <- data.frame(
+    USUBJID = c("S05", "S06", "S10", "S11"),
+    TRT = factor(c("Low", "Low", "High", "High"),
+                 levels = c("Placebo", "Low", "High")),
+    SOC = c("GI", "NERVOUS", "GI", "NERVOUS"),
+    PT = c("NAUSEA", "SYNCOPE", "NAUSEA", "SYNCOPE"),
+    stringsAsFactors = FALSE
+  )
+
+  calls <- 0
+  fp <- function(m) {
+    calls <<- calls + 1
+    if (sum(m[, 1]) == 0) NA_real_ else fisher.test(m)$p.value
+  }
+  at <- assoc_test(fn = fp, format = f_str("x.xxx", "p"),
+                   reference = "Placebo", comparisons = c("Low", "High"))
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count(c("SOC", "PT"),
+      settings = layer_settings(
+        distinct_by = "USUBJID", total_row = TRUE, total_row_label = "ANY",
+        stat_columns = list("n" = f_str("xx", "distinct_n")),
+        assoc_test = at)))
+  )
+  disp <- as.data.frame(as_display(tplyr_build(spec, adae, pop_data = adsl)))
+
+  # fn is actually called for the 0-vs-k comparisons (not short-circuited)
+  expect_gt(calls, 0)
+  # every category + total row carries a p-value for both comparisons
+  expect_true(all(trimws(disp$pval1) != ""))
+  expect_true(all(trimws(disp$pval2) != ""))
+
+  # a 0-vs-1 category row matches a direct Fisher on the same 2x2
+  gi_nausea <- disp[disp$rowlabel1 == "GI" & disp$rowlabel2 == "NAUSEA", ]
+  expected <- fisher.test(matrix(c(0, 1, 4, 4), nrow = 2))$p.value
+  expect_equal(trimws(gi_nausea$pval1),
+               trimws(apply_formats(f_str("x.xxx", "p"), expected)))
+})
+
 test_that("nested pairwise assoc_test passes a character fn return verbatim (#47 + #49)", {
   dat <- .assoc_nested_data()
   ae_disp <- function(m) {

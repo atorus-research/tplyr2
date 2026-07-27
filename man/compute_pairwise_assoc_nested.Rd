@@ -10,7 +10,8 @@ compute_pairwise_assoc_nested(
   row_label_cols,
   distinct_by,
   config,
-  reference
+  reference,
+  arm_n = NULL
 )
 }
 \arguments{
@@ -30,6 +31,12 @@ counts/denominators when non-NULL.}
 \item{config}{A \code{tplyr_assoc_test} object (pairwise mode).}
 
 \item{reference}{Character(1) resolved reference arm level.}
+
+\item{arm_n}{Named numeric of population arm sizes (arm level -> N), used to
+back-fill the 2x2 denominator for an arm that has no events on a row (or no
+events at all). Without it, a zero-event reference or comparison arm would
+have a missing denominator and blank the test; with it, an empty arm still
+yields a valid \code{0-vs-k} test (issue #49, sparse-table fix).}
 }
 \value{
 A data.table with the \code{row_label_cols} (as character),

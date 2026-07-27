@@ -478,13 +478,19 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
 #'   counts/denominators when non-NULL.
 #' @param config A \code{tplyr_assoc_test} object (pairwise mode).
 #' @param reference Character(1) resolved reference arm level.
+#' @param arm_n Named numeric of population arm sizes (arm level -> N), used to
+#'   back-fill the 2x2 denominator for an arm that has no events on a row (or no
+#'   events at all). Without it, a zero-event reference or comparison arm would
+#'   have a missing denominator and blank the test; with it, an empty arm still
+#'   yields a valid \code{0-vs-k} test (issue #49, sparse-table fix).
 #'
 #' @return A data.table with the \code{row_label_cols} (as character),
 #'   \code{.comp_idx}, and the display string \code{.disp}; one row per output
 #'   row per comparison.
 #' @keywords internal
 compute_pairwise_assoc_nested <- function(long, cols, row_label_cols,
-                                          distinct_by, config, reference) {
+                                          distinct_by, config, reference,
+                                          arm_n = NULL) {
   comparisons <- config$comparisons
   if (length(cols) == 0) {
     stop("pairwise assoc_test requires at least one column variable (cols)",
@@ -496,20 +502,44 @@ compute_pairwise_assoc_nested <- function(long, cols, row_label_cols,
   n_col     <- if (!is.null(distinct_by)) "distinct_n" else "n"
   total_col <- if (!is.null(distinct_by)) "distinct_total" else "total"
 
-  keep <- c(row_label_cols, n_col, total_col)
-  ref_dt <- long[get(col_var) == reference, keep, with = FALSE]
-  data.table::setnames(ref_dt, c(n_col, total_col), c("n_ref", "N_ref"))
-  # Key columns to character so ref/cmp merges align regardless of source type
+  # Universe of output rows. Every arm is compared on every row, so an arm with
+  # no events on a row (or absent from the layer entirely) still contributes an
+  # n = 0 cell rather than dropping the whole comparison.
+  row_keys <- unique(long[, row_label_cols, with = FALSE])
   for (k in row_label_cols) {
-    data.table::set(ref_dt, j = k, value = as.character(ref_dt[[k]]))
+    data.table::set(row_keys, j = k, value = as.character(row_keys[[k]]))
   }
 
-  results <- imap(comparisons, function(cmp_level, ci_idx) {
-    cmp_dt <- long[get(col_var) == cmp_level, keep, with = FALSE]
-    data.table::setnames(cmp_dt, c(n_col, total_col), c("n_cmp", "N_cmp"))
+  arm_denom <- function(arm) {
+    if (is.null(arm_n)) return(NA_real_)
+    v <- arm_n[[as.character(arm)]]
+    if (is.null(v)) NA_real_ else as.numeric(v)
+  }
+
+  # An arm's counts, completed to the full row universe: n zero-filled, and the
+  # denominator back-filled from the population arm N wherever the layer left it
+  # missing (a zero-event arm never reaches denominator completion upstream).
+  arm_counts <- function(arm) {
+    sub <- long[get(col_var) == arm, c(row_label_cols, n_col, total_col),
+                with = FALSE]
     for (k in row_label_cols) {
-      data.table::set(cmp_dt, j = k, value = as.character(cmp_dt[[k]]))
+      data.table::set(sub, j = k, value = as.character(sub[[k]]))
     }
+    m <- merge(row_keys, sub, by = row_label_cols, all.x = TRUE)
+    data.table::set(m, which(is.na(m[[n_col]])), n_col, 0)
+    Narm <- arm_denom(arm)
+    if (!is.na(Narm)) {
+      data.table::set(m, which(is.na(m[[total_col]])), total_col, Narm)
+    }
+    m
+  }
+
+  ref_dt <- arm_counts(reference)
+  data.table::setnames(ref_dt, c(n_col, total_col), c("n_ref", "N_ref"))
+
+  results <- imap(comparisons, function(cmp_level, ci_idx) {
+    cmp_dt <- arm_counts(cmp_level)
+    data.table::setnames(cmp_dt, c(n_col, total_col), c("n_cmp", "N_cmp"))
 
     paired <- merge(ref_dt, cmp_dt, by = row_label_cols, all = TRUE)
 

@@ -417,11 +417,26 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   row_label_cols_all <- str_c("rowlabel", seq_len(n_label_cols))
   assoc_pieces <- list()
   assoc_reference <- NULL
+  assoc_arm_n <- NULL
   if (is_pairwise_assoc) {
     assoc_reference <- resolve_assoc_reference(settings$assoc_test, dt, cols)
+    # Population arm sizes (subjects at risk per arm) for the pairwise 2x2
+    # denominator, sourced from the denominator/pop table so a zero-event arm
+    # still supplies its N for a valid 0-vs-k test. An empty reference or
+    # comparison arm never reaches the layer's denominator completion, so
+    # combined leaves its N missing; this back-fills it.
+    if (length(cols) > 0) {
+      av <- cols[1]
+      an <- if (!is.null(distinct_by)) {
+        denom_dt[, list(.n = uniqueN(get(distinct_by))), by = av]
+      } else {
+        denom_dt[, list(.n = .N), by = av]
+      }
+      assoc_arm_n <- setNames(an$.n, as.character(an[[av]]))
+    }
     assoc_pieces[[length(assoc_pieces) + 1L]] <- compute_pairwise_assoc_nested(
       combined, cols, row_label_cols_all, distinct_by,
-      settings$assoc_test, assoc_reference
+      settings$assoc_test, assoc_reference, assoc_arm_n
     )
   }
 
@@ -472,7 +487,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     if (is_pairwise_assoc && isTRUE(settings$assoc_test$total_row)) {
       assoc_pieces[[length(assoc_pieces) + 1L]] <- compute_pairwise_assoc_nested(
         total_result, cols, row_label_cols_all, distinct_by,
-        settings$assoc_test, assoc_reference
+        settings$assoc_test, assoc_reference, assoc_arm_n
       )
     }
 
