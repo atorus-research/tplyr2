@@ -406,6 +406,40 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   # Sort for correct interleaving: outer value, then level, then inner value
   sort_nested(combined, target_vars, by_data_vars, dt = dt)
 
+  # --- Pairwise per-level association test (#49) ---
+  # Computed on the category rows (all nesting levels) before the special rows
+  # are appended, keyed by the assembled rowlabel columns; the grand-total row's
+  # p-value is folded in below when total_row is enabled. Omnibus assoc_test on
+  # a nested layer remains a no-op (single-column-across-arms has no per-row
+  # placement here).
+  is_pairwise_assoc <- !is.null(settings$assoc_test) &&
+    isTRUE(settings$assoc_test$pairwise)
+  row_label_cols_all <- str_c("rowlabel", seq_len(n_label_cols))
+  assoc_pieces <- list()
+  assoc_reference <- NULL
+  assoc_arm_n <- NULL
+  if (is_pairwise_assoc) {
+    assoc_reference <- resolve_assoc_reference(settings$assoc_test, dt, cols)
+    # Population arm sizes (subjects at risk per arm) for the pairwise 2x2
+    # denominator, sourced from the denominator/pop table so a zero-event arm
+    # still supplies its N for a valid 0-vs-k test. An empty reference or
+    # comparison arm never reaches the layer's denominator completion, so
+    # combined leaves its N missing; this back-fills it.
+    if (length(cols) > 0) {
+      av <- cols[1]
+      an <- if (!is.null(distinct_by)) {
+        denom_dt[, list(.n = uniqueN(get(distinct_by))), by = av]
+      } else {
+        denom_dt[, list(.n = .N), by = av]
+      }
+      assoc_arm_n <- setNames(an$.n, as.character(an[[av]]))
+    }
+    assoc_pieces[[length(assoc_pieces) + 1L]] <- compute_pairwise_assoc_nested(
+      combined, cols, row_label_cols_all, distinct_by,
+      settings$assoc_test, assoc_reference, assoc_arm_n
+    )
+  }
+
   # Handle missing row (outermost level only). Appended before the total row
   # so it sorts ahead of it (matching the single-variable path); the row order
   # below is derived from this physical append order.
@@ -446,6 +480,16 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     build_nested_row_labels_special(total_result, by_labels, by_data_vars,
                                      target_vars, outer_tv, n_label_cols)
     total_result[, .nest_level := 0L]
+
+    # Grand-total row p-value (#49): the total-row table carries one row per arm
+    # with the "any event anywhere" counts and arm denominators, so the same
+    # rowlabel-keyed computation yields its 2x2. Gated by assoc_test(total_row).
+    if (is_pairwise_assoc && isTRUE(settings$assoc_test$total_row)) {
+      assoc_pieces[[length(assoc_pieces) + 1L]] <- compute_pairwise_assoc_nested(
+        total_result, cols, row_label_cols_all, distinct_by,
+        settings$assoc_test, assoc_reference, assoc_arm_n
+      )
+    }
 
     # Align columns and append
     shared_cols <- intersect(names(combined), names(total_result))
@@ -494,6 +538,17 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
                              by = row_label_cols]
     wide <- merge(wide, nest_levels, by = row_label_cols, all.x = TRUE, sort = FALSE)
     data.table::setnames(wide, ".nest_level", "ord2")
+  }
+
+  # --- Merge pairwise association-test p-value column(s) (#49) ---
+  if (is_pairwise_assoc) {
+    assoc_data <- data.table::rbindlist(
+      Filter(function(x) !is.null(x) && nrow(x) > 0, assoc_pieces),
+      use.names = TRUE, fill = TRUE
+    )
+    merge_pairwise_assoc_nested(
+      wide, assoc_data, settings$assoc_test, row_label_cols_all, assoc_reference
+    )
   }
 
   # Attach numeric data snapshot

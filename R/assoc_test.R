@@ -18,7 +18,11 @@
 #' Count layers only. Emits one \code{pval} column per comparison, each
 #' comparing an arm level of the first \code{cols} variable to \code{reference},
 #' with a value on \emph{every} target-level row (like \code{risk_diff}'s
-#' \code{rdiff} columns). Here \code{fn} receives, for one (target level,
+#' \code{rdiff} columns). On a \strong{nested} count layer it emits a value on
+#' every row of every level -- each inner (e.g. preferred-term) row and each
+#' outer (e.g. system-organ-class subtotal) row, each row's 2x2 built from that
+#' row's own counts -- and, when the layer has a total row, on the grand-total
+#' row too (see \code{total_row}). Here \code{fn} receives, for one (row,
 #' comparison) pair, a 2x2 contingency \strong{matrix}
 #' \code{matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)} --
 #' rows are (reference, comparison) arm, columns are (event, no event) -- where
@@ -57,6 +61,11 @@
 #'   levels) of arm levels, each compared to \code{reference} (e.g.
 #'   \code{c("Low", "High")}). Supplying this switches on pairwise/per-level
 #'   mode; \code{NULL} (default) keeps omnibus mode.
+#' @param total_row Pairwise mode only. Logical(1); when the layer also emits a
+#'   total row (\code{layer_settings(total_row = TRUE)}), \code{TRUE} (default)
+#'   computes the pairwise p-value on that row too -- for a nested AE layer the
+#'   grand-total ("any event anywhere") 2x2 -- while \code{FALSE} leaves it
+#'   blank. Missing rows are always left blank.
 #'
 #' @return A \code{tplyr_assoc_test} object.
 #' @examples
@@ -76,7 +85,7 @@
 #' )
 #' @export
 assoc_test <- function(fn, format = f_str("x.xxx", "p"), label = NULL,
-                       reference = NULL, comparisons = NULL) {
+                       reference = NULL, comparisons = NULL, total_row = TRUE) {
   if (!is.function(fn)) {
     stop("`fn` must be a function of one argument (the by-group data subset, ",
          "or a 2x2 matrix in pairwise mode)",
@@ -88,6 +97,9 @@ assoc_test <- function(fn, format = f_str("x.xxx", "p"), label = NULL,
   if (length(format$vars) != 1) {
     stop("`format` must reference exactly one variable (the returned scalar)",
          call. = FALSE)
+  }
+  if (!is.logical(total_row) || length(total_row) != 1 || is.na(total_row)) {
+    stop("`total_row` must be a single logical (TRUE/FALSE)", call. = FALSE)
   }
 
   pairwise <- !is.null(comparisons)
@@ -134,7 +146,7 @@ assoc_test <- function(fn, format = f_str("x.xxx", "p"), label = NULL,
   structure(
     list(fn = fn, format = format, label = label,
          reference = reference, comparisons = comparisons,
-         pairwise = pairwise),
+         pairwise = pairwise, total_row = isTRUE(total_row)),
     class = "tplyr_assoc_test"
   )
 }
@@ -274,6 +286,29 @@ resolve_assoc_reference <- function(config, dt, cols) {
   lv[1]
 }
 
+#' Build one pairwise 2x2 and render its display string
+#'
+#' Shared by the single-level and nested pairwise paths. Builds
+#' \code{matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)}, calls
+#' \code{config$fn} on it, and renders the return via
+#' \code{\link{format_assoc_return}}. A missing count/denominator or a zero
+#' denominator renders a blank (no test).
+#'
+#' @param n_ref,n_cmp Event counts for the reference and comparison arm.
+#' @param N_ref,N_cmp Population denominators for the reference and comparison arm.
+#' @param config A \code{tplyr_assoc_test} object (pairwise mode).
+#' @return A length-1 character display string.
+#' @keywords internal
+pairwise_cell_disp <- function(n_ref, n_cmp, N_ref, N_cmp, config) {
+  if (is.na(n_ref) || is.na(n_cmp) || is.na(N_ref) || is.na(N_cmp) ||
+      N_ref == 0 || N_cmp == 0) {
+    return("")
+  }
+  m <- matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)
+  raw <- tryCatch(config$fn(m), error = function(e) NA_real_)
+  format_assoc_return(raw, config$format)
+}
+
 #' Compute pairwise per-level association-test p-values from a counts table
 #'
 #' For each comparison arm and each target-variable level, builds a 2x2
@@ -313,13 +348,7 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
   row_vars <- c(by_data_vars, tv)
 
   run_one <- function(n_ref, n_cmp, N_ref, N_cmp) {
-    if (is.na(n_ref) || is.na(n_cmp) || is.na(N_ref) || is.na(N_cmp) ||
-        N_ref == 0 || N_cmp == 0) {
-      return("")
-    }
-    m <- matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)
-    raw <- tryCatch(config$fn(m), error = function(e) NA_real_)
-    format_assoc_return(raw, config$format)
+    pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
   }
 
   ref_dt <- counts_long[get(col_var) == reference,
@@ -416,6 +445,155 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
       on_clause <- setNames(sub_join_cols, wide_join_cols)
       wide[sub, (pcol) := i..disp, on = on_clause]
       wide[is.na(get(pcol)), (pcol) := ""]
+    }
+
+    data.table::setattr(wide[[pcol]], "label", labels[ci_idx])
+  })
+
+  invisible(wide)
+}
+
+# =============================================================================
+# Pairwise / per-level association test on a NESTED count layer (#49)
+# =============================================================================
+
+#' Compute pairwise per-level association-test p-values for a nested layer
+#'
+#' Like \code{compute_pairwise_assoc()} but keyed directly by the assembled
+#' \code{rowlabel*} columns rather than a single target variable, so it works at
+#' every nesting level at once: each inner (e.g. preferred-term) row and each
+#' outer (e.g. system-organ-class subtotal) row is one \code{rowlabel} tuple,
+#' and its 2x2 is built from that row's own reference/comparison counts and
+#' population denominators. The same helper computes the grand-total row's
+#' p-value when passed the total-row table (a single \code{rowlabel} tuple).
+#'
+#' @param long data.table holding the column variable, the assembled
+#'   \code{rowlabel*} columns, and the raw \code{n}/\code{total}
+#'   (or \code{distinct_n}/\code{distinct_total}) statistics -- the nested
+#'   \code{combined} table (category rows) or a total-row table.
+#' @param cols Character vector of column variable names from the spec.
+#' @param row_label_cols Character vector of the \code{rowlabel*} column names
+#'   that jointly identify an output row.
+#' @param distinct_by Distinct-by variable name (or NULL); selects the distinct
+#'   counts/denominators when non-NULL.
+#' @param config A \code{tplyr_assoc_test} object (pairwise mode).
+#' @param reference Character(1) resolved reference arm level.
+#' @param arm_n Named numeric of population arm sizes (arm level -> N), used to
+#'   back-fill the 2x2 denominator for an arm that has no events on a row (or no
+#'   events at all). Without it, a zero-event reference or comparison arm would
+#'   have a missing denominator and blank the test; with it, an empty arm still
+#'   yields a valid \code{0-vs-k} test (issue #49, sparse-table fix).
+#'
+#' @return A data.table with the \code{row_label_cols} (as character),
+#'   \code{.comp_idx}, and the display string \code{.disp}; one row per output
+#'   row per comparison.
+#' @keywords internal
+compute_pairwise_assoc_nested <- function(long, cols, row_label_cols,
+                                          distinct_by, config, reference,
+                                          arm_n = NULL) {
+  comparisons <- config$comparisons
+  if (length(cols) == 0) {
+    stop("pairwise assoc_test requires at least one column variable (cols)",
+         call. = FALSE)
+  }
+  if (is.null(long) || nrow(long) == 0) return(NULL)
+
+  col_var   <- cols[1]
+  n_col     <- if (!is.null(distinct_by)) "distinct_n" else "n"
+  total_col <- if (!is.null(distinct_by)) "distinct_total" else "total"
+
+  # Universe of output rows. Every arm is compared on every row, so an arm with
+  # no events on a row (or absent from the layer entirely) still contributes an
+  # n = 0 cell rather than dropping the whole comparison.
+  row_keys <- unique(long[, row_label_cols, with = FALSE])
+  for (k in row_label_cols) {
+    data.table::set(row_keys, j = k, value = as.character(row_keys[[k]]))
+  }
+
+  arm_denom <- function(arm) {
+    if (is.null(arm_n)) return(NA_real_)
+    v <- arm_n[[as.character(arm)]]
+    if (is.null(v)) NA_real_ else as.numeric(v)
+  }
+
+  # An arm's counts, completed to the full row universe: n zero-filled, and the
+  # denominator back-filled from the population arm N wherever the layer left it
+  # missing (a zero-event arm never reaches denominator completion upstream).
+  arm_counts <- function(arm) {
+    sub <- long[get(col_var) == arm, c(row_label_cols, n_col, total_col),
+                with = FALSE]
+    for (k in row_label_cols) {
+      data.table::set(sub, j = k, value = as.character(sub[[k]]))
+    }
+    m <- merge(row_keys, sub, by = row_label_cols, all.x = TRUE)
+    data.table::set(m, which(is.na(m[[n_col]])), n_col, 0)
+    Narm <- arm_denom(arm)
+    if (!is.na(Narm)) {
+      data.table::set(m, which(is.na(m[[total_col]])), total_col, Narm)
+    }
+    m
+  }
+
+  ref_dt <- arm_counts(reference)
+  data.table::setnames(ref_dt, c(n_col, total_col), c("n_ref", "N_ref"))
+
+  results <- imap(comparisons, function(cmp_level, ci_idx) {
+    cmp_dt <- arm_counts(cmp_level)
+    data.table::setnames(cmp_dt, c(n_col, total_col), c("n_cmp", "N_cmp"))
+
+    paired <- merge(ref_dt, cmp_dt, by = row_label_cols, all = TRUE)
+
+    disp_vec <- map_chr(seq_len(nrow(paired)), function(r) {
+      pairwise_cell_disp(paired$n_ref[r], paired$n_cmp[r],
+                         paired$N_ref[r], paired$N_cmp[r], config)
+    })
+
+    cbind(
+      paired[, row_label_cols, with = FALSE],
+      data.table::data.table(.comp_idx = ci_idx, .disp = disp_vec)
+    )
+  })
+
+  data.table::rbindlist(results, fill = TRUE)
+}
+
+#' Attach pairwise association-test columns to a nested wide layer result
+#'
+#' Places each comparison's display string on every matching output row by an
+#' exact join on the \code{rowlabel*} columns (which uniquely identify a wide
+#' row across all nesting levels). Rows with no computed value -- special rows
+#' such as Missing, or a Total row when \code{total_row = FALSE} -- stay blank.
+#'
+#' @param wide data.table in wide format (after \code{cast_to_wide()}).
+#' @param assoc_data data.table from \code{compute_pairwise_assoc_nested()}.
+#' @param config A \code{tplyr_assoc_test} object (pairwise mode).
+#' @param row_label_cols Character vector of the \code{rowlabel*} column names.
+#' @param reference Character(1) resolved reference arm level.
+#' @keywords internal
+merge_pairwise_assoc_nested <- function(wide, assoc_data, config, row_label_cols,
+                                        reference) {
+  comparisons <- config$comparisons
+
+  labels <- if (is.null(config$label)) {
+    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
+  } else if (length(config$label) == 1) {
+    rep(config$label, length(comparisons))
+  } else {
+    config$label
+  }
+
+  join_cols <- intersect(row_label_cols, names(wide))
+
+  iwalk(comparisons, function(cmp, ci_idx) {
+    pcol <- str_c("pval", ci_idx)
+    wide[, (pcol) := ""]
+
+    if (!is.null(assoc_data) && nrow(assoc_data) > 0 && length(join_cols) > 0) {
+      sub <- assoc_data[.comp_idx == ci_idx]
+      if (nrow(sub) > 0) {
+        wide[sub, (pcol) := i..disp, on = join_cols]
+        wide[is.na(get(pcol)), (pcol) := ""]
+      }
     }
 
     data.table::setattr(wide[[pcol]], "label", labels[ci_idx])

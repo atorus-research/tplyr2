@@ -397,6 +397,189 @@ test_that("pairwise assoc_test places p-values per (by, level) with a by variabl
   expect_true(all(trimws(disp$pval1) != ""))
 })
 
+.assoc_nested_data <- function() {
+  adsl <- data.frame(
+    USUBJID = sprintf("S%02d", 1:15),
+    TRT = c(rep("Placebo", 4), rep("Low", 5), rep("High", 6)),
+    stringsAsFactors = FALSE
+  )
+  adae <- data.frame(
+    USUBJID = c("S01", "S02", "S03", "S05", "S06", "S07", "S08",
+                "S10", "S11", "S12", "S13", "S14"),
+    TRT = c(rep("Placebo", 3), rep("Low", 4), rep("High", 5)),
+    SOC = c("NERVOUS", "NERVOUS", "GI", "NERVOUS", "GI", "GI", "GI",
+            "NERVOUS", "NERVOUS", "NERVOUS", "GI", "GI"),
+    PT = c("HEADACHE", "HEADACHE", "NAUSEA", "HEADACHE", "NAUSEA", "NAUSEA",
+           "NAUSEA", "HEADACHE", "HEADACHE", "HEADACHE", "NAUSEA", "NAUSEA"),
+    stringsAsFactors = FALSE
+  )
+  list(adsl = adsl, adae = adae)
+}
+
+.nested_spec <- function(at, total_row = FALSE) {
+  tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count(c("SOC", "PT"),
+      settings = layer_settings(
+        distinct_by = "USUBJID", total_row = total_row,
+        total_row_label = "ANY EVENT",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))
+  )
+}
+
+test_that("pairwise assoc_test emits p-values on inner and outer nested rows (#49)", {
+  dat <- .assoc_nested_data()
+  fish <- function(m) if (sum(m[, 1]) == 0) NA_real_ else fisher.test(m)$p.value
+  at <- assoc_test(fn = fish, format = f_str("x.xxx", "p"),
+                   reference = "Placebo", comparisons = c("Low", "High"))
+  b <- tplyr_build(.nested_spec(at), dat$adae, pop_data = dat$adsl)
+  disp <- as.data.frame(as_display(b))
+
+  expect_true(all(c("pval1", "pval2") %in% names(disp)))
+  # Every category row (SOC subtotal AND PT) carries a value
+  expect_true(all(trimws(disp$pval1) != ""))
+  expect_true(all(trimws(disp$pval2) != ""))
+  # default labels
+  expect_equal(attr(b$pval1, "label"), "Placebo vs Low")
+  expect_equal(attr(b$pval2, "label"), "Placebo vs High")
+
+  # Outer (SOC subtotal) rows: rowlabel2 == ""
+  soc_rows <- disp[disp$rowlabel2 == "", ]
+  expect_equal(nrow(soc_rows), 2L)  # GI + NERVOUS
+  expect_true(all(trimws(soc_rows$pval1) != ""))
+
+  # A nested PT row's p-value equals the single-level p for the same PT/arm,
+  # since the 2x2 is built from the same distinct counts + denominators.
+  single <- as.data.frame(as_display(tplyr_build(
+    tplyr_spec(cols = "TRT", pop_data = pop_data(cols = "TRT"),
+      layers = tplyr_layers(group_count("PT", settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+        assoc_test = at)))),
+    dat$adae, pop_data = dat$adsl)))
+  nausea_nested <- disp[disp$rowlabel2 == "NAUSEA", ]
+  nausea_single <- single[single$rowlabel1 == "NAUSEA", ]
+  expect_equal(trimws(nausea_nested$pval1), trimws(nausea_single$pval1))
+  expect_equal(trimws(nausea_nested$pval2), trimws(nausea_single$pval2))
+})
+
+test_that("nested pairwise total_row toggles the grand-total p-value (#49)", {
+  dat <- .assoc_nested_data()
+  fish <- function(m) if (sum(m[, 1]) == 0) NA_real_ else fisher.test(m)$p.value
+
+  # default total_row = TRUE -> grand-total row gets a p-value
+  at_on <- assoc_test(fn = fish, format = f_str("x.xxx", "p"),
+                      reference = "Placebo", comparisons = c("Low", "High"))
+  disp_on <- as.data.frame(as_display(
+    tplyr_build(.nested_spec(at_on, total_row = TRUE), dat$adae, pop_data = dat$adsl)))
+  tot_on <- disp_on[disp_on$rowlabel1 == "ANY EVENT", ]
+  expect_equal(nrow(tot_on), 1L)
+  expect_true(trimws(tot_on$pval1) != "")
+  expect_true(trimws(tot_on$pval2) != "")
+
+  # total_row = FALSE -> grand-total row blank, category rows unaffected
+  at_off <- assoc_test(fn = fish, format = f_str("x.xxx", "p"),
+                       reference = "Placebo", comparisons = c("Low", "High"),
+                       total_row = FALSE)
+  disp_off <- as.data.frame(as_display(
+    tplyr_build(.nested_spec(at_off, total_row = TRUE), dat$adae, pop_data = dat$adsl)))
+  tot_off <- disp_off[disp_off$rowlabel1 == "ANY EVENT", ]
+  expect_equal(trimws(tot_off$pval1), "")
+  expect_equal(trimws(tot_off$pval2), "")
+  cat_off <- disp_off[disp_off$rowlabel1 != "ANY EVENT", ]
+  expect_true(all(trimws(cat_off$pval1) != ""))
+})
+
+test_that("nested pairwise assoc_test handles a zero-event reference arm (#49)", {
+  # Placebo has NO events at all: its 2x2 is 0-vs-k, still a valid test. The
+  # reference arm's denominator must come from pop_data, not the (empty)
+  # observed counts, so every SOC/PT/total row still gets a p-value.
+  adsl <- data.frame(
+    USUBJID = sprintf("S%02d", 1:15),
+    TRT = factor(c(rep("Placebo", 4), rep("Low", 5), rep("High", 6)),
+                 levels = c("Placebo", "Low", "High")),
+    stringsAsFactors = FALSE
+  )
+  adae <- data.frame(
+    USUBJID = c("S05", "S06", "S10", "S11"),
+    TRT = factor(c("Low", "Low", "High", "High"),
+                 levels = c("Placebo", "Low", "High")),
+    SOC = c("GI", "NERVOUS", "GI", "NERVOUS"),
+    PT = c("NAUSEA", "SYNCOPE", "NAUSEA", "SYNCOPE"),
+    stringsAsFactors = FALSE
+  )
+
+  calls <- 0
+  fp <- function(m) {
+    calls <<- calls + 1
+    if (sum(m[, 1]) == 0) NA_real_ else fisher.test(m)$p.value
+  }
+  at <- assoc_test(fn = fp, format = f_str("x.xxx", "p"),
+                   reference = "Placebo", comparisons = c("Low", "High"))
+  spec <- tplyr_spec(
+    cols = "TRT", pop_data = pop_data(cols = "TRT"),
+    layers = tplyr_layers(group_count(c("SOC", "PT"),
+      settings = layer_settings(
+        distinct_by = "USUBJID", total_row = TRUE, total_row_label = "ANY",
+        stat_columns = list("n" = f_str("xx", "distinct_n")),
+        assoc_test = at)))
+  )
+  disp <- as.data.frame(as_display(tplyr_build(spec, adae, pop_data = adsl)))
+
+  # fn is actually called for the 0-vs-k comparisons (not short-circuited)
+  expect_gt(calls, 0)
+  # every category + total row carries a p-value for both comparisons
+  expect_true(all(trimws(disp$pval1) != ""))
+  expect_true(all(trimws(disp$pval2) != ""))
+
+  # a 0-vs-1 category row matches a direct Fisher on the same 2x2
+  gi_nausea <- disp[disp$rowlabel1 == "GI" & disp$rowlabel2 == "NAUSEA", ]
+  expected <- fisher.test(matrix(c(0, 1, 4, 4), nrow = 2))$p.value
+  expect_equal(trimws(gi_nausea$pval1),
+               trimws(apply_formats(f_str("x.xxx", "p"), expected)))
+})
+
+test_that("nested pairwise assoc_test passes a character fn return verbatim (#47 + #49)", {
+  dat <- .assoc_nested_data()
+  ae_disp <- function(m) {
+    if (sum(m[, 1]) == 0) return(NA_character_)
+    p <- fisher.test(m)$p.value
+    if (p > .99) ">.99" else paste0(formatC(round(p, 3), format = "f", digits = 3), "*")
+  }
+  at <- assoc_test(fn = ae_disp, format = f_str("xxxxx", "p"),
+                   reference = "Placebo", comparisons = c("Low", "High"))
+  disp <- as.data.frame(as_display(
+    tplyr_build(.nested_spec(at), dat$adae, pop_data = dat$adsl)))
+  # every category cell is a verbatim fn string: a flagged p or the >.99 ceiling
+  vals <- c(disp$pval1, disp$pval2)
+  vals <- vals[trimws(vals) != ""]
+  expect_true(length(vals) > 0)
+  expect_true(all(grepl("\\*$", vals) | vals == ">.99"))
+})
+
+test_that("assoc_test validates total_row and round-trips it through JSON", {
+  expect_error(assoc_test(fn = function(m) 1, comparisons = "Low",
+                          total_row = "yes"),
+               "single logical")
+  expect_error(assoc_test(fn = function(m) 1, comparisons = "Low",
+                          total_row = NA),
+               "single logical")
+
+  at <- assoc_test(fn = function(m) fisher.test(m)$p.value,
+                   reference = "Placebo", comparisons = c("Low", "High"),
+                   total_row = FALSE)
+  expect_false(at$total_row)
+
+  spec <- tplyr_spec(cols = "TRT",
+    layers = tplyr_layers(group_count(c("SOC", "PT"),
+      settings = layer_settings(assoc_test = at))))
+  tmp <- withr::local_tempfile(fileext = ".json")
+  tplyr_write_spec(spec, tmp)
+  spec2 <- tplyr_read_spec(tmp)
+  expect_false(spec2$layers[[1]]$settings$assoc_test$total_row)
+})
+
 test_that("compute_pairwise_assoc handles zero denominators and bad fn returns", {
   counts <- data.table::data.table(
     TRT = c("Placebo", "Low", "Placebo", "Low"),

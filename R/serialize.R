@@ -191,7 +191,8 @@ serialize_settings <- function(settings) {
       format = serialize_f_str(at$format),
       label = at$label,
       reference = at$reference,
-      comparisons = at$comparisons
+      comparisons = at$comparisons,
+      total_row = at$total_row
     )
   }
 
@@ -471,12 +472,15 @@ deserialize_settings <- function(raw) {
     if (!is.null(comparisons)) comparisons <- as.character(unlist(comparisons))
     label <- raw$assoc_test$label
     if (!is.null(label)) label <- as.character(unlist(label))
+    total_row <- raw$assoc_test$total_row
+    if (is.null(total_row)) total_row <- TRUE
     raw$assoc_test <- assoc_test(
       fn = deserialize_function(raw$assoc_test$fn),
       format = deserialize_f_str(raw$assoc_test$format),
       label = label,
       reference = raw$assoc_test$reference,
-      comparisons = comparisons
+      comparisons = comparisons,
+      total_row = as.logical(unlist(total_row))[1]
     )
   }
 

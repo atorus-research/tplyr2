@@ -61,6 +61,21 @@
   in the `fn`. Works in both omnibus and pairwise modes; `NA` (numeric or
   character) still renders a blank. Existing numeric-returning fns are
   unaffected.
+- Pairwise `assoc_test()` now works on **nested** count layers (#49), where it
+  was previously a no-op. It emits a `pval` column per comparison with a value
+  on every row of every level — each inner (e.g. preferred-term) row and each
+  outer (e.g. system-organ-class subtotal) row — building each row's 2x2 from
+  that row's own distinct counts and the `pop_data` denominators (the outer row
+  uses the level's "any event in that group" subject count). This is the
+  canonical AE-incidence-by-SOC/PT Fisher layout. A new `total_row` argument to
+  `assoc_test()` (default `TRUE`) also lands a p-value on the layer's total
+  ("any event anywhere") row; set `total_row = FALSE` to leave it blank.
+  Missing rows are always blank. Combined with the character-return display
+  (#47), the `fn` can supply the exact `* / >.99 / trailing-space / blank`
+  cell text on every nested row. A zero-event arm is handled correctly: its
+  2x2 denominator is taken from `pop_data` (subjects at risk), so a sparse or
+  empty **reference** arm still yields a valid `0`-vs-`k` test on every row
+  instead of blanking the column.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard
