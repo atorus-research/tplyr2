@@ -98,18 +98,29 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
 
   # Sort key for target variable
   if (!is.null(method) && method == "bycount") {
-    # Count-based ordering: use the count value from a specific column level
-    if (!is.null(ordering_cols_setting) && result_order_var %in% names(counts)) {
-      # Filter to the specified column level and get counts
-      count_vals <- counts[[result_order_var]]
-      counts[, .ord_tv := compute_var_order(
-        get(tv), method = "bycount", count_values = count_vals
-      )]
+    # Count-based ordering. The sort key must be constant across the column
+    # (cols) dimension for a given target value, so aggregate the ordering
+    # statistic per (by-group, target) rather than using the per-column count.
+    # `result_order_var` picks the statistic (default "n"); `ordering_cols`
+    # restricts the tally to a specific column level (issue #57).
+    order_var <- if (result_order_var %in% names(counts)) result_order_var else "n"
+    agg_src <- if (".is_special" %in% names(counts)) {
+      counts[.is_special == 0]
     } else {
-      counts[, .ord_tv := compute_var_order(
-        get(tv), method = "bycount", count_values = counts[["n"]]
-      )]
+      counts
     }
+    if (!is.null(ordering_cols_setting) && length(cols) >= 1 &&
+        cols[1] %in% names(counts)) {
+      agg_src <- agg_src[as.character(get(cols[1])) %in%
+                           as.character(ordering_cols_setting)]
+    }
+    key_vars <- c(by_data_vars, tv)
+    agg <- agg_src[, list(.agg_cnt = sum(get(order_var), na.rm = TRUE)),
+                   by = key_vars]
+    counts[agg, .agg_cnt := i..agg_cnt, on = key_vars]
+    counts[is.na(.agg_cnt), .agg_cnt := 0]
+    counts[, .ord_tv := -.agg_cnt]   # descending count -> ascending sort key
+    counts[, .agg_cnt := NULL]
   } else {
     counts[, .ord_tv := compute_var_order(
       get(tv), var_name = tv, data_dt = dt, method = method

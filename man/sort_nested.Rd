@@ -4,7 +4,13 @@
 \alias{sort_nested}
 \title{Sort nested count data for correct interleaving}
 \usage{
-sort_nested(combined, target_vars, by_data_vars, dt = NULL)
+sort_nested(
+  combined,
+  target_vars,
+  by_data_vars,
+  dt = NULL,
+  outer_sort_position = NULL
+)
 }
 \description{
 Sort nested count data for correct interleaving

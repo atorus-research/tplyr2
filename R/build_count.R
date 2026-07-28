@@ -226,36 +226,22 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   # (mirrors the shift layer) and drop them afterward.
   # `.is_special` sits between the by keys and the row labels so special rows
   # (total/missing) sort after the normal rows within each by-group (#24).
+  # The target sort key `.ord_tv` (computed above per output row: factor level,
+  # VARN, aggregated count, or alphabetical, per order_count_method) sits between
+  # the by-group keys and the row labels in the dcast LHS. This orders the target
+  # values within each by-group by the chosen method while keeping by-groups
+  # blocked and special rows (.is_special) last -- so ord1, taken from the dcast
+  # row order, reflects the full intended order for every method (issue #57).
   by_order_cols <- str_subset(names(counts), "^\\.ord_by_\\d+$")
   special_col <- if (".is_special" %in% names(counts)) ".is_special" else character(0)
-  drop_cols <- c(by_order_cols, special_col)
-  wide <- cast_to_wide(counts, c(by_order_cols, special_col, row_labels), cols,
-                       layer_index, col_n = col_n, stat_labels = names(fmts),
+  tv_order_col <- if (".ord_tv" %in% names(counts)) ".ord_tv" else character(0)
+  drop_cols <- c(by_order_cols, special_col, tv_order_col)
+  wide <- cast_to_wide(counts,
+                       c(by_order_cols, special_col, tv_order_col, row_labels),
+                       cols, layer_index, col_n = col_n, stat_labels = names(fmts),
                        col_levels = get_col_levels(dt, cols))
   for (oc in drop_cols) {
     if (oc %in% names(wide)) wide[, (oc) := NULL]
-  }
-
-  # --- Override ord1 with computed sort keys ---
-  method <- settings$order_count_method
-  if (!is.null(method)) {
-    # Find the rowlabel column that holds the target variable values
-    tv_label_idx <- length(by_labels) + length(by_data_vars) + 1L
-    tv_label_col <- str_c("rowlabel", tv_label_idx)
-    if (tv_label_col %in% names(wide)) {
-      tv_vals <- wide[[tv_label_col]]
-      if (method == "bycount") {
-        # For count-based, use the pre-computed ord1 from cast_to_wide
-        # (which is seq_len(.N) based on dcast order)
-        # We need to sum counts across columns for ordering
-        # Use ord1 as-is (already reflects the dcast order which respects .sort_key)
-        # No override needed for bycount — handle via pre-sort below
-      } else {
-        wide[, ord1 := compute_var_order(
-          tv_vals, var_name = tv, data_dt = dt, method = method
-        )]
-      }
-    }
   }
 
   # --- Merge risk difference columns onto wide result ---
@@ -404,7 +390,8 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   }
 
   # Sort for correct interleaving: outer value, then level, then inner value
-  sort_nested(combined, target_vars, by_data_vars, dt = dt)
+  sort_nested(combined, target_vars, by_data_vars, dt = dt,
+              outer_sort_position = settings$outer_sort_position)
 
   # --- Pairwise per-level association test (#49) ---
   # Computed on the category rows (all nesting levels) before the special rows
@@ -649,7 +636,8 @@ build_nested_row_labels_special <- function(dt, by_labels, by_data_vars,
 
 #' Sort nested count data for correct interleaving
 #' @keywords internal
-sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL) {
+sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL,
+                        outer_sort_position = NULL) {
   n_levels <- length(target_vars)
 
   # Compute sort keys for each level. Coerce to character so the source factor
@@ -660,6 +648,12 @@ sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL) {
   combined[, .sort_outer := compute_var_order(
     as.character(get(target_vars[1])), var_name = target_vars[1], data_dt = dt
   )]
+
+  # outer_sort_position = "desc" reverses the outer-level ordering while keeping
+  # the inner order (and the subtotal-before-detail nesting) intact (issue #57).
+  if (identical(outer_sort_position, "desc")) {
+    combined[, .sort_outer := -.sort_outer]
+  }
 
   if (n_levels >= 2) {
     # Inner rank: same priority, applied to the inner target var. A global key
