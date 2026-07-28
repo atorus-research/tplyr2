@@ -57,7 +57,8 @@ modes.
 
 **Omnibus mode** (the default) runs your function once per `by` group over the
 **raw source rows** for that group (all treatment columns at once), and lands a
-single value on the group's first output row. This is the shape for a
+single value on the group's first output row. It works on **count**, **shift**,
+and **desc** layers (a desc layer is shown below). This is the shape for a
 per-analyte test that collapses across arms:
 
 ```{r assoc-omnibus}
@@ -130,6 +131,14 @@ The `fn` receives
 counts and denominators when `distinct_by` is set. Because it is just a matrix
 in and a scalar out, any 2x2 test (Fisher, chi-square, relative risk, ...)
 plugs in.
+
+These snippets show only the count layer, to keep the focus on `assoc_test()`.
+In a real adverse-event build the enclosing `tplyr_spec()` sets `pop_data()`, so
+the displayed incidence *and* the `N_ref`/`N_cmp` cells of the 2x2 use the safety
+population rather than only the subjects who had events (see `vignette("count")`
+and `vignette("adverse-events")`, which builds this pattern end to end). The
+`stat_columns` shown here is also optional — `format_strings` works identically;
+pairwise mode does not require `stat_columns`.
 
 **Nested layers** — the AE-by-SOC/PT case — work the same way: give
 `group_count()` a nested target such as `c("AEBODSYS", "AEDECOD")` and the

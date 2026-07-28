@@ -51,7 +51,12 @@ The table below maps v1 functions to their tplyr2 equivalents.
 | `set_denoms_by()` | `denoms_by` in `layer_settings()` | Character vector |
 | `set_where()` | `where` parameter in layer or spec | Bare expression (unquoted) |
 | `add_total_group()` | `total_group()` in spec's `total_groups` | Spec-level config |
+| `add_total_row()` | `total_row = TRUE` in `layer_settings()` | Plus `total_row_label` |
+| `set_missing_count()` | `missing_count` in `layer_settings()` | List config |
+| `keep_levels()` | `keep_levels` in `layer_settings()` | Character vector |
 | `set_pop_data()` | `pop_data()` in spec + `tplyr_build()` | Config in spec, data at build |
+| `set_pop_treat_var()` | `pop_data(cols = c(...))` mapping | Maps analysis to population column |
+| `add_risk_diff()` | `risk_diff` in `layer_settings()` | See `vignette("riskdiff")` |
 | `build()` | `tplyr_build(spec, data)` | Data supplied at build time |
 | `f_str()` | `f_str()` | Variable names are now quoted strings |
 
@@ -242,6 +247,32 @@ modifiers become arguments in `layer_settings()`, and data is supplied at build.
 # New Features in tplyr2
 
 Beyond the API redesign, tplyr2 introduces several entirely new capabilities.
+
+## Comparative and Inferential Statistics
+
+tplyr2 can attach cross-arm comparisons directly to a layer -- something Tplyr v1
+handled only through `add_risk_diff()`:
+
+- **Risk difference** via `risk_diff` in `layer_settings()` (the direct successor
+  to `add_risk_diff()`) -- one `rdiff` column per comparison with a confidence
+  interval. See `vignette("riskdiff")`.
+- **Association tests** via `assoc_test()` -- an omnibus p-value column (Fisher,
+  chi-square, CMH, ANOVA/Kruskal on `group_desc`) or a pairwise per-level mode
+  that emits a `pval` column per comparison, including on nested SOC/PT layers.
+  See `vignette("binding-statistics")`.
+- **Single-proportion confidence intervals** via the `ci_lower`/`ci_upper`
+  `f_str` keywords with `ci_method`/`ci_level` (Clopper-Pearson, Wilson, and
+  more). See `vignette("denom")`.
+
+## Binding External Results and Display Helpers
+
+`apply_formats()` gained `na`, `width`, and `pad` arguments for formatting
+externally computed statistics (e.g. MMRM/ANCOVA results) into fixed-width cells
+you can row-bind onto a table, and `as_display()` returns a render-ready frame
+(`rowlabel*`/`res*`/`rdiff*`/`pval*` only). `group_desc()` also adds an
+`n_records` statistic (records assessed), and shift layers gain a `denom_row`
+(the "n" denominator line). See `vignette("binding-statistics")` and
+`vignette("post_processing")`.
 
 ## Multi-Column Count Layouts
 

@@ -188,54 +188,35 @@ Count layers offer the most flexibility through the `order_count_method` paramet
 | `"byfactor"` | Sort by factor level position |
 | `"byvarn"` | Sort by a numeric companion column (e.g., `RACEN`) |
 | `"bycount"` | Sort by count values (descending) |
+| `"alphabetical"` | Sort by the target value alphabetically |
 
 When `order_count_method` is left as `NULL` (the default), tplyr2 auto-detects: it checks for factor levels first, then VARN companions, then falls back to alphabetical.
 
 ### Sorting by Count
 
-The `"bycount"` method sorts rows by their count values in descending order, which is common for adverse event tables where the most frequent events should appear first.
+A frequent request -- especially for adverse event tables -- is to order rows by descending frequency so the most common events appear first.
+
+> **Note:** In the current release `order_count_method = "bycount"` is **not yet wired to the output order**: the rows come back in the default (factor, then VARN, then alphabetical) order and `ord_layer_1` does not reflect the counts. The companion settings `ordering_cols` (which column supplies the counts) and `outer_sort_position` (nested outer-level direction) are likewise accepted but not yet honored. These are tracked for a future release.
+
+Until then, sort by frequency in **post-processing** -- the "build, then sort" pattern. Pull the counts out of the result with `str_extract_num()` (or from `tplyr_numeric_data()`) and reorder the rows:
 
 ```{r bycount}
 spec <- tplyr_spec(
   cols = "TRT01P",
-  layers = tplyr_layers(
-    group_count("DCDECOD",
-      settings = layer_settings(
-        order_count_method = "bycount"
-      )
-    )
-  )
+  layers = tplyr_layers(group_count("DCDECOD"))
 )
-
 result <- tplyr_build(spec, tplyr_adsl)
-sorted <- result[order(result$ord_layer_1), ]
-kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
+
+# Total count across arms, parsed from the formatted cells
+totals <- str_extract_num(result$res1, 1) +
+  str_extract_num(result$res2, 1) +
+  str_extract_num(result$res3, 1)
+
+result <- result[order(-totals), ]
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
-When using `"bycount"`, `ord_layer_1` contains the negated count values (so that lower values sort first for descending order).
-
-### Controlling Which Column Drives the Sort
-
-When sorting by count, you may want to sort based on a specific treatment column rather than all columns. The `ordering_cols` parameter lets you specify which column level to use for deriving the sort counts, and `result_order_var` specifies which statistic to sort by (defaulting to `"n"`).
-
-```{r bycount_ordering_cols}
-spec <- tplyr_spec(
-  cols = "TRT01P",
-  layers = tplyr_layers(
-    group_count("DCDECOD",
-      settings = layer_settings(
-        order_count_method = "bycount",
-        ordering_cols = "Placebo",
-        result_order_var = "n"
-      )
-    )
-  )
-)
-
-result <- tplyr_build(spec, tplyr_adsl)
-sorted <- result[order(result$ord_layer_1), ]
-kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
-```
+The most frequent disposition reasons now sort to the top. The same approach -- sort the built frame on a value you compute -- covers "by a single column's count" (`order(-str_extract_num(result$res2, 1))`) and any other custom ordering you need.
 
 ## Nested Count Sorting
 
@@ -244,6 +225,7 @@ Nested count layers -- created by passing two variables to `group_count()` -- pr
 ```{r nested_basic}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -256,7 +238,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index",
                        "ord_layer_1", "ord_layer_2")], 12))
 ```
@@ -266,7 +248,7 @@ In nested output:
 - `ord_layer_1` captures the row sequence within the interleaved structure.
 - `ord_layer_2` indicates the nesting depth: 1 for outer-level (body system) rows, 2 for inner-level (preferred term) rows. Total rows, if present, get depth 0.
 
-The `outer_sort_position` parameter in `layer_settings()` controls the sort direction of outer-level groupings, accepting `"asc"` or `"desc"`.
+Nested layers order both levels by factor level (then VARN, then alphabetical); `"bycount"` currently reorders only single-level layers, not the outer categories of a nested layer.
 
 ## Practical Example: Preparing a Final Table
 

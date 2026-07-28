@@ -138,6 +138,45 @@ result <- tplyr_build(spec, tplyr_adsl)
 kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
+## Population Data: Getting the Denominator Right
+
+Everything so far has summarized `tplyr_adsl`, which has one row per subject, so the column total *is* the number of subjects in each arm. Adverse event data is different, and this is where denominators most often go wrong.
+
+`tplyr_adae` only contains subjects who experienced at least one event, with many rows per subject. If you count it directly, the denominator becomes "subjects who had *any* adverse event" rather than the number of subjects at risk -- and every incidence percentage comes out too large. For an adverse event table (and for most tables built from a findings or events dataset), the denominator must come from the **population dataset** -- typically `ADSL`, the set of subjects in the analysis population.
+
+You supply population data in two places: a `pop_data()` mapping in the spec, and the population data frame itself at build time. Here is the same simple adverse-event count built both ways:
+
+```{r pop_data_compare}
+# WITHOUT population data: denominator = subjects present in ADAE
+spec_no_pop <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+res_no_pop <- tplyr_build(spec_no_pop, tplyr_adae)
+
+# WITH population data: denominator = full safety population from ADSL
+spec_pop <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+res_pop <- tplyr_build(spec_pop, tplyr_adae, pop_data = tplyr_adsl)
+
+# Column Ns: subjects-with-events vs. the true population
+sapply(c("res1", "res2", "res3"), function(c) attr(res_no_pop[[c]], "label"))
+sapply(c("res1", "res2", "res3"), function(c) attr(res_pop[[c]], "label"))
+```
+
+The header N tells the story: without population data the Placebo column is `N=47` (only the subjects who had an event), and with it the column is the true `N=86`. Because the numerator is unchanged, every percentage roughly halves once the denominator is correct -- a cell that read `6 (14.0%)` becomes `6 (7.1%)`. Getting this wrong silently inflates every incidence in the table, so **for adverse event tables population data is effectively mandatory.**
+
+The named vector in `pop_data(cols = c("TRTA" = "TRT01A"))` maps the treatment column in the analysis data (`TRTA`, actual treatment in `ADAE`) to the matching column in the population data (`TRT01A` in `ADSL`). The mapping is needed because the two datasets frequently name the treatment variable differently.
+
+Population data also unlocks related features -- a "no events reported" row for subjects who are in the population but absent from the analysis data (`missing_subjects`), a separate denominator filter (`denom_where`), and per-subgroup denominators (`denoms_by`). Those are covered in depth in `vignette("denom")`. Every adverse event example in the rest of this vignette uses population data.
+
 ## Distinct Versus Event Counts
 
 When summarizing adverse events, the distinction between events and subjects matters enormously. A single subject might experience the same event multiple times. If you simply count rows, you are counting events. If you want the number of subjects who experienced each event at least once, you need distinct counts.
@@ -147,6 +186,7 @@ The `distinct_by` parameter in `layer_settings()` tells tplyr2 which variable id
 ```{r distinct_counts}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -159,7 +199,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 10))
 ```
 
@@ -172,6 +212,7 @@ Some sponsors require the subject and event counts in separate columns rather th
 ```{r stat_columns}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -185,7 +226,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "res4")], 10))
 ```
 
@@ -213,6 +254,7 @@ Adverse event tables in clinical reports almost always use a hierarchical struct
 ```{r nested_basic}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -225,7 +267,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 15))
 ```
 
@@ -264,6 +306,7 @@ Total rows work with nested counts as well. When `total_row = TRUE` is set on a 
 ```{r nested_total}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -278,7 +321,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
@@ -287,8 +330,10 @@ kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 
 Count layers in tplyr2 cover a wide range of clinical table patterns, but there is much more to explore. Here are some related topics covered in other vignettes:
 
-- **Denominators**: Control how percentages are calculated with `denoms_by` and `denom_ignore` in `layer_settings()`.
-- **Missing counts**: Add rows for missing values with the `missing_count` parameter.
-- **Shift tables**: Use `group_shift()` for cross-tabulation of baseline versus post-baseline categories.
-- **Descriptive statistics**: Use `group_desc()` for continuous variable summaries like mean, median, and standard deviation.
-- **Post-processing**: Apply row masks, conditional formatting, and row label collapsing to polish your final output.
+- `vignette("denom")` -- Denominator control in depth: population data, `denoms_by`, `denom_where`, `denom_ignore`, single-proportion confidence intervals, and the "no events reported" row.
+- `vignette("adverse-events")` -- An end-to-end adverse event table combining nested counts, population-based incidence, sorting, and comparative statistics into one worked example.
+- `vignette("riskdiff")` and `vignette("binding-statistics")` -- Risk differences and association-test (Fisher / chi-square) p-value columns alongside your counts.
+- `vignette("sort")` -- Ordering rows by frequency, factor levels, or a VARN companion variable.
+- `vignette("shift")` -- `group_shift()` for cross-tabulation of baseline versus post-baseline categories.
+- `vignette("desc")` -- `group_desc()` for continuous variable summaries like mean, median, and standard deviation.
+- `vignette("post_processing")` -- Row masks, conditional formatting, and row label collapsing to polish your final output.

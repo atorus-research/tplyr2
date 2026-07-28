@@ -337,11 +337,15 @@ This vignette covered the table-level properties that control the overall
 structure of your tplyr2 output. For details on specific layer types and
 additional features, see:
 
-- **Count layers**: `group_count()` for frequency tables, including nested
-  counts, distinct subject counts, and missing value handling
-- **Descriptive statistics layers**: `group_desc()` for summary statistics
-  with format strings, auto-precision, and custom summary functions
-- **Shift layers**: `group_shift()` for baseline-by-post-baseline
-  cross-tabulations
-- **Ordering**: How tplyr2 sorts rows and controls output order
-- **Options**: Package-level options via `tplyr2_options()`
+- `vignette("count")` -- `group_count()` for frequency tables, including nested
+  counts, distinct subject counts, population data, and missing value handling.
+- `vignette("denom")` -- denominator control in depth (this vignette and the
+  denominators vignette both cover `pop_data`; that one goes deeper on
+  `denoms_by`, `denom_where`, and confidence intervals).
+- `vignette("adverse-events")` -- a full adverse event table built end to end,
+  the canonical use of population data.
+- `vignette("desc")` -- `group_desc()` for summary statistics.
+- `vignette("shift")` -- `group_shift()` for baseline-by-post-baseline
+  cross-tabulations.
+- `vignette("sort")` -- how tplyr2 orders rows.
+- `vignette("options")` -- package-level options via `tplyr2_options()`.

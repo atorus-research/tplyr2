@@ -280,11 +280,16 @@ kable(result[, !grepl("^ord", names(result))])
 
 In adverse event tables, you often need to count the number of _subjects_ who
 experienced an event, not the number of event records. Use `distinct_by` to
-specify the subject identifier:
+specify the subject identifier. Because `ADAE` contains only subjects with
+events, the denominator must come from the full population (`ADSL`), supplied
+through `pop_data()` -- otherwise the percentages are computed against
+subjects-with-events and come out too large (see `vignette("count")` and
+`vignette("denom")`):
 
 ```{r}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(
       "AEBODSYS",
@@ -298,7 +303,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
@@ -311,6 +316,7 @@ by body system and preferred term. Pass a vector of variable names to
 ```{r}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(
       c("AEBODSYS", "AEDECOD"),
@@ -324,7 +330,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, !grepl("^ord", names(result))], 15))
 ```
 
@@ -420,17 +426,31 @@ the build.
 This vignette covers the fundamentals. Here are the topics covered in other
 vignettes:
 
-- `vignette("count")` -- Denominator control, missing value handling, risk
-  differences, ordering.
-- `vignette("desc")` -- Custom summaries, auto-precision, stats-as-columns.
-- `vignette("shift")` -- Shift layers and cross-tabulation options.
-- `vignette("denom")` -- Population data, header N, total groups, custom
-  groups.
+- `vignette("table")` -- Spec-level structure: column variables, table filters,
+  total/custom groups, and population data.
+- `vignette("count")` -- Count layers in depth: population-based denominators,
+  distinct counts, nested summaries, stat columns, missing values.
+- `vignette("desc")` -- Descriptive layers: custom summaries, auto-precision,
+  stats-as-columns.
+- `vignette("shift")` -- Shift layers, shift denominators, and the denominator
+  row.
+- `vignette("denom")` -- Denominator control: population data, header N,
+  `denoms_by`, `denom_where`, single-proportion confidence intervals.
+- `vignette("adverse-events")` -- A full adverse event table built end to end.
+- `vignette("riskdiff")` and `vignette("binding-statistics")` -- Risk
+  differences and association-test p-value columns.
+- `vignette("sort")` -- Row ordering by frequency, factor levels, or a VARN
+  companion.
+- `vignette("general_string_formatting")` and
+  `vignette("desc_layer_formatting")` -- The `f_str()` format-string system.
 - `vignette("post_processing")` -- Row masks, row label collapsing,
-  conditional formatting, and text wrapping.
+  conditional formatting, `as_display()`, and text wrapping.
 - `vignette("metadata")` -- Cell-level metadata and traceability.
-- `vignette("serialization")` -- Saving and loading specs as JSON or YAML.
+- `vignette("serialization")`, `vignette("ard")` -- Saving/loading specs and
+  Analysis Results Data conversion.
 - `vignette("analyze")` -- Custom analysis layers with user-defined functions.
+- `vignette("options")` -- Package options (rounding, quantiles, precision).
+- `vignette("migration")` -- Moving from Tplyr v1 to tplyr2.
 
 # References
 

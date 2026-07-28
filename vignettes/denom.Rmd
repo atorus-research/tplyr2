@@ -205,6 +205,8 @@ kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 8))
 
 Each cell now shows `n (%) [lower, upper]`, where the bracketed bounds are the confidence limits on the percentage scale. Because these are ordinary format keywords, they also compose with `stat_columns` (one `n (%)` column and one `[CI]` column) and appear on Total/Missing rows just like the percentage does. The bounds are only computed when a format string actually references one of the four keywords, so layers that do not display a CI incur no extra cost. The vectorized engine behind the keywords, `proportion_ci()`, is exported for standalone use.
 
+This single-proportion interval is distinct from the *between-arm* confidence interval that `risk_diff` produces; the two are independent and can appear in the same table. `vignette("binding-statistics")` discusses the single-proportion CI alongside the other comparative statistics.
+
 ## Denominators with Population Data
 
 In many clinical studies, the analysis data contains only a subset of the randomized population. Adverse event data, for example, only includes subjects who experienced at least one event. If you compute denominators from the event data alone, you will undercount the population.
@@ -324,3 +326,10 @@ The table below summarizes the denominator controls available in `layer_settings
 | `pop_data()` | Separate population dataset for denominators | None (use analysis data) |
 
 Each of these can be used independently or combined as needed. The key principle is that the numerator (what you are counting) and the denominator (what you are dividing by) can be controlled separately, giving you precise control over how percentages are computed in your clinical tables.
+
+## See Also
+
+- `vignette("count")` -- count-layer fundamentals, where population data is first introduced.
+- `vignette("table")` -- population data and header N from the spec-level perspective.
+- `vignette("adverse-events")` -- these denominator controls applied in a complete adverse event table.
+- `vignette("binding-statistics")` -- the single-proportion CI alongside risk difference and association tests.

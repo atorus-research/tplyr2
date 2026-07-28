@@ -76,6 +76,7 @@ A few things to notice in this output:
 - The `rowlabel1` and `rowlabel2` columns are populated by the `by` variables (PARAM, VISIT), and `rowlabel3` contains the values of the row shift variable (BNRIND).
 - Each result column represents a treatment-by-ANRIND combination. The column labels (stored as attributes) follow the pattern `"Treatment | ANRIND (N=n)"`.
 - The default format is `"xx (xx.x%)"`, showing a count and percentage, the same default used by count layers.
+- By default those percentages are out of the **treatment-arm total** (`shift_denom = "total"`). Many shift tables instead want "% within the baseline group"; the [Shift Denominators](#shift-denominators) section below shows how to switch.
 
 However, you may notice that the only BNRIND values present in the output are whatever happened to appear in the data. If a category like "L" (Low) does not appear in the data, it will be absent from the table entirely. Similarly, the sort order of rows depends on the alphabetical order of the character values. Both of these problems have the same solution: factors.
 
@@ -143,6 +144,76 @@ result_counts <- tplyr_build(spec_counts, adlb)
 kable(result_counts[, !grepl("^ord_", names(result_counts))])
 ```
 
+# Shift Denominators
+
+Every percentage needs a denominator, and a shift table has two natural choices. The `shift_denom` setting selects between them:
+
+- `shift_denom = "total"` (the default) computes each percentage out of the **treatment-arm total** -- every cell in an arm shares one denominator.
+- `shift_denom = "column"` computes each percentage out of its **shift-column group** -- the "from"/baseline group within the arm. This is the classic "% within the baseline category" reading, in which each baseline row's cells sum to 100% across the post-baseline columns.
+
+```{r shift-denom-column}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = PARAMCD == "CK",
+  layers = tplyr_layers(
+    group_shift(
+      c(row = "BNRIND", column = "ANRIND"),
+      by = c("PARAM", "VISIT"),
+      settings = layer_settings(
+        shift_denom = "column",
+        format_strings = list(n_counts = f_str("xx (xxx.x%)", "n", "pct"))
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, adlb)
+kable(result[, !grepl("^ord_", names(result))])
+```
+
+With `shift_denom = "column"` and no `by` variable, the header `(N=)` labels reflect the per-column-group denominators. When a `by` variable is present (as here), the column-group denominator varies by by-group, so no single header N can represent it and the header keeps the arm total. An explicit `denoms_by` overrides both choices -- see `vignette("denom")`.
+
+# The Denominator Row
+
+Threshold and shift tables often print an "n" row above the shift-to rows giving the size of each baseline (from) group -- the denominator behind the column-group percentages. Set `denom_row = TRUE` to emit it directly from the layer rather than computing it separately:
+
+```{r denom-row}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = PARAMCD == "CK",
+  layers = tplyr_layers(
+    group_shift(
+      c(row = "BNRIND", column = "ANRIND"),
+      by = c("PARAM", "VISIT"),
+      settings = layer_settings(
+        shift_denom = "column",
+        denom_row = TRUE,
+        denom_row_label = "n",
+        denom_row_format = f_str("xx", "n"),
+        format_strings = list(n_counts = f_str("xx (xxx.x%)", "n", "pct"))
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, adlb)
+kable(result[, !grepl("^ord_", names(result))])
+```
+
+The row is labelled `"n"` by default (`denom_row_label`). Without `denom_row_format` its integers are padded to the width of the shift cells; supplying an `f_str` -- here `f_str("xx", "n")` -- gives the row its own width, independent of the `n_counts` format. A baseline group that is absent within a by-group renders as `0` in this row rather than a blank.
+
+# Zero Cells and Percent Thresholds
+
+Shift layers honor the same display conventions as count layers, because both route through the same formatting engine. `zero_count_display` controls how a zero cell renders -- `"full"` (default, e.g. `0 (0.0%)`), `"count_only"` (just the count, e.g. `0`), or `"blank"` (empty) -- and `pct_lt` / `pct_gt` apply the regulatory "less-than / greater-than" percent conventions (e.g. a nonzero cell whose percent rounds below 1 shows `<1`). These are described in `vignette("count")`.
+
+# Distinct (Subject-Level) Shifts
+
+By default a shift layer counts records. When your lab data has one row per subject per visit that is exactly right, but if a subject can contribute more than one record to a cell and you want to count *subjects*, set `distinct_by` to the subject identifier -- just as in a count layer. The percentages then use the distinct-subject denominators.
+
+# Association Tests
+
+An omnibus `assoc_test()` attaches to shift layers as well, for a single p-value across the shift table (for example a chi-square or CMH test on the baseline-by-post-baseline table). The contract is identical to count layers; see `vignette("binding-statistics")`.
+
 # One Thing to Note
 
 The `group_shift()` API is designed specifically for matrix-style shift tables, where baseline categories form the rows and post-baseline categories form the columns. This cross-tabulation style is the most common shift table format in clinical reporting.
@@ -153,5 +224,7 @@ However, not all shift displays take this form. Sometimes you may need a text-ba
 
 Shift layers share much of their underlying machinery with count layers, so many of the concepts from the count layer documentation apply here as well. For further reading:
 
-- The **denominator** vignette covers how denominators are computed and how to customize them, which directly affects the percentages displayed in shift tables.
-- The **sorting and ordering** vignette explains how row and column ordering works, including the role of factor levels that we touched on in this vignette.
+- `vignette("denom")` -- how denominators are computed and customized (`denoms_by`, `denom_where`), which directly affects shift percentages.
+- `vignette("count")` -- the shared count machinery, including `zero_count_display` and the `pct_lt`/`pct_gt` conventions.
+- `vignette("sort")` -- how row and column ordering works, including the role of factor levels touched on here.
+- `vignette("binding-statistics")` -- attaching an `assoc_test()` p-value column to a shift table.

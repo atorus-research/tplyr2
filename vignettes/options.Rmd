@@ -227,6 +227,15 @@ tplyr2_options()$tplyr2.scipen
 
 The `scipen` override is applied only for the duration of `tplyr_build()` and is automatically restored to its previous value when the build completes. This means it will not affect other code in your session.
 
+# Reading Variable Labels
+
+Clinical datasets usually carry a SAS-style `label` attribute on each column (the descriptive text like "Age" or "Planned Treatment"). The helper `get_data_labels()` pulls those labels off a data frame as a named character vector, returning `NA` for any column that has no label. It is handy for building column headers or annotating output.
+
+```{r data-labels}
+labs <- get_data_labels(tplyr_adsl)
+labs[c("AGE", "SEX", "RACE", "TRT01P")]
+```
+
 # Resetting Options
 
 To return all options to their defaults, set each one explicitly:
@@ -245,3 +254,9 @@ tplyr2_options()
 ```
 
 Because tplyr2 options are stored as standard R options (with the `tplyr2.` prefix), they reset automatically when you start a new R session. If you want your options to persist, place the `tplyr2_options()` call in your project's `.Rprofile` or at the top of your analysis script.
+
+## See Also
+
+- `vignette("desc")` -- descriptive statistics, where `quantile_type` and `custom_summaries` apply.
+- `vignette("desc_layer_formatting")` -- auto-precision, which `precision_cap` bounds.
+- `vignette("general_string_formatting")` -- the `f_str()` system that IBM rounding feeds into.
