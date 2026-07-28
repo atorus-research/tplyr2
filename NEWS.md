@@ -136,6 +136,13 @@
   even when it was a factor). The target sort key is threaded through the cast
   so all methods compose correctly with by-groups and special (total/missing)
   rows.
+- `order_count_method = "bycount"` now also reaches the **inner** level of a
+  nested count layer (#64), sorting (e.g.) preferred terms by descending count
+  within each system organ class -- the AE-by-SOC/PT convention -- with
+  `result_order_var`/`ordering_cols` honored. Previously it only affected
+  single-level layers. The outer level keeps its own order (controlled by
+  `outer_sort_position`), so the useful "outer alphabetical, inner by descending
+  count" layout comes for free.
 - `risk_diff` on a **nested** count layer now errors instead of silently
   emitting an all-blank column (#58). Risk difference is computed only on
   single-level count layers; on a nested SOC/PT layer the setting previously
