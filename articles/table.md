@@ -59,8 +59,8 @@ kable(result[, c("rowlabel1", grep("^res", names(result), value = TRUE))])
 
 | rowlabel1 | res1       | res2       | res3       |
 |:----------|:-----------|:-----------|:-----------|
-| 65-80     | 42 (48.8%) | 55 (65.5%) | 47 (56.0%) |
 | \<65      | 14 (16.3%) | 11 (13.1%) | 8 ( 9.5%)  |
+| 65-80     | 42 (48.8%) | 55 (65.5%) | 47 (56.0%) |
 | \>80      | 30 (34.9%) | 18 (21.4%) | 29 (34.5%) |
 
 ### Multiple Column Variables
@@ -84,8 +84,8 @@ kable(result[, c("rowlabel1", grep("^res", names(result), value = TRUE))])
 
 | rowlabel1 | res1       | res2       | res3       | res4       | res5       | res6       |
 |:----------|:-----------|:-----------|:-----------|:-----------|:-----------|:-----------|
-| 65-80     | 22 (41.5%) | 20 (60.6%) | 28 (70.0%) | 27 (61.4%) | 28 (56.0%) | 19 (55.9%) |
 | \<65      | 9 (17.0%)  | 5 (15.2%)  | 5 (12.5%)  | 6 (13.6%)  | 5 (10.0%)  | 3 ( 8.8%)  |
+| 65-80     | 22 (41.5%) | 20 (60.6%) | 28 (70.0%) | 27 (61.4%) | 28 (56.0%) | 19 (55.9%) |
 | \>80      | 22 (41.5%) | 8 (24.2%)  | 7 (17.5%)  | 11 (25.0%) | 17 (34.0%) | 12 (35.3%) |
 
 Notice that the column labels use a `" | "` separator to show the cross
@@ -125,8 +125,8 @@ kable(result[, c("rowlabel1", "rowlabel2", grep("^res", names(result), value = T
 
 | rowlabel1   | rowlabel2 | res1         | res2         | res3         |
 |:------------|:----------|:-------------|:-------------|:-------------|
-| Age Group   | 65-80     | 42 (48.8%)   | 55 (65.5%)   | 47 (56.0%)   |
 | Age Group   | \<65      | 14 (16.3%)   | 11 (13.1%)   | 8 ( 9.5%)    |
+| Age Group   | 65-80     | 42 (48.8%)   | 55 (65.5%)   | 47 (56.0%)   |
 | Age Group   | \>80      | 30 (34.9%)   | 18 (21.4%)   | 29 (34.5%)   |
 | Age (Years) | n         | 86           | 84           | 84           |
 | Age (Years) | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
@@ -374,9 +374,9 @@ kable(result[, c("rowlabel1", grep("^res", names(result), value = TRUE))])
 
 | rowlabel1                        | res1       | res2       | res3       |
 |:---------------------------------|:-----------|:-----------|:-----------|
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
 | WHITE                            | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) |
+| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
 
 Every race category appears for every treatment group, even when the
 count is zero.

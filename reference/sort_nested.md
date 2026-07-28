@@ -5,5 +5,11 @@ Sort nested count data for correct interleaving
 ## Usage
 
 ``` r
-sort_nested(combined, target_vars, by_data_vars, dt = NULL)
+sort_nested(
+  combined,
+  target_vars,
+  by_data_vars,
+  dt = NULL,
+  outer_sort_position = NULL
+)
 ```

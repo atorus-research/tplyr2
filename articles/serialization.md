@@ -341,9 +341,9 @@ kable(complex_result[, !grepl("^ord", names(complex_result))])
 
 | rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 |
 |:---|:---|:---|:---|:---|:---|:---|
-| Race n (%) | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 ( 0.4%) | 1 ( 1.2%) | 0 ( 0.0%) |
-| Race n (%) | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 23 ( 9.1%) | 9 (10.7%) | 6 ( 7.1%) |
 | Race n (%) | WHITE |  | 78 (90.7%) | 230 (90.6%) | 74 (88.1%) | 78 (92.9%) |
+| Race n (%) | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 23 ( 9.1%) | 9 (10.7%) | 6 ( 7.1%) |
+| Race n (%) | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 ( 0.4%) | 1 ( 1.2%) | 0 ( 0.0%) |
 | Race n (%) | Total |  | 86 (100.0%) | 254 (100.0%) | 84 (100.0%) | 84 (100.0%) |
 | Baseline Measurements | AGE | n | 86 | 254 | 84 | 84 |
 | Baseline Measurements | AGE | Mean (SD) | 75.2 ( 8.59) | 75.1 ( 8.25) | 74.4 ( 7.89) | 75.7 ( 8.29) |

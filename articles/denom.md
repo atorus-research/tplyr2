@@ -38,9 +38,9 @@ kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 
 | rowlabel1                        | res1       | res2       | res3       |
 |:---------------------------------|:-----------|:-----------|:-----------|
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
 | WHITE                            | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) |
+| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
 
 Each percentage is computed against the total count within its column.
 For the Placebo arm, there are 86 subjects, so the WHITE row shows
@@ -223,9 +223,9 @@ kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 
 | rowlabel1                        | res1       | res2       | res3       |
 |:---------------------------------|:-----------|:-----------|:-----------|
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.8%)  | 6 ( 7.1%)  |
 | WHITE                            | 78 (90.7%) | 74 (89.2%) | 78 (92.9%) |
+| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.8%)  | 6 ( 7.1%)  |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
 
 The “AMERICAN INDIAN OR ALASKA NATIVE” row still appears in the output
 with its count, but subjects in that category are excluded from the

@@ -20,7 +20,7 @@ articles:
   sort: sort.html
   table: table.html
   tplyr2: tplyr2.html
-last_built: 2026-07-28T15:15Z
+last_built: 2026-07-28T15:17Z
 urls:
   reference: https://github.com/mstackhouse/tplyr2/reference
   article: https://github.com/mstackhouse/tplyr2/articles

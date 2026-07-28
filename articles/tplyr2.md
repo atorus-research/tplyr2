@@ -313,9 +313,9 @@ kable(result[, !grepl("^ord", names(result))])
 
 | rowlabel1                        | res1       | res2       | res3       |
 |:---------------------------------|:-----------|:-----------|:-----------|
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
 | WHITE                            | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) |
+| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)  | 9 (10.7%)  | 6 ( 7.1%)  |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
 
 #### Total Rows
 
@@ -341,9 +341,9 @@ kable(result[, !grepl("^ord", names(result))])
 
 | rowlabel1                        | res1        | res2        | res3        |
 |:---------------------------------|:------------|:------------|:------------|
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)   | 1 ( 1.2%)   | 0 ( 0.0%)   |
-| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)   | 9 (10.7%)   | 6 ( 7.1%)   |
 | WHITE                            | 78 (90.7%)  | 74 (88.1%)  | 78 (92.9%)  |
+| BLACK OR AFRICAN AMERICAN        | 8 ( 9.3%)   | 9 (10.7%)   | 6 ( 7.1%)   |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%)   | 1 ( 1.2%)   | 0 ( 0.0%)   |
 | Total                            | 86 (100.0%) | 84 (100.0%) | 84 (100.0%) |
 
 #### Distinct Counting

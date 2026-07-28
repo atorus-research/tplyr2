@@ -95,9 +95,9 @@ kable(result[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index", "ord_layer
 
 | rowlabel1 | rowlabel2 | res1 | ord_layer_index | ord_layer_1 |
 |:---|:---|:---|---:|---:|
-| AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 1 |
+| WHITE |  | 78 (90.7%) | 1 | 1 |
 | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 1 | 2 |
-| WHITE |  | 78 (90.7%) | 1 | 3 |
+| AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 3 |
 | Age (years) | n | 86 | 2 | 1 |
 | Age (years) | Mean (SD) | 75.2 ( 8.59) | 2 | 2 |
 | Age (years) | Median | 76.0 | 2 | 3 |
@@ -120,9 +120,9 @@ kable(reordered[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index", "ord_la
 | 4 | Age (years) | n | 86 | 2 | 1 |
 | 5 | Age (years) | Mean (SD) | 75.2 ( 8.59) | 2 | 2 |
 | 6 | Age (years) | Median | 76.0 | 2 | 3 |
-| 1 | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 1 |
+| 1 | WHITE |  | 78 (90.7%) | 1 | 1 |
 | 2 | BLACK OR AFRICAN AMERICAN |  | 8 ( 9.3%) | 1 | 2 |
-| 3 | WHITE |  | 78 (90.7%) | 1 | 3 |
+| 3 | AMERICAN INDIAN OR ALASKA NATIVE |  | 0 ( 0.0%) | 1 | 3 |
 
 ## Sorting by Variable Values
 
@@ -220,7 +220,7 @@ kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
 |:---|:---|:---|:---|---:|
 | WHITE | 78 (90.7%) | 74 (88.1%) | 78 (92.9%) | 1 |
 | BLACK OR AFRICAN AMERICAN | 8 ( 9.3%) | 9 (10.7%) | 6 ( 7.1%) | 2 |
-| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 6 |
+| AMERICAN INDIAN OR ALASKA NATIVE | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 3 |
 
 Here, `RACEN` values of 1 (WHITE), 2 (BLACK OR AFRICAN AMERICAN), and 6
 (AMERICAN INDIAN OR ALASKA NATIVE) drive the sort keys in `ord_layer_1`.
@@ -311,15 +311,15 @@ kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
 
 | rowlabel1                   | res1       | res2       | res3       | ord_layer_1 |
 |:----------------------------|:-----------|:-----------|:-----------|------------:|
-| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           1 |
-| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           2 |
-| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           3 |
-| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           4 |
-| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           5 |
-| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           6 |
-| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           7 |
-| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           8 |
-| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           9 |
+| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           1 |
+| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           2 |
+| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           3 |
+| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           4 |
+| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           5 |
+| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           6 |
+| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           7 |
+| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           8 |
+| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           9 |
 
 When using `"bycount"`, `ord_layer_1` contains the negated count values
 (so that lower values sort first for descending order).
@@ -354,15 +354,15 @@ kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
 
 | rowlabel1                   | res1       | res2       | res3       | ord_layer_1 |
 |:----------------------------|:-----------|:-----------|:-----------|------------:|
-| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           1 |
-| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           2 |
-| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           3 |
+| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           1 |
+| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           2 |
+| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           3 |
 | LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           4 |
-| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           5 |
-| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           6 |
-| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           7 |
-| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           8 |
-| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           9 |
+| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           5 |
+| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           6 |
+| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           7 |
+| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           8 |
+| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           9 |
 
 ## Nested Count Sorting
 
