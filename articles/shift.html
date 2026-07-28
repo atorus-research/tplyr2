@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -232,6 +235,10 @@ column labels (stored as attributes) follow the pattern
 <code>"Treatment | ANRIND (N=n)"</code>.</li>
 <li>The default format is <code>"xx (xx.x%)"</code>, showing a count and
 percentage, the same default used by count layers.</li>
+<li>By default those percentages are out of the <strong>treatment-arm
+total</strong> (<code>shift_denom = "total"</code>). Many shift tables
+instead want “% within the baseline group”; the <a href="#shift-denominators">Shift Denominators</a> section below shows
+how to switch.</li>
 </ul>
 <p>However, you may notice that the only BNRIND values present in the
 output are whatever happened to appear in the data. If a category like
@@ -468,6 +475,282 @@ one used across all of tplyr2.</p>
 </table>
 </div>
 <div class="section level2">
+<h2 id="shift-denominators">Shift Denominators<a class="anchor" aria-label="anchor" href="#shift-denominators"></a>
+</h2>
+<p>Every percentage needs a denominator, and a shift table has two
+natural choices. The <code>shift_denom</code> setting selects between
+them:</p>
+<ul>
+<li>
+<code>shift_denom = "total"</code> (the default) computes each
+percentage out of the <strong>treatment-arm total</strong> – every cell
+in an arm shares one denominator.</li>
+<li>
+<code>shift_denom = "column"</code> computes each percentage out of
+its <strong>shift-column group</strong> – the “from”/baseline group
+within the arm. This is the classic “% within the baseline category”
+reading, in which each baseline row’s cells sum to 100% across the
+post-baseline columns.</li>
+</ul>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  where <span class="op">=</span> <span class="va">PARAMCD</span> <span class="op">==</span> <span class="st">"CK"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_shift.html">group_shift</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>row <span class="op">=</span> <span class="st">"BNRIND"</span>, column <span class="op">=</span> <span class="st">"ANRIND"</span><span class="op">)</span>,</span>
+<span>      by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PARAM"</span>, <span class="st">"VISIT"</span><span class="op">)</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        shift_denom <span class="op">=</span> <span class="st">"column"</span>,</span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xxx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">adlb</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="11%">
+<col width="7%">
+<col width="7%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">rowlabel2</th>
+<th align="left">rowlabel3</th>
+<th align="left">res1</th>
+<th align="left">res2</th>
+<th align="left">res3</th>
+<th align="left">res4</th>
+<th align="left">res5</th>
+<th align="left">res6</th>
+<th align="left">res7</th>
+<th align="left">res8</th>
+<th align="left">res9</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">L</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+<tr class="even">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">N</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">4 ( 80.0%)</td>
+<td align="left">2 ( 40.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">2 ( 40.0%)</td>
+<td align="left">4 ( 80.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">6 ( 75.0%)</td>
+<td align="left">2 (100.0%)</td>
+</tr>
+<tr class="odd">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">H</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 20.0%)</td>
+<td align="left">3 ( 60.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">3 ( 60.0%)</td>
+<td align="left">1 ( 20.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">2 ( 25.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+</tbody>
+</table>
+<p>With <code>shift_denom = "column"</code> and no <code>by</code>
+variable, the header <code>(N=)</code> labels reflect the
+per-column-group denominators. When a <code>by</code> variable is
+present (as here), the column-group denominator varies by by-group, so
+no single header N can represent it and the header keeps the arm total.
+An explicit <code>denoms_by</code> overrides both choices – see
+<code><a href="../articles/denom.html">vignette("denom")</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="the-denominator-row">The Denominator Row<a class="anchor" aria-label="anchor" href="#the-denominator-row"></a>
+</h2>
+<p>Threshold and shift tables often print an “n” row above the shift-to
+rows giving the size of each baseline (from) group – the denominator
+behind the column-group percentages. Set <code>denom_row = TRUE</code>
+to emit it directly from the layer rather than computing it
+separately:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  where <span class="op">=</span> <span class="va">PARAMCD</span> <span class="op">==</span> <span class="st">"CK"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_shift.html">group_shift</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>row <span class="op">=</span> <span class="st">"BNRIND"</span>, column <span class="op">=</span> <span class="st">"ANRIND"</span><span class="op">)</span>,</span>
+<span>      by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"PARAM"</span>, <span class="st">"VISIT"</span><span class="op">)</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        shift_denom <span class="op">=</span> <span class="st">"column"</span>,</span>
+<span>        denom_row <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>        denom_row_label <span class="op">=</span> <span class="st">"n"</span>,</span>
+<span>        denom_row_format <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx"</span>, <span class="st">"n"</span><span class="op">)</span>,</span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xxx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">adlb</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="11%">
+<col width="7%">
+<col width="7%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+<col width="8%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">rowlabel2</th>
+<th align="left">rowlabel3</th>
+<th align="left">res1</th>
+<th align="left">res2</th>
+<th align="left">res3</th>
+<th align="left">res4</th>
+<th align="left">res5</th>
+<th align="left">res6</th>
+<th align="left">res7</th>
+<th align="left">res8</th>
+<th align="left">res9</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">n</td>
+<td align="left">0</td>
+<td align="left">5</td>
+<td align="left">5</td>
+<td align="left">0</td>
+<td align="left">5</td>
+<td align="left">5</td>
+<td align="left">0</td>
+<td align="left">8</td>
+<td align="left">2</td>
+</tr>
+<tr class="even">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">L</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+<tr class="odd">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">N</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">4 ( 80.0%)</td>
+<td align="left">2 ( 40.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">2 ( 40.0%)</td>
+<td align="left">4 ( 80.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">6 ( 75.0%)</td>
+<td align="left">2 (100.0%)</td>
+</tr>
+<tr class="even">
+<td align="left">Creatine Kinase</td>
+<td align="left">WEEK 24</td>
+<td align="left">H</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">1 ( 20.0%)</td>
+<td align="left">3 ( 60.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">3 ( 60.0%)</td>
+<td align="left">1 ( 20.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="left">2 ( 25.0%)</td>
+<td align="left">0 ( 0.0%)</td>
+</tr>
+</tbody>
+</table>
+<p>The row is labelled <code>"n"</code> by default
+(<code>denom_row_label</code>). Without <code>denom_row_format</code>
+its integers are padded to the width of the shift cells; supplying an
+<code>f_str</code> – here <code>f_str("xx", "n")</code> – gives the row
+its own width, independent of the <code>n_counts</code> format. A
+baseline group that is absent within a by-group renders as
+<code>0</code> in this row rather than a blank.</p>
+</div>
+<div class="section level2">
+<h2 id="zero-cells-and-percent-thresholds">Zero Cells and Percent Thresholds<a class="anchor" aria-label="anchor" href="#zero-cells-and-percent-thresholds"></a>
+</h2>
+<p>Shift layers honor the same display conventions as count layers,
+because both route through the same formatting engine.
+<code>zero_count_display</code> controls how a zero cell renders –
+<code>"full"</code> (default, e.g. <code>0 (0.0%)</code>),
+<code>"count_only"</code> (just the count, e.g. <code>0</code>), or
+<code>"blank"</code> (empty) – and <code>pct_lt</code> /
+<code>pct_gt</code> apply the regulatory “less-than / greater-than”
+percent conventions (e.g. a nonzero cell whose percent rounds below 1
+shows <code>&lt;1</code>). These are described in
+<code><a href="../articles/count.html">vignette("count")</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="distinct-subject-level-shifts">Distinct (Subject-Level) Shifts<a class="anchor" aria-label="anchor" href="#distinct-subject-level-shifts"></a>
+</h2>
+<p>By default a shift layer counts records. When your lab data has one
+row per subject per visit that is exactly right, but if a subject can
+contribute more than one record to a cell and you want to count
+<em>subjects</em>, set <code>distinct_by</code> to the subject
+identifier – just as in a count layer. The percentages then use the
+distinct-subject denominators.</p>
+</div>
+<div class="section level2">
+<h2 id="association-tests">Association Tests<a class="anchor" aria-label="anchor" href="#association-tests"></a>
+</h2>
+<p>An omnibus <code><a href="../reference/assoc_test.html">assoc_test()</a></code> attaches to shift layers as
+well, for a single p-value across the shift table (for example a
+chi-square or CMH test on the baseline-by-post-baseline table). The
+contract is identical to count layers; see
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code>.</p>
+</div>
+<div class="section level2">
 <h2 id="one-thing-to-note">One Thing to Note<a class="anchor" aria-label="anchor" href="#one-thing-to-note"></a>
 </h2>
 <p>The <code><a href="../reference/group_shift.html">group_shift()</a></code> API is designed specifically for
@@ -490,12 +773,20 @@ directly.</p>
 layers, so many of the concepts from the count layer documentation apply
 here as well. For further reading:</p>
 <ul>
-<li>The <strong>denominator</strong> vignette covers how denominators
-are computed and how to customize them, which directly affects the
-percentages displayed in shift tables.</li>
-<li>The <strong>sorting and ordering</strong> vignette explains how row
-and column ordering works, including the role of factor levels that we
-touched on in this vignette.</li>
+<li>
+<code><a href="../articles/denom.html">vignette("denom")</a></code> – how denominators are computed and
+customized (<code>denoms_by</code>, <code>denom_where</code>), which
+directly affects shift percentages.</li>
+<li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – the shared count machinery,
+including <code>zero_count_display</code> and the
+<code>pct_lt</code>/<code>pct_gt</code> conventions.</li>
+<li>
+<code><a href="../articles/sort.html">vignette("sort")</a></code> – how row and column ordering works,
+including the role of factor levels touched on here.</li>
+<li>
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> – attaching an
+<code><a href="../reference/assoc_test.html">assoc_test()</a></code> p-value column to a shift table.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

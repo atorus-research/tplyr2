@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -198,68 +201,89 @@ reference in format strings.</p>
 </tr>
 <tr class="even">
 <td align="left">Desc</td>
+<td align="left"><code>n_records</code></td>
+<td align="left">Records assessed (non-missing + missing)</td>
+</tr>
+<tr class="odd">
+<td align="left">Desc</td>
 <td align="left"><code>mean</code></td>
 <td align="left">Arithmetic mean</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Desc</td>
 <td align="left"><code>sd</code></td>
 <td align="left">Standard deviation</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Desc</td>
 <td align="left"><code>median</code></td>
 <td align="left">Median</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Desc</td>
 <td align="left"><code>var</code></td>
 <td align="left">Variance</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Desc</td>
 <td align="left"><code>min</code></td>
 <td align="left">Minimum</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Desc</td>
 <td align="left"><code>max</code></td>
 <td align="left">Maximum</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Desc</td>
 <td align="left"><code>iqr</code></td>
 <td align="left">Interquartile range</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Desc</td>
 <td align="left"><code>q1</code></td>
 <td align="left">First quartile</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Desc</td>
 <td align="left"><code>q3</code></td>
 <td align="left">Third quartile</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Desc</td>
 <td align="left"><code>missing</code></td>
 <td align="left">Count of missing values</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Shift</td>
 <td align="left"><code>n</code></td>
 <td align="left">Number of observations</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">Shift</td>
 <td align="left"><code>pct</code></td>
 <td align="left">Percentage of observations</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">Shift</td>
 <td align="left"><code>total</code></td>
 <td align="left">Denominator for percentage</td>
+</tr>
+<tr class="even">
+<td align="left">Shift</td>
+<td align="left"><code>distinct_n</code></td>
+<td align="left">Distinct subjects (requires
+<code>distinct_by</code>)</td>
+</tr>
+<tr class="odd">
+<td align="left">Shift</td>
+<td align="left"><code>distinct_pct</code></td>
+<td align="left">Percentage of distinct subjects</td>
+</tr>
+<tr class="even">
+<td align="left">Shift</td>
+<td align="left"><code>distinct_total</code></td>
+<td align="left">Distinct denominator</td>
 </tr>
 <tr class="odd">
 <td align="left">Analyze</td>
@@ -635,10 +659,13 @@ separately for each group – useful when a single spec covers multiple
 lab parameters, each measured at a different scale. This means you can
 write one spec that handles dozens of parameters, each rendered at the
 precision appropriate to its measurement.</p>
-<p>Note that auto-precision characters can also be used in count layers.
-For instance, <code>a</code> in the integer portion of a count format
-will auto-size the field width based on the data, so you do not have to
-guess how many digits the largest count will require.</p>
+<p>Auto-precision (<code>a</code>/<code>A</code>) is a descriptive-layer
+feature – it is driven by scanning a continuous variable’s decimal
+precision, which count layers do not do. In a count format,
+<code>x</code>/<code>X</code> are fixed-width fields; simply reserve
+enough <code>x</code> characters for the largest count you expect. See
+<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> for the full
+auto-precision system.</p>
 </div>
 <div class="section level2">
 <h2 id="the-empty-argument">The empty Argument<a class="anchor" aria-label="anchor" href="#the-empty-argument"></a>
@@ -670,6 +697,7 @@ you would see in a clinical study report.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>, <span class="st">"AEDECOD"</span><span class="op">)</span>,</span>
 <span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
@@ -682,7 +710,7 @@ you would see in a clinical study report.</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="va">result</span>, <span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">collapsed</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -707,74 +735,74 @@ you would see in a clinical study report.</p>
 </tr>
 <tr class="even">
 <td align="left"></td>
-<td align="left">4 (12.5% )</td>
-<td align="left">6 (14.0% )</td>
-<td align="left">5 (10.0% )</td>
+<td align="left">4 (4.7% )</td>
+<td align="left">6 (7.1% )</td>
+<td align="left">5 (6.0% )</td>
 </tr>
 <tr class="odd">
 <td align="left">ATRIAL FIBRILLATION</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.0% )</td>
+<td align="left">1 (1.2% )</td>
 </tr>
 <tr class="even">
 <td align="left">ATRIAL FLUTTER</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.3% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="odd">
 <td align="left">ATRIAL HYPERTROPHY</td>
-<td align="left">1 (3.1% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="even">
 <td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
-<td align="left">1 (3.1% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="odd">
 <td align="left">CARDIAC FAILURE CONGESTIVE</td>
-<td align="left">1 (3.1% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="even">
 <td align="left">MYOCARDIAL INFARCTION</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.3% )</td>
-<td align="left">2 (4.0% )</td>
+<td align="left">1 (1.2% )</td>
+<td align="left">2 (2.4% )</td>
 </tr>
 <tr class="odd">
 <td align="left">SINUS BRADYCARDIA</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">3 (7.0% )</td>
-<td align="left">1 (2.0% )</td>
+<td align="left">3 (3.6% )</td>
+<td align="left">1 (1.2% )</td>
 </tr>
 <tr class="even">
 <td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
-<td align="left">1 (3.1% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.0% )</td>
+<td align="left">1 (1.2% )</td>
 </tr>
 <tr class="odd">
 <td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.0% )</td>
+<td align="left">1 (1.2% )</td>
 </tr>
 <tr class="even">
 <td align="left">TACHYCARDIA</td>
-<td align="left">1 (3.1% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="odd">
 <td align="left">VENTRICULAR EXTRASYSTOLES</td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.3% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 <tr class="even">
@@ -786,7 +814,7 @@ you would see in a clinical study report.</p>
 <tr class="odd">
 <td align="left"></td>
 <td align="left">0 (0.0% )</td>
-<td align="left">1 (2.3% )</td>
+<td align="left">1 (1.2% )</td>
 <td align="left">0 (0.0% )</td>
 </tr>
 </tbody>
@@ -803,7 +831,10 @@ sits right next to the percentage value.</li>
 percentage in every cell.</li>
 <li>
 <code>distinct_n</code> and <code>distinct_pct</code> compute
-subject-level (not event-level) summaries.</li>
+subject-level (not event-level) summaries – and because this is an
+adverse event table, <code><a href="../reference/pop_data.html">pop_data()</a></code> supplies the
+safety-population denominator from <code>ADSL</code> so the percentages
+are correct.</li>
 <li>Nested counts display body system totals alongside preferred term
 detail.</li>
 </ul>
@@ -813,6 +844,35 @@ padding, alignment, and precision across every cell in the table.
 Whether you need fixed widths, data-driven precision, or
 delimiter-hugging alignment, the same <code><a href="../reference/f_str.html">f_str()</a></code> interface
 covers all three.</p>
+</div>
+<div class="section level2">
+<h2 id="formatting-values-outside-a-layer">Formatting Values Outside a Layer<a class="anchor" aria-label="anchor" href="#formatting-values-outside-a-layer"></a>
+</h2>
+<p><code><a href="../reference/apply_formats.html">apply_formats()</a></code> also works standalone, to format a
+numeric vector with an <code>f_str</code> outside of any layer – useful
+when you compute a statistic yourself (an ANCOVA estimate, a model
+p-value) and want to row-bind it onto an assembled table with matching
+alignment. For that use it gains three extra arguments: <code>na</code>
+(a string to substitute when a cell’s inputs are all missing,
+e.g. <code>na = "NE"</code> or <code>na = ""</code>), and
+<code>width</code>/<code>pad</code> (to pad each token to a fixed
+width). See <code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> for the binding
+workflow.</p>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> – auto-precision and
+the descriptive-layer formatting features.</li>
+<li>
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> –
+<code><a href="../reference/apply_formats.html">apply_formats()</a></code> for row-binding external statistics.</li>
+<li>
+<code><a href="../articles/count.html">vignette("count")</a></code> and <code><a href="../articles/desc.html">vignette("desc")</a></code> –
+format strings in the context of each layer type.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

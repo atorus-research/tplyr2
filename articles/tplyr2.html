@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -604,11 +607,16 @@ By default, they produce counts and percentages formatted as
 </h4>
 <p>In adverse event tables, you often need to count the number of
 <em>subjects</em> who experienced an event, not the number of event
-records. Use <code>distinct_by</code> to specify the subject
-identifier:</p>
+records. Use <code>distinct_by</code> to specify the subject identifier.
+Because <code>ADAE</code> contains only subjects with events, the
+denominator must come from the full population (<code>ADSL</code>),
+supplied through <code><a href="../reference/pop_data.html">pop_data()</a></code> – otherwise the percentages are
+computed against subjects-with-events and come out too large (see
+<code><a href="../articles/count.html">vignette("count")</a></code> and <code><a href="../articles/denom.html">vignette("denom")</a></code>):</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span></span>
 <span>      <span class="st">"AEBODSYS"</span>,</span>
@@ -622,7 +630,7 @@ identifier:</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
@@ -640,100 +648,100 @@ identifier:</p>
 <tbody>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
-<td align="left">4 (12.5%)</td>
-<td align="left">6 (14.0%)</td>
-<td align="left">5 (10.0%)</td>
+<td align="left">4 ( 4.7%)</td>
+<td align="left">6 ( 7.1%)</td>
+<td align="left">5 ( 6.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">CONGENITAL, FAMILIAL AND GENETIC DISORDERS</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
 <td align="left">GASTROINTESTINAL DISORDERS</td>
-<td align="left">6 (18.8%)</td>
-<td align="left">4 ( 9.3%)</td>
-<td align="left">3 ( 6.0%)</td>
+<td align="left">6 ( 7.0%)</td>
+<td align="left">4 ( 4.8%)</td>
+<td align="left">3 ( 3.6%)</td>
 </tr>
 <tr class="even">
 <td align="left">GENERAL DISORDERS AND ADMINISTRATION SITE
 CONDITIONS</td>
-<td align="left">9 (28.1%)</td>
-<td align="left">15 (34.9%)</td>
-<td align="left">18 (36.0%)</td>
+<td align="left">9 (10.5%)</td>
+<td align="left">15 (17.9%)</td>
+<td align="left">18 (21.4%)</td>
 </tr>
 <tr class="odd">
 <td align="left">IMMUNE SYSTEM DISORDERS</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="even">
 <td align="left">INFECTIONS AND INFESTATIONS</td>
-<td align="left">5 (15.6%)</td>
-<td align="left">4 ( 9.3%)</td>
-<td align="left">3 ( 6.0%)</td>
+<td align="left">5 ( 5.8%)</td>
+<td align="left">4 ( 4.8%)</td>
+<td align="left">3 ( 3.6%)</td>
 </tr>
 <tr class="odd">
 <td align="left">INJURY, POISONING AND PROCEDURAL COMPLICATIONS</td>
-<td align="left">2 ( 6.2%)</td>
-<td align="left">1 ( 2.3%)</td>
-<td align="left">2 ( 4.0%)</td>
+<td align="left">2 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="left">2 ( 2.4%)</td>
 </tr>
 <tr class="even">
 <td align="left">INVESTIGATIONS</td>
-<td align="left">3 ( 9.4%)</td>
-<td align="left">1 ( 2.3%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">3 ( 3.5%)</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
 <td align="left">METABOLISM AND NUTRITION DISORDERS</td>
-<td align="left">2 ( 6.2%)</td>
-<td align="left">2 ( 4.7%)</td>
+<td align="left">2 ( 2.3%)</td>
+<td align="left">2 ( 2.4%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">MUSCULOSKELETAL AND CONNECTIVE TISSUE DISORDERS</td>
-<td align="left">1 ( 3.1%)</td>
-<td align="left">2 ( 4.7%)</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="left">2 ( 2.4%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
 <td align="left">NERVOUS SYSTEM DISORDERS</td>
-<td align="left">1 ( 3.1%)</td>
-<td align="left">5 (11.6%)</td>
-<td align="left">6 (12.0%)</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="left">5 ( 6.0%)</td>
+<td align="left">6 ( 7.1%)</td>
 </tr>
 <tr class="even">
 <td align="left">PSYCHIATRIC DISORDERS</td>
-<td align="left">3 ( 9.4%)</td>
-<td align="left">2 ( 4.7%)</td>
-<td align="left">3 ( 6.0%)</td>
+<td align="left">3 ( 3.5%)</td>
+<td align="left">2 ( 2.4%)</td>
+<td align="left">3 ( 3.6%)</td>
 </tr>
 <tr class="odd">
 <td align="left">RENAL AND URINARY DISORDERS</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">RESPIRATORY, THORACIC AND MEDIASTINAL DISORDERS</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">3 ( 7.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">3 ( 3.6%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
 <td align="left">SKIN AND SUBCUTANEOUS TISSUE DISORDERS</td>
-<td align="left">5 (15.6%)</td>
-<td align="left">18 (41.9%)</td>
-<td align="left">19 (38.0%)</td>
+<td align="left">5 ( 5.8%)</td>
+<td align="left">18 (21.4%)</td>
+<td align="left">19 (22.6%)</td>
 </tr>
 <tr class="even">
 <td align="left">VASCULAR DISORDERS</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 </tbody>
 </table>
@@ -747,6 +755,7 @@ variable names to <code>target_var</code>:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
 <span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>, <span class="st">"AEDECOD"</span><span class="op">)</span>,</span>
@@ -760,7 +769,7 @@ variable names to <code>target_var</code>:</p>
 <span>  <span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table style="width:100%;" class="table">
 <colgroup>
@@ -781,42 +790,42 @@ variable names to <code>target_var</code>:</p>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left"></td>
-<td align="left">4 (12.5%)</td>
-<td align="left">6 (14.0%)</td>
-<td align="left">5 (10.0%)</td>
+<td align="left">4 ( 4.7%)</td>
+<td align="left">6 ( 7.1%)</td>
+<td align="left">5 ( 6.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FIBRILLATION</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL FLUTTER</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">ATRIAL HYPERTROPHY</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">CARDIAC FAILURE CONGESTIVE</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
@@ -824,34 +833,34 @@ variable names to <code>target_var</code>:</p>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">MYOCARDIAL INFARCTION</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
-<td align="left">2 ( 4.0%)</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="left">2 ( 2.4%)</td>
 </tr>
 <tr class="even">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SINUS BRADYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">3 ( 7.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">3 ( 3.6%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="even">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.0%)</td>
+<td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">TACHYCARDIA</td>
-<td align="left">1 ( 3.1%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
@@ -859,29 +868,29 @@ variable names to <code>target_var</code>:</p>
 <td align="left">CARDIAC DISORDERS</td>
 <td align="left">VENTRICULAR EXTRASYSTOLES</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
 <td align="left">CONGENITAL, FAMILIAL AND GENETIC DISORDERS</td>
 <td align="left"></td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
 <td align="left">CONGENITAL, FAMILIAL AND GENETIC DISORDERS</td>
 <td align="left">VENTRICULAR SEPTAL DEFECT</td>
 <td align="left">0 ( 0.0%)</td>
-<td align="left">1 ( 2.3%)</td>
+<td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
 <td align="left">GASTROINTESTINAL DISORDERS</td>
 <td align="left"></td>
-<td align="left">6 (18.8%)</td>
-<td align="left">4 ( 9.3%)</td>
-<td align="left">3 ( 6.0%)</td>
+<td align="left">6 ( 7.0%)</td>
+<td align="left">4 ( 4.8%)</td>
+<td align="left">3 ( 3.6%)</td>
 </tr>
 </tbody>
 </table>
@@ -1162,29 +1171,55 @@ variables used during the build.</p>
 other vignettes:</p>
 <ul>
 <li>
-<code><a href="../articles/count.html">vignette("count")</a></code> – Denominator control, missing value
-handling, risk differences, ordering.</li>
+<code><a href="../articles/table.html">vignette("table")</a></code> – Spec-level structure: column
+variables, table filters, total/custom groups, and population data.</li>
 <li>
-<code><a href="../articles/desc.html">vignette("desc")</a></code> – Custom summaries, auto-precision,
-stats-as-columns.</li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – Count layers in depth:
+population-based denominators, distinct counts, nested summaries, stat
+columns, missing values.</li>
 <li>
-<code><a href="../articles/shift.html">vignette("shift")</a></code> – Shift layers and cross-tabulation
-options.</li>
+<code><a href="../articles/desc.html">vignette("desc")</a></code> – Descriptive layers: custom
+summaries, auto-precision, stats-as-columns.</li>
 <li>
-<code><a href="../articles/denom.html">vignette("denom")</a></code> – Population data, header N, total
-groups, custom groups.</li>
+<code><a href="../articles/shift.html">vignette("shift")</a></code> – Shift layers, shift denominators,
+and the denominator row.</li>
+<li>
+<code><a href="../articles/denom.html">vignette("denom")</a></code> – Denominator control: population
+data, header N, <code>denoms_by</code>, <code>denom_where</code>,
+single-proportion confidence intervals.</li>
+<li>
+<code><a href="../articles/adverse-events.html">vignette("adverse-events")</a></code> – A full adverse event table
+built end to end.</li>
+<li>
+<code><a href="../articles/riskdiff.html">vignette("riskdiff")</a></code> and
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> – Risk differences and
+association-test p-value columns.</li>
+<li>
+<code><a href="../articles/sort.html">vignette("sort")</a></code> – Row ordering by frequency, factor
+levels, or a VARN companion.</li>
+<li>
+<code><a href="../articles/general_string_formatting.html">vignette("general_string_formatting")</a></code> and
+<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> – The
+<code><a href="../reference/f_str.html">f_str()</a></code> format-string system.</li>
 <li>
 <code><a href="../articles/post_processing.html">vignette("post_processing")</a></code> – Row masks, row label
-collapsing, conditional formatting, and text wrapping.</li>
+collapsing, conditional formatting, <code><a href="../reference/as_display.html">as_display()</a></code>, and text
+wrapping.</li>
 <li>
 <code><a href="../articles/metadata.html">vignette("metadata")</a></code> – Cell-level metadata and
 traceability.</li>
 <li>
-<code><a href="../articles/serialization.html">vignette("serialization")</a></code> – Saving and loading specs as
-JSON or YAML.</li>
+<code><a href="../articles/serialization.html">vignette("serialization")</a></code>, <code><a href="../articles/ard.html">vignette("ard")</a></code>
+– Saving/loading specs and Analysis Results Data conversion.</li>
 <li>
 <code><a href="../articles/analyze.html">vignette("analyze")</a></code> – Custom analysis layers with
 user-defined functions.</li>
+<li>
+<code><a href="../articles/options.html">vignette("options")</a></code> – Package options (rounding,
+quantiles, precision).</li>
+<li>
+<code><a href="../articles/migration.html">vignette("migration")</a></code> – Moving from Tplyr v1 to
+tplyr2.</li>
 </ul>
 </div>
 <div class="section level2">

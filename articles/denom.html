@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -794,6 +797,11 @@ actually references one of the four keywords, so layers that do not
 display a CI incur no extra cost. The vectorized engine behind the
 keywords, <code><a href="../reference/proportion_ci.html">proportion_ci()</a></code>, is exported for standalone
 use.</p>
+<p>This single-proportion interval is distinct from the
+<em>between-arm</em> confidence interval that <code>risk_diff</code>
+produces; the two are independent and can appear in the same table.
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> discusses the
+single-proportion CI alongside the other comparative statistics.</p>
 </div>
 <div class="section level2">
 <h2 id="denominators-with-population-data">Denominators with Population Data<a class="anchor" aria-label="anchor" href="#denominators-with-population-data"></a>
@@ -1170,6 +1178,24 @@ key principle is that the numerator (what you are counting) and the
 denominator (what you are dividing by) can be controlled separately,
 giving you precise control over how percentages are computed in your
 clinical tables.</p>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – count-layer fundamentals, where
+population data is first introduced.</li>
+<li>
+<code><a href="../articles/table.html">vignette("table")</a></code> – population data and header N from
+the spec-level perspective.</li>
+<li>
+<code><a href="../articles/adverse-events.html">vignette("adverse-events")</a></code> – these denominator controls
+applied in a complete adverse event table.</li>
+<li>
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> – the single-proportion
+CI alongside risk difference and association tests.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -228,6 +228,84 @@ kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 | WITHDRAWAL BY SUBJECT       | 9 (10.5%)   | 8 ( 9.5%)   | 10 (11.9%)  |
 | Overall Total               | 86 (100.0%) | 84 (100.0%) | 84 (100.0%) |
 
+## Population Data: Getting the Denominator Right
+
+Everything so far has summarized `tplyr_adsl`, which has one row per
+subject, so the column total *is* the number of subjects in each arm.
+Adverse event data is different, and this is where denominators most
+often go wrong.
+
+`tplyr_adae` only contains subjects who experienced at least one event,
+with many rows per subject. If you count it directly, the denominator
+becomes “subjects who had *any* adverse event” rather than the number of
+subjects at risk – and every incidence percentage comes out too large.
+For an adverse event table (and for most tables built from a findings or
+events dataset), the denominator must come from the **population
+dataset** – typically `ADSL`, the set of subjects in the analysis
+population.
+
+You supply population data in two places: a
+[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+mapping in the spec, and the population data frame itself at build time.
+Here is the same simple adverse-event count built both ways:
+
+``` r
+
+# WITHOUT population data: denominator = subjects present in ADAE
+spec_no_pop <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+res_no_pop <- tplyr_build(spec_no_pop, tplyr_adae)
+
+# WITH population data: denominator = full safety population from ADSL
+spec_pop <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count("AEDECOD", settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+res_pop <- tplyr_build(spec_pop, tplyr_adae, pop_data = tplyr_adsl)
+
+# Column Ns: subjects-with-events vs. the true population
+sapply(c("res1", "res2", "res3"), function(c) attr(res_no_pop[[c]], "label"))
+#>                          res1                          res2 
+#>              "Placebo (N=47)" "Xanomeline High Dose (N=77)" 
+#>                          res3 
+#>  "Xanomeline Low Dose (N=76)"
+sapply(c("res1", "res2", "res3"), function(c) attr(res_pop[[c]], "label"))
+#>                          res1                          res2 
+#>              "Placebo (N=86)" "Xanomeline High Dose (N=84)" 
+#>                          res3 
+#>  "Xanomeline Low Dose (N=84)"
+```
+
+The header N tells the story: without population data the Placebo column
+is `N=47` (only the subjects who had an event), and with it the column
+is the true `N=86`. Because the numerator is unchanged, every percentage
+roughly halves once the denominator is correct – a cell that read
+`6 (14.0%)` becomes `6 (7.1%)`. Getting this wrong silently inflates
+every incidence in the table, so **for adverse event tables population
+data is effectively mandatory.**
+
+The named vector in `pop_data(cols = c("TRTA" = "TRT01A"))` maps the
+treatment column in the analysis data (`TRTA`, actual treatment in
+`ADAE`) to the matching column in the population data (`TRT01A` in
+`ADSL`). The mapping is needed because the two datasets frequently name
+the treatment variable differently.
+
+Population data also unlocks related features – a “no events reported”
+row for subjects who are in the population but absent from the analysis
+data (`missing_subjects`), a separate denominator filter
+(`denom_where`), and per-subgroup denominators (`denoms_by`). Those are
+covered in depth in
+[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+Every adverse event example in the rest of this vignette uses population
+data.
+
 ## Distinct Versus Event Counts
 
 When summarizing adverse events, the distinction between events and
@@ -246,6 +324,7 @@ format strings.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -258,22 +337,22 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3")], 10))
 ```
 
 | rowlabel1 | res1 | res2 | res3 |
 |:---|:---|:---|:---|
-| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| AGITATION | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| ANXIETY | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
-| APPLICATION SITE DERMATITIS | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 3\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0\] | 3 ( 7.0%) \[ 3\] | 4 ( 8.0%) \[ 4\] |
-| APPLICATION SITE IRRITATION | 1 ( 3.1%) \[ 1\] | 3 ( 7.0%) \[ 4\] | 2 ( 4.0%) \[ 2\] |
-| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
-| APPLICATION SITE PRURITUS | 4 (12.5%) \[ 4\] | 6 (14.0%) \[ 7\] | 5 (10.0%) \[ 5\] |
-| APPLICATION SITE REACTION | 1 ( 3.1%) \[ 1\] | 1 ( 2.3%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
-| APPLICATION SITE URTICARIA | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 2.0%) \[ 1\] |
+| ABDOMINAL PAIN | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 1.2%) \[ 1\] |
+| AGITATION | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 1.2%) \[ 1\] |
+| ANXIETY | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 1.2%) \[ 1\] |
+| APPLICATION SITE DERMATITIS | 1 ( 1.2%) \[ 1\] | 3 ( 3.6%) \[ 3\] | 2 ( 2.4%) \[ 2\] |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) \[ 0\] | 3 ( 3.6%) \[ 3\] | 4 ( 4.8%) \[ 4\] |
+| APPLICATION SITE IRRITATION | 1 ( 1.2%) \[ 1\] | 3 ( 3.6%) \[ 4\] | 2 ( 2.4%) \[ 2\] |
+| APPLICATION SITE PAIN | 0 ( 0.0%) \[ 0\] | 1 ( 1.2%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
+| APPLICATION SITE PRURITUS | 4 ( 4.7%) \[ 4\] | 6 ( 7.1%) \[ 7\] | 5 ( 6.0%) \[ 5\] |
+| APPLICATION SITE REACTION | 1 ( 1.2%) \[ 1\] | 1 ( 1.2%) \[ 1\] | 0 ( 0.0%) \[ 0\] |
+| APPLICATION SITE URTICARIA | 0 ( 0.0%) \[ 0\] | 0 ( 0.0%) \[ 0\] | 1 ( 1.2%) \[ 1\] |
 
 In this output, the first number is the count of distinct subjects, the
 percentage is based on distinct subjects, and the number in brackets is
@@ -295,6 +374,7 @@ and the entry name becomes the column sub-label.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -308,7 +388,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "res4")], 10))
 ```
 
@@ -317,12 +397,12 @@ kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "res4")], 10))
 | ABDOMINAL PAIN              | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
 | AGITATION                   | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
 | ANXIETY                     | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
-| APPLICATION SITE DERMATITIS | 1 ( 3.1%) | 1    | 3 ( 7.0%) | 3    |
-| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) | 0    | 3 ( 7.0%) | 3    |
-| APPLICATION SITE IRRITATION | 1 ( 3.1%) | 1    | 3 ( 7.0%) | 4    |
-| APPLICATION SITE PAIN       | 0 ( 0.0%) | 0    | 1 ( 2.3%) | 1    |
-| APPLICATION SITE PRURITUS   | 4 (12.5%) | 4    | 6 (14.0%) | 7    |
-| APPLICATION SITE REACTION   | 1 ( 3.1%) | 1    | 1 ( 2.3%) | 1    |
+| APPLICATION SITE DERMATITIS | 1 ( 1.2%) | 1    | 3 ( 3.6%) | 3    |
+| APPLICATION SITE ERYTHEMA   | 0 ( 0.0%) | 0    | 3 ( 3.6%) | 3    |
+| APPLICATION SITE IRRITATION | 1 ( 1.2%) | 1    | 3 ( 3.6%) | 4    |
+| APPLICATION SITE PAIN       | 0 ( 0.0%) | 0    | 1 ( 1.2%) | 1    |
+| APPLICATION SITE PRURITUS   | 4 ( 4.7%) | 4    | 6 ( 7.1%) | 7    |
+| APPLICATION SITE REACTION   | 1 ( 1.2%) | 1    | 1 ( 1.2%) | 1    |
 | APPLICATION SITE URTICARIA  | 0 ( 0.0%) | 0    | 0 ( 0.0%) | 0    |
 
 The result columns interleave arm-major, so each treatment group’s stat
@@ -334,9 +414,9 @@ carried on the label attributes, which follow the pattern
 ``` r
 
 attr(result$res1, "label")
-#> [1] "Placebo (N=47) | n (%)"
+#> [1] "Placebo (N=86) | n (%)"
 attr(result$res2, "label")
-#> [1] "Placebo (N=47) | E"
+#> [1] "Placebo (N=86) | E"
 ```
 
 Renderers can split these labels on `" | "` to span the treatment group
@@ -378,6 +458,7 @@ by passing a vector of two variable names to
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -390,27 +471,27 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 15))
 ```
 
 | rowlabel1 | rowlabel2 | res1 | res2 | res3 |
 |:---|:---|:---|:---|:---|
-| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS |  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| CARDIAC DISORDERS |  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  | 6 ( 7.0%) | 4 ( 4.8%) | 3 ( 3.6%) |
 
 The first variable in the vector (`AEBODSYS`) becomes the outer level,
 and the second (`AEDECOD`) becomes the inner level. In the output,
@@ -447,20 +528,20 @@ kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 | row_label                                  | res1      | res2      | res3      |
 |:-------------------------------------------|:----------|:----------|:----------|
 | CARDIAC DISORDERS                          |           |           |           |
-|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                                | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 | CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
-|                                            | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 
 #### Nest Mode
 
@@ -477,21 +558,21 @@ kable(head(nested[, c("row_label", "res1", "res2", "res3")], 15))
 
 | row_label                                  | res1      | res2      | res3      |
 |:-------------------------------------------|:----------|:----------|:----------|
-| CARDIAC DISORDERS                          | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS                 | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| CARDIAC DISORDERS                          | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                                | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS                 | 6 ( 7.0%) | 4 ( 4.8%) | 3 ( 3.6%) |
 
 The `indent` parameter controls the string used for each level of
 nesting. Here we use three spaces, but you can use any string that suits
@@ -507,6 +588,7 @@ all body systems.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -521,7 +603,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
@@ -529,20 +611,20 @@ kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 | row_label                                  | res1      | res2      | res3      |
 |:-------------------------------------------|:----------|:----------|:----------|
 | CARDIAC DISORDERS                          |           |           |           |
-|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                                | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 | CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
-|                                            | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 
 ## Where to Go from Here
 
@@ -550,17 +632,31 @@ Count layers in tplyr2 cover a wide range of clinical table patterns,
 but there is much more to explore. Here are some related topics covered
 in other vignettes:
 
-- **Denominators**: Control how percentages are calculated with
-  `denoms_by` and `denom_ignore` in
-  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
-- **Missing counts**: Add rows for missing values with the
-  `missing_count` parameter.
-- **Shift tables**: Use
+- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+  – Denominator control in depth: population data, `denoms_by`,
+  `denom_where`, `denom_ignore`, single-proportion confidence intervals,
+  and the “no events reported” row.
+- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+  – An end-to-end adverse event table combining nested counts,
+  population-based incidence, sorting, and comparative statistics into
+  one worked example.
+- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+  and
+  [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – Risk differences and association-test (Fisher / chi-square) p-value
+  columns alongside your counts.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – Ordering rows by frequency, factor levels, or a VARN companion
+  variable.
+- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+  –
   [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
   for cross-tabulation of baseline versus post-baseline categories.
-- **Descriptive statistics**: Use
+- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  –
   [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
   for continuous variable summaries like mean, median, and standard
   deviation.
-- **Post-processing**: Apply row masks, conditional formatting, and row
-  label collapsing to polish your final output.
+- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+  – Row masks, conditional formatting, and row label collapsing to
+  polish your final output.

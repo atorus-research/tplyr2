@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -844,6 +847,187 @@ variable name, then the statistic label.</p>
 </tr>
 </tbody>
 </table>
+</div>
+<div class="section level2">
+<h2 id="records-assessed-n-versus-n_records">Records Assessed: <code>n</code> Versus <code>n_records</code><a class="anchor" aria-label="anchor" href="#records-assessed-n-versus-n_records"></a>
+</h2>
+<p>Two counts are available and they answer different questions.
+<code>n</code> is the number of <em>non-missing</em> values – the
+analysis count that pairs naturally with mean/SD. <code>n_records</code>
+is the number of records <em>assessed</em> (non-missing plus missing),
+which some tables report as an “N assessed” line. When there are no
+missing values the two are identical; they diverge only when the target
+variable has <code>NA</code> values.</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          <span class="st">"N assessed"</span>   <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n_records"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"n (analyzed)"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"Mean (SD)"</span>    <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x (xx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">res1</th>
+<th align="left">res2</th>
+<th align="left">res3</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">N assessed</td>
+<td align="left">86</td>
+<td align="left">84</td>
+<td align="left">84</td>
+</tr>
+<tr class="even">
+<td align="left">n (analyzed)</td>
+<td align="left">86</td>
+<td align="left">84</td>
+<td align="left">84</td>
+</tr>
+<tr class="odd">
+<td align="left">Mean (SD)</td>
+<td align="left">75.2 ( 8.59)</td>
+<td align="left">74.4 ( 7.89)</td>
+<td align="left">75.7 ( 8.29)</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2">
+<h2 id="statistics-as-columns">Statistics as Columns<a class="anchor" aria-label="anchor" href="#statistics-as-columns"></a>
+</h2>
+<p>The default descriptive layout puts statistics in rows. Some tables
+instead want each statistic as its own column. Set
+<code>stats_as_columns = TRUE</code> to transpose the block: without a
+<code>by</code> variable, the treatment groups become the rows and each
+statistic becomes a column.</p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        stats_as_columns <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          <span class="st">"Mean (SD)"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x (xx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"Median"</span>    <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"median"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"Min, Max"</span>  <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx, xx"</span>, <span class="st">"min"</span>, <span class="st">"max"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">Mean (SD)</th>
+<th align="left">Median</th>
+<th align="left">Min, Max</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Placebo (N=86)</td>
+<td align="left">75.2 ( 8.59)</td>
+<td align="left">76.0</td>
+<td align="left">52, 89</td>
+</tr>
+<tr class="even">
+<td align="left">Xanomeline High Dose (N=84)</td>
+<td align="left">74.4 ( 7.89)</td>
+<td align="left">76.0</td>
+<td align="left">56, 88</td>
+</tr>
+<tr class="odd">
+<td align="left">Xanomeline Low Dose (N=84)</td>
+<td align="left">75.7 ( 8.29)</td>
+<td align="left">77.5</td>
+<td align="left">51, 88</td>
+</tr>
+</tbody>
+</table>
+<p>When a <code>by</code> variable is present, the by-groups stay as
+rows and each column becomes a treatment-by-statistic combination
+(labelled <code>"&lt;arm&gt; | &lt;stat&gt;"</code>), so the by
+dimension is preserved rather than collapsed.</p>
+</div>
+<div class="section level2">
+<h2 id="adding-a-comparison-p-value">Adding a Comparison p-value<a class="anchor" aria-label="anchor" href="#adding-a-comparison-p-value"></a>
+</h2>
+<p>A demographics table often carries a p-value comparing a continuous
+characteristic across arms – an ANOVA, a Kruskal-Wallis test, or a
+t-test. Attach one with <code><a href="../reference/assoc_test.html">assoc_test()</a></code> in omnibus mode: it
+runs a function you supply once over the raw source rows and lands the
+result in a trailing <code>pval</code> column. This is the same
+mechanism count layers use, so the continuous and categorical rows of a
+demographics table can share one p-value column.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          <span class="st">"Mean (SD)"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x (xx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"Median"</span>    <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"median"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span>,</span>
+<span>        assoc_test <span class="op">=</span> <span class="fu"><a href="../reference/assoc_test.html">assoc_test</a></span><span class="op">(</span></span>
+<span>          fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">.data</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">AGE</span> <span class="op">~</span> <span class="va">TRT01P</span>, <span class="va">.data</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="st">"Pr(&gt;F)"</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span>
+<span>          format <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"x.xxx"</span>, <span class="st">"p"</span><span class="op">)</span>,</span>
+<span>          label <span class="op">=</span> <span class="st">"ANOVA p"</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">res1</th>
+<th align="left">res2</th>
+<th align="left">res3</th>
+<th align="left">pval1</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Mean (SD)</td>
+<td align="left">75.2 ( 8.59)</td>
+<td align="left">74.4 ( 7.89)</td>
+<td align="left">75.7 ( 8.29)</td>
+<td align="left">0.593</td>
+</tr>
+<tr class="even">
+<td align="left">Median</td>
+<td align="left">76.0</td>
+<td align="left">76.0</td>
+<td align="left">77.5</td>
+<td align="left"></td>
+</tr>
+</tbody>
+</table>
+<p>The p-value sits on the first statistic row of each <code>by</code>
+group (here there is no <code>by</code>, so it appears once, on the
+first row). The <code>fn</code> receives the by-group’s raw data frame
+and returns a scalar; a character return is passed through verbatim.
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> covers this in full,
+including how to bind externally computed model results.</p>
 </div>
 <div class="section level2">
 <h2 id="where-to-go-from-here">Where to Go From Here<a class="anchor" aria-label="anchor" href="#where-to-go-from-here"></a>

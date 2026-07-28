@@ -371,6 +371,26 @@ The `scipen` override is applied only for the duration of
 and is automatically restored to its previous value when the build
 completes. This means it will not affect other code in your session.
 
+## Reading Variable Labels
+
+Clinical datasets usually carry a SAS-style `label` attribute on each
+column (the descriptive text like “Age” or “Planned Treatment”). The
+helper
+[`get_data_labels()`](https://github.com/mstackhouse/tplyr2/reference/get_data_labels.md)
+pulls those labels off a data frame as a named character vector,
+returning `NA` for any column that has no label. It is handy for
+building column headers or annotating output.
+
+``` r
+
+labs <- get_data_labels(tplyr_adsl)
+labs[c("AGE", "SEX", "RACE", "TRT01P")]
+#>                               AGE                               SEX 
+#>                             "Age"                             "Sex" 
+#>                              RACE                            TRT01P 
+#>                            "Race" "Planned Treatment for Period 01"
+```
+
 ## Resetting Options
 
 To return all options to their defaults, set each one explicitly:
@@ -409,3 +429,15 @@ session. If you want your options to persist, place the
 [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
 call in your project’s `.Rprofile` or at the top of your analysis
 script.
+
+### See Also
+
+- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  – descriptive statistics, where `quantile_type` and `custom_summaries`
+  apply.
+- [`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+  – auto-precision, which `precision_cap` bounds.
+- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
+  – the
+  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  system that IBM rounding feeds into.

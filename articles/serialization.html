@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -298,20 +301,23 @@ internal structure.</p>
 </h3>
 <p>When you use <code><a href="../reference/label.html">label()</a></code> in a <code>by</code> parameter to
 create an explicit text label, the label is serialized with a type
-marker so it can be distinguished from a data variable name.</p>
+marker so it can be distinguished from a data variable name. A single
+<code><a href="../reference/label.html">label()</a></code> uses the key <code>values</code>:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">{</span></span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"value"</span><span class="fu">:</span> <span class="st">"Age (Years)"</span><span class="fu">,</span></span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="dt">"values"</span><span class="fu">:</span> <span class="st">"Age (Years)"</span><span class="fu">,</span></span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="dt">"_type"</span><span class="fu">:</span> <span class="st">"label"</span></span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
-<p>Regular data variable names (character strings) pass through
-as-is.</p>
+<p>When a <code>by</code> is a list mixing data variables and labels,
+each label <em>element</em> serializes with the singular key
+<code>value</code> instead. Regular data variable names (character
+strings) pass through as-is.</p>
 </div>
 <div class="section level3">
 <h3 id="functions">Functions<a class="anchor" aria-label="anchor" href="#functions"></a>
 </h3>
 <p>Analyze layers created with <code><a href="../reference/group_analyze.html">group_analyze()</a></code> include a
-user-defined function. These are serialized by deparsing the function
-body to a string.</p>
+user-defined function. These are serialized by deparsing the entire
+function definition to a string.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode json"><code class="sourceCode json"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">{</span></span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="dt">"_fn"</span><span class="fu">:</span> <span class="st">"function(.data, .target_var) {</span><span class="ch">\n</span><span class="st">  ...</span><span class="ch">\n</span><span class="st">}"</span></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
@@ -320,6 +326,42 @@ the function object. Note that functions which depend on objects in a
 specific environment (closures that capture external variables) may not
 survive the round-trip. For best results, write analyze functions that
 are self-contained.</p>
+</div>
+<div class="section level3">
+<h3 id="layer-settings">Layer Settings<a class="anchor" aria-label="anchor" href="#layer-settings"></a>
+</h3>
+<p>The full <code><a href="../reference/layer_settings.html">layer_settings()</a></code> surface round-trips, not just
+the simple flags. Fields that hold richer objects are serialized with
+the same machinery shown above – <code>f_str</code> objects via the
+<code>_class</code> marker, expressions via <code>_expr</code>,
+functions via <code>_fn</code>. In particular, all of the 0.2.0
+comparative-statistics and formatting settings are preserved:</p>
+<ul>
+<li>
+<code>stat_columns</code> – the named list of <code>f_str</code>
+objects (one result column per statistic).</li>
+<li>
+<code>risk_diff</code> – comparisons, <code>ci</code>, and the
+optional <code>f_str</code> <code>format</code>.</li>
+<li>
+<code><a href="../reference/assoc_test.html">assoc_test()</a></code> – the <code>fn</code> (as a deparsed
+function), <code>format</code>, <code>label</code>,
+<code>reference</code>, <code>comparisons</code>, and
+<code>total_row</code>.</li>
+<li>
+<code>ci_method</code> / <code>ci_level</code> – the
+single-proportion confidence-interval controls.</li>
+<li>
+<code>denom_row_format</code> – the shift denominator-row
+<code>f_str</code>.</li>
+<li>
+<code>missing_count</code> (with its optional <code>f_str</code>
+format), <code>custom_summaries</code> (expressions), and
+<code>precision_data</code> (a data frame).</li>
+</ul>
+<p>So a spec carrying an <code><a href="../reference/assoc_test.html">assoc_test()</a></code> Fisher column,
+<code>stat_columns</code>, and a custom <code>risk_diff</code> format
+can be written to disk and read back with those settings intact.</p>
 </div>
 </div>
 <div class="section level2">
@@ -608,6 +650,19 @@ definition alongside the analysis output provides an additional layer of
 documentation. The JSON or YAML file describes exactly how the table was
 configured, in a format that does not require R to interpret.</p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/ard.html">vignette("ard")</a></code> – exporting the computed
+<em>results</em> (not just the spec) as Analysis Results Data, which
+pairs with a saved spec for full reproducibility.</li>
+<li>
+<code><a href="../articles/metadata.html">vignette("metadata")</a></code> – cell-level traceability back to
+source data.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

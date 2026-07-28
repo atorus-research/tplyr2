@@ -16,6 +16,11 @@
 - [Shift
   Layers](https://github.com/mstackhouse/tplyr2/articles/shift.md):
 
+### Worked Examples
+
+- [Building an Adverse Events
+  Table](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md):
+
 ### Formatting
 
 - [General String

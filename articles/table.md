@@ -435,17 +435,28 @@ This vignette covered the table-level properties that control the
 overall structure of your tplyr2 output. For details on specific layer
 types and additional features, see:
 
-- **Count layers**:
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  –
   [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
   for frequency tables, including nested counts, distinct subject
-  counts, and missing value handling
-- **Descriptive statistics layers**:
+  counts, population data, and missing value handling.
+- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+  – denominator control in depth (this vignette and the denominators
+  vignette both cover `pop_data`; that one goes deeper on `denoms_by`,
+  `denom_where`, and confidence intervals).
+- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+  – a full adverse event table built end to end, the canonical use of
+  population data.
+- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  –
   [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
-  for summary statistics with format strings, auto-precision, and custom
-  summary functions
-- **Shift layers**:
+  for summary statistics.
+- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+  –
   [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
-  for baseline-by-post-baseline cross-tabulations
-- **Ordering**: How tplyr2 sorts rows and controls output order
-- **Options**: Package-level options via
-  [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
+  for baseline-by-post-baseline cross-tabulations.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – how tplyr2 orders rows.
+- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+  – package-level options via
+  [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md).

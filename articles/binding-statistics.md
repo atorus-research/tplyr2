@@ -45,8 +45,10 @@ modes.
 
 **Omnibus mode** (the default) runs your function once per `by` group
 over the **raw source rows** for that group (all treatment columns at
-once), and lands a single value on the group’s first output row. This is
-the shape for a per-analyte test that collapses across arms:
+once), and lands a single value on the group’s first output row. It
+works on **count**, **shift**, and **desc** layers (a desc layer is
+shown below). This is the shape for a per-analyte test that collapses
+across arms:
 
 ``` r
 
@@ -135,6 +137,22 @@ using distinct counts and denominators when `distinct_by` is set.
 Because it is just a matrix in and a scalar out, any 2x2 test (Fisher,
 chi-square, relative risk, …) plugs in.
 
+These snippets show only the count layer, to keep the focus on
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md).
+In a real adverse-event build the enclosing
+[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+sets
+[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md),
+so the displayed incidence *and* the `N_ref`/`N_cmp` cells of the 2x2
+use the safety population rather than only the subjects who had events
+(see
+[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+and
+[`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md),
+which builds this pattern end to end). The `stat_columns` shown here is
+also optional — `format_strings` works identically; pairwise mode does
+not require `stat_columns`.
+
 **Nested layers** — the AE-by-SOC/PT case — work the same way: give
 [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
 a nested target such as `c("AEBODSYS", "AEDECOD")` and the `pval`
@@ -171,6 +189,36 @@ group_count("AEDECOD",
     assoc_test = assoc_test(fn = ae_pval,
                             reference = "Placebo", comparisons = c("Low", "High"))))
 ```
+
+**Returning several statistics.** A p-value is not the only thing a test
+produces. When `format` references more than one variable, `fn` returns
+a numeric *vector* matching it (mapped positionally), so an effect size
+and its confidence interval land in a single cell. For example, an odds
+ratio with a 95% CI straight from
+[`fisher.test()`](https://rdrr.io/r/stats/fisher.test.html):
+
+``` r
+
+or_ci <- function(m) {
+  ft <- fisher.test(m)
+  c(ft$estimate, ft$conf.int[1], ft$conf.int[2])   # OR, lower, upper
+}
+group_count("AEDECOD",
+  settings = layer_settings(
+    distinct_by = "USUBJID",
+    stat_columns = list("n" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")),
+    assoc_test = assoc_test(fn = or_ci,
+                            reference = "Placebo", comparisons = c("Low", "High"),
+                            format = f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi"),
+                            label = "OR (95% CI)")))
+```
+
+Each `pval` column then reads like `1.85 (1.10, 3.02)` – the odds ratio
+and its interval in one cell. Any statistical procedure that emits a
+small tuple fits this pattern: an estimate with a p-value, a hazard
+ratio with an interval, and so on. The values map to the `format`
+variables positionally, so their names are free; an all-`NA` return (or
+one whose length does not match `format`) blanks the cell.
 
 ### Single-proportion confidence intervals
 

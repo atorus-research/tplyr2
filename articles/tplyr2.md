@@ -350,12 +350,21 @@ kable(result[, !grepl("^ord", names(result))])
 
 In adverse event tables, you often need to count the number of
 *subjects* who experienced an event, not the number of event records.
-Use `distinct_by` to specify the subject identifier:
+Use `distinct_by` to specify the subject identifier. Because `ADAE`
+contains only subjects with events, the denominator must come from the
+full population (`ADSL`), supplied through
+[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+– otherwise the percentages are computed against subjects-with-events
+and come out too large (see
+[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+and
+[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)):
 
 ``` r
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(
       "AEBODSYS",
@@ -369,28 +378,28 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(result[, !grepl("^ord", names(result))])
 ```
 
 | rowlabel1 | res1 | res2 | res3 |
 |:---|:---|:---|:---|
-| CARDIAC DISORDERS | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
-| GENERAL DISORDERS AND ADMINISTRATION SITE CONDITIONS | 9 (28.1%) | 15 (34.9%) | 18 (36.0%) |
-| IMMUNE SYSTEM DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| INFECTIONS AND INFESTATIONS | 5 (15.6%) | 4 ( 9.3%) | 3 ( 6.0%) |
-| INJURY, POISONING AND PROCEDURAL COMPLICATIONS | 2 ( 6.2%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| INVESTIGATIONS | 3 ( 9.4%) | 1 ( 2.3%) | 1 ( 2.0%) |
-| METABOLISM AND NUTRITION DISORDERS | 2 ( 6.2%) | 2 ( 4.7%) | 0 ( 0.0%) |
-| MUSCULOSKELETAL AND CONNECTIVE TISSUE DISORDERS | 1 ( 3.1%) | 2 ( 4.7%) | 0 ( 0.0%) |
-| NERVOUS SYSTEM DISORDERS | 1 ( 3.1%) | 5 (11.6%) | 6 (12.0%) |
-| PSYCHIATRIC DISORDERS | 3 ( 9.4%) | 2 ( 4.7%) | 3 ( 6.0%) |
-| RENAL AND URINARY DISORDERS | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| RESPIRATORY, THORACIC AND MEDIASTINAL DISORDERS | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | 5 (15.6%) | 18 (41.9%) | 19 (38.0%) |
-| VASCULAR DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+| CARDIAC DISORDERS | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS | 6 ( 7.0%) | 4 ( 4.8%) | 3 ( 3.6%) |
+| GENERAL DISORDERS AND ADMINISTRATION SITE CONDITIONS | 9 (10.5%) | 15 (17.9%) | 18 (21.4%) |
+| IMMUNE SYSTEM DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| INFECTIONS AND INFESTATIONS | 5 ( 5.8%) | 4 ( 4.8%) | 3 ( 3.6%) |
+| INJURY, POISONING AND PROCEDURAL COMPLICATIONS | 2 ( 2.3%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| INVESTIGATIONS | 3 ( 3.5%) | 1 ( 1.2%) | 1 ( 1.2%) |
+| METABOLISM AND NUTRITION DISORDERS | 2 ( 2.3%) | 2 ( 2.4%) | 0 ( 0.0%) |
+| MUSCULOSKELETAL AND CONNECTIVE TISSUE DISORDERS | 1 ( 1.2%) | 2 ( 2.4%) | 0 ( 0.0%) |
+| NERVOUS SYSTEM DISORDERS | 1 ( 1.2%) | 5 ( 6.0%) | 6 ( 7.1%) |
+| PSYCHIATRIC DISORDERS | 3 ( 3.5%) | 2 ( 2.4%) | 3 ( 3.6%) |
+| RENAL AND URINARY DISORDERS | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| RESPIRATORY, THORACIC AND MEDIASTINAL DISORDERS | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | 5 ( 5.8%) | 18 (21.4%) | 19 (22.6%) |
+| VASCULAR DISORDERS | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
 
 #### Nested Counts
 
@@ -402,6 +411,7 @@ names to `target_var`:
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(
       c("AEBODSYS", "AEDECOD"),
@@ -415,27 +425,27 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, !grepl("^ord", names(result))], 15))
 ```
 
 | rowlabel1 | rowlabel2 | res1 | res2 | res3 |
 |:---|:---|:---|:---|:---|
-| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| GASTROINTESTINAL DISORDERS |  | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
+| CARDIAC DISORDERS |  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS | VENTRICULAR SEPTAL DEFECT | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| GASTROINTESTINAL DISORDERS |  | 6 ( 7.0%) | 4 ( 4.8%) | 3 ( 3.6%) |
 
 The outer level (body system) appears in `rowlabel1`, and the inner
 level (preferred term) appears in `rowlabel2`. Outer rows contain
@@ -558,24 +568,49 @@ variables used during the build.
 This vignette covers the fundamentals. Here are the topics covered in
 other vignettes:
 
+- [`vignette("table")`](https://github.com/mstackhouse/tplyr2/articles/table.md)
+  – Spec-level structure: column variables, table filters, total/custom
+  groups, and population data.
 - [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
-  – Denominator control, missing value handling, risk differences,
-  ordering.
+  – Count layers in depth: population-based denominators, distinct
+  counts, nested summaries, stat columns, missing values.
 - [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
-  – Custom summaries, auto-precision, stats-as-columns.
+  – Descriptive layers: custom summaries, auto-precision,
+  stats-as-columns.
 - [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
-  – Shift layers and cross-tabulation options.
+  – Shift layers, shift denominators, and the denominator row.
 - [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
-  – Population data, header N, total groups, custom groups.
+  – Denominator control: population data, header N, `denoms_by`,
+  `denom_where`, single-proportion confidence intervals.
+- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+  – A full adverse event table built end to end.
+- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+  and
+  [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – Risk differences and association-test p-value columns.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – Row ordering by frequency, factor levels, or a VARN companion.
+- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
+  and
+  [`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+  – The
+  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  format-string system.
 - [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
-  – Row masks, row label collapsing, conditional formatting, and text
-  wrapping.
+  – Row masks, row label collapsing, conditional formatting,
+  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),
+  and text wrapping.
 - [`vignette("metadata")`](https://github.com/mstackhouse/tplyr2/articles/metadata.md)
   – Cell-level metadata and traceability.
-- [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)
-  – Saving and loading specs as JSON or YAML.
+- [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md),
+  [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md)
+  – Saving/loading specs and Analysis Results Data conversion.
 - [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
   – Custom analysis layers with user-defined functions.
+- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+  – Package options (rounding, quantiles, precision).
+- [`vignette("migration")`](https://github.com/mstackhouse/tplyr2/articles/migration.md)
+  – Moving from Tplyr v1 to tplyr2.
 
 ## References
 

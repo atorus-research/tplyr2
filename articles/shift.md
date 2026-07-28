@@ -100,6 +100,10 @@ A few things to notice in this output:
   `"Treatment | ANRIND (N=n)"`.
 - The default format is `"xx (xx.x%)"`, showing a count and percentage,
   the same default used by count layers.
+- By default those percentages are out of the **treatment-arm total**
+  (`shift_denom = "total"`). Many shift tables instead want “% within
+  the baseline group”; the [Shift Denominators](#shift-denominators)
+  section below shows how to switch.
 
 However, you may notice that the only BNRIND values present in the
 output are whatever happened to appear in the data. If a category like
@@ -203,6 +207,128 @@ kable(result_counts[, !grepl("^ord_", names(result_counts))])
 | Creatine Kinase | WEEK 24   | N         | 0    | 4    | 2    | 0    | 2    | 4    | 0    | 6    | 2    |
 | Creatine Kinase | WEEK 24   | H         | 0    | 1    | 3    | 0    | 3    | 1    | 0    | 2    | 0    |
 
+## Shift Denominators
+
+Every percentage needs a denominator, and a shift table has two natural
+choices. The `shift_denom` setting selects between them:
+
+- `shift_denom = "total"` (the default) computes each percentage out of
+  the **treatment-arm total** – every cell in an arm shares one
+  denominator.
+- `shift_denom = "column"` computes each percentage out of its
+  **shift-column group** – the “from”/baseline group within the arm.
+  This is the classic “% within the baseline category” reading, in which
+  each baseline row’s cells sum to 100% across the post-baseline
+  columns.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = PARAMCD == "CK",
+  layers = tplyr_layers(
+    group_shift(
+      c(row = "BNRIND", column = "ANRIND"),
+      by = c("PARAM", "VISIT"),
+      settings = layer_settings(
+        shift_denom = "column",
+        format_strings = list(n_counts = f_str("xx (xxx.x%)", "n", "pct"))
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, adlb)
+kable(result[, !grepl("^ord_", names(result))])
+```
+
+| rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | N | 0 ( 0.0%) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( 0.0%) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( 0.0%) | 6 ( 75.0%) | 2 (100.0%) |
+| Creatine Kinase | WEEK 24 | H | 0 ( 0.0%) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( 0.0%) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( 0.0%) | 2 ( 25.0%) | 0 ( 0.0%) |
+
+With `shift_denom = "column"` and no `by` variable, the header `(N=)`
+labels reflect the per-column-group denominators. When a `by` variable
+is present (as here), the column-group denominator varies by by-group,
+so no single header N can represent it and the header keeps the arm
+total. An explicit `denoms_by` overrides both choices – see
+[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+
+## The Denominator Row
+
+Threshold and shift tables often print an “n” row above the shift-to
+rows giving the size of each baseline (from) group – the denominator
+behind the column-group percentages. Set `denom_row = TRUE` to emit it
+directly from the layer rather than computing it separately:
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = PARAMCD == "CK",
+  layers = tplyr_layers(
+    group_shift(
+      c(row = "BNRIND", column = "ANRIND"),
+      by = c("PARAM", "VISIT"),
+      settings = layer_settings(
+        shift_denom = "column",
+        denom_row = TRUE,
+        denom_row_label = "n",
+        denom_row_format = f_str("xx", "n"),
+        format_strings = list(n_counts = f_str("xx (xxx.x%)", "n", "pct"))
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, adlb)
+kable(result[, !grepl("^ord_", names(result))])
+```
+
+| rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| Creatine Kinase | WEEK 24 | n | 0 | 5 | 5 | 0 | 5 | 5 | 0 | 8 | 2 |
+| Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | N | 0 ( 0.0%) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( 0.0%) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( 0.0%) | 6 ( 75.0%) | 2 (100.0%) |
+| Creatine Kinase | WEEK 24 | H | 0 ( 0.0%) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( 0.0%) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( 0.0%) | 2 ( 25.0%) | 0 ( 0.0%) |
+
+The row is labelled `"n"` by default (`denom_row_label`). Without
+`denom_row_format` its integers are padded to the width of the shift
+cells; supplying an `f_str` – here `f_str("xx", "n")` – gives the row
+its own width, independent of the `n_counts` format. A baseline group
+that is absent within a by-group renders as `0` in this row rather than
+a blank.
+
+## Zero Cells and Percent Thresholds
+
+Shift layers honor the same display conventions as count layers, because
+both route through the same formatting engine. `zero_count_display`
+controls how a zero cell renders – `"full"` (default, e.g. `0 (0.0%)`),
+`"count_only"` (just the count, e.g. `0`), or `"blank"` (empty) – and
+`pct_lt` / `pct_gt` apply the regulatory “less-than / greater-than”
+percent conventions (e.g. a nonzero cell whose percent rounds below 1
+shows `<1`). These are described in
+[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md).
+
+## Distinct (Subject-Level) Shifts
+
+By default a shift layer counts records. When your lab data has one row
+per subject per visit that is exactly right, but if a subject can
+contribute more than one record to a cell and you want to count
+*subjects*, set `distinct_by` to the subject identifier – just as in a
+count layer. The percentages then use the distinct-subject denominators.
+
+## Association Tests
+
+An omnibus
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+attaches to shift layers as well, for a single p-value across the shift
+table (for example a chi-square or CMH test on the
+baseline-by-post-baseline table). The contract is identical to count
+layers; see
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+
 ## One Thing to Note
 
 The
@@ -226,9 +352,16 @@ Shift layers share much of their underlying machinery with count layers,
 so many of the concepts from the count layer documentation apply here as
 well. For further reading:
 
-- The **denominator** vignette covers how denominators are computed and
-  how to customize them, which directly affects the percentages
-  displayed in shift tables.
-- The **sorting and ordering** vignette explains how row and column
-  ordering works, including the role of factor levels that we touched on
-  in this vignette.
+- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+  – how denominators are computed and customized (`denoms_by`,
+  `denom_where`), which directly affects shift percentages.
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  – the shared count machinery, including `zero_count_display` and the
+  `pct_lt`/`pct_gt` conventions.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – how row and column ordering works, including the role of factor
+  levels touched on here.
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – attaching an
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  p-value column to a shift table.

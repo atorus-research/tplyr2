@@ -33,7 +33,12 @@ The table below maps v1 functions to their tplyr2 equivalents.
 | `set_denoms_by()` | `denoms_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character vector |
 | `set_where()` | `where` parameter in layer or spec | Bare expression (unquoted) |
 | `add_total_group()` | [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md) in spec’s `total_groups` | Spec-level config |
+| `add_total_row()` | `total_row = TRUE` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Plus `total_row_label` |
+| `set_missing_count()` | `missing_count` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | List config |
+| `keep_levels()` | `keep_levels` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character vector |
 | `set_pop_data()` | [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) in spec + [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md) | Config in spec, data at build |
+| `set_pop_treat_var()` | `pop_data(cols = c(...))` mapping | Maps analysis to population column |
+| `add_risk_diff()` | `risk_diff` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | See [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md) |
 | `build()` | `tplyr_build(spec, data)` | Data supplied at build time |
 | [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | Variable names are now quoted strings |
 
@@ -269,6 +274,42 @@ and data is supplied at build.
 
 Beyond the API redesign, tplyr2 introduces several entirely new
 capabilities.
+
+### Comparative and Inferential Statistics
+
+tplyr2 can attach cross-arm comparisons directly to a layer – something
+Tplyr v1 handled only through `add_risk_diff()`:
+
+- **Risk difference** via `risk_diff` in
+  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  (the direct successor to `add_risk_diff()`) – one `rdiff` column per
+  comparison with a confidence interval. See
+  [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md).
+- **Association tests** via
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  – an omnibus p-value column (Fisher, chi-square, CMH, ANOVA/Kruskal on
+  `group_desc`) or a pairwise per-level mode that emits a `pval` column
+  per comparison, including on nested SOC/PT layers. See
+  [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+- **Single-proportion confidence intervals** via the
+  `ci_lower`/`ci_upper` `f_str` keywords with `ci_method`/`ci_level`
+  (Clopper-Pearson, Wilson, and more). See
+  [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+
+### Binding External Results and Display Helpers
+
+[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+gained `na`, `width`, and `pad` arguments for formatting externally
+computed statistics (e.g. MMRM/ANCOVA results) into fixed-width cells
+you can row-bind onto a table, and
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+returns a render-ready frame (`rowlabel*`/`res*`/`rdiff*`/`pval*` only).
+[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+also adds an `n_records` statistic (records assessed), and shift layers
+gain a `denom_row` (the “n” denominator line). See
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+and
+[`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md).
 
 ### Multi-Column Count Layouts
 

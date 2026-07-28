@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -191,18 +194,54 @@ examples.</p>
 <td>Spec-level config</td>
 </tr>
 <tr class="odd">
+<td><code>add_total_row()</code></td>
+<td>
+<code>total_row = TRUE</code> in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>
+</td>
+<td>Plus <code>total_row_label</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>set_missing_count()</code></td>
+<td>
+<code>missing_count</code> in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>
+</td>
+<td>List config</td>
+</tr>
+<tr class="odd">
+<td><code>keep_levels()</code></td>
+<td>
+<code>keep_levels</code> in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>
+</td>
+<td>Character vector</td>
+</tr>
+<tr class="even">
 <td><code>set_pop_data()</code></td>
 <td>
 <code><a href="../reference/pop_data.html">pop_data()</a></code> in spec + <code><a href="../reference/tplyr_build.html">tplyr_build()</a></code>
 </td>
 <td>Config in spec, data at build</td>
 </tr>
+<tr class="odd">
+<td><code>set_pop_treat_var()</code></td>
+<td>
+<code>pop_data(cols = c(...))</code> mapping</td>
+<td>Maps analysis to population column</td>
+</tr>
 <tr class="even">
+<td><code>add_risk_diff()</code></td>
+<td>
+<code>risk_diff</code> in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>
+</td>
+<td>See <code><a href="../articles/riskdiff.html">vignette("riskdiff")</a></code>
+</td>
+</tr>
+<tr class="odd">
 <td><code>build()</code></td>
 <td><code>tplyr_build(spec, data)</code></td>
 <td>Data supplied at build time</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td><code><a href="../reference/f_str.html">f_str()</a></code></td>
 <td><code><a href="../reference/f_str.html">f_str()</a></code></td>
 <td>Variable names are now quoted strings</td>
@@ -570,6 +609,47 @@ in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>,
 </h2>
 <p>Beyond the API redesign, tplyr2 introduces several entirely new
 capabilities.</p>
+<div class="section level3">
+<h3 id="comparative-and-inferential-statistics">Comparative and Inferential Statistics<a class="anchor" aria-label="anchor" href="#comparative-and-inferential-statistics"></a>
+</h3>
+<p>tplyr2 can attach cross-arm comparisons directly to a layer –
+something Tplyr v1 handled only through
+<code>add_risk_diff()</code>:</p>
+<ul>
+<li>
+<strong>Risk difference</strong> via <code>risk_diff</code> in
+<code><a href="../reference/layer_settings.html">layer_settings()</a></code> (the direct successor to
+<code>add_risk_diff()</code>) – one <code>rdiff</code> column per
+comparison with a confidence interval. See
+<code><a href="../articles/riskdiff.html">vignette("riskdiff")</a></code>.</li>
+<li>
+<strong>Association tests</strong> via <code><a href="../reference/assoc_test.html">assoc_test()</a></code> –
+an omnibus p-value column (Fisher, chi-square, CMH, ANOVA/Kruskal on
+<code>group_desc</code>) or a pairwise per-level mode that emits a
+<code>pval</code> column per comparison, including on nested SOC/PT
+layers. See <code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code>.</li>
+<li>
+<strong>Single-proportion confidence intervals</strong> via the
+<code>ci_lower</code>/<code>ci_upper</code> <code>f_str</code> keywords
+with <code>ci_method</code>/<code>ci_level</code> (Clopper-Pearson,
+Wilson, and more). See <code><a href="../articles/denom.html">vignette("denom")</a></code>.</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="binding-external-results-and-display-helpers">Binding External Results and Display Helpers<a class="anchor" aria-label="anchor" href="#binding-external-results-and-display-helpers"></a>
+</h3>
+<p><code><a href="../reference/apply_formats.html">apply_formats()</a></code> gained <code>na</code>,
+<code>width</code>, and <code>pad</code> arguments for formatting
+externally computed statistics (e.g. MMRM/ANCOVA results) into
+fixed-width cells you can row-bind onto a table, and
+<code><a href="../reference/as_display.html">as_display()</a></code> returns a render-ready frame
+(<code>rowlabel*</code>/<code>res*</code>/<code>rdiff*</code>/<code>pval*</code>
+only). <code><a href="../reference/group_desc.html">group_desc()</a></code> also adds an <code>n_records</code>
+statistic (records assessed), and shift layers gain a
+<code>denom_row</code> (the “n” denominator line). See
+<code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> and
+<code><a href="../articles/post_processing.html">vignette("post_processing")</a></code>.</p>
+</div>
 <div class="section level3">
 <h3 id="multi-column-count-layouts">Multi-Column Count Layouts<a class="anchor" aria-label="anchor" href="#multi-column-count-layouts"></a>
 </h3>

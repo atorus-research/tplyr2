@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -534,10 +537,27 @@ value when the build completes. This means it will not affect other code
 in your session.</p>
 </div>
 <div class="section level2">
+<h2 id="reading-variable-labels">Reading Variable Labels<a class="anchor" aria-label="anchor" href="#reading-variable-labels"></a>
+</h2>
+<p>Clinical datasets usually carry a SAS-style <code>label</code>
+attribute on each column (the descriptive text like “Age” or “Planned
+Treatment”). The helper <code><a href="../reference/get_data_labels.html">get_data_labels()</a></code> pulls those
+labels off a data frame as a named character vector, returning
+<code>NA</code> for any column that has no label. It is handy for
+building column headers or annotating output.</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">labs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/get_data_labels.html">get_data_labels</a></span><span class="op">(</span><span class="va">tplyr_adsl</span><span class="op">)</span></span>
+<span><span class="va">labs</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AGE"</span>, <span class="st">"SEX"</span>, <span class="st">"RACE"</span>, <span class="st">"TRT01P"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt;                               AGE                               SEX </span></span>
+<span><span class="co">#&gt;                             "Age"                             "Sex" </span></span>
+<span><span class="co">#&gt;                              RACE                            TRT01P </span></span>
+<span><span class="co">#&gt;                            "Race" "Planned Treatment for Period 01"</span></span></code></pre></div>
+</div>
+<div class="section level2">
 <h2 id="resetting-options">Resetting Options<a class="anchor" aria-label="anchor" href="#resetting-options"></a>
 </h2>
 <p>To return all options to their defaults, set each one explicitly:</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span></span>
 <span>  IBMRounding     <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  quantile_type   <span class="op">=</span> <span class="fl">7L</span>,</span>
@@ -567,6 +587,21 @@ in your session.</p>
 new R session. If you want your options to persist, place the
 <code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code> call in your project’s
 <code>.Rprofile</code> or at the top of your analysis script.</p>
+<div class="section level3">
+<h3 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h3>
+<ul>
+<li>
+<code><a href="../articles/desc.html">vignette("desc")</a></code> – descriptive statistics, where
+<code>quantile_type</code> and <code>custom_summaries</code> apply.</li>
+<li>
+<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> – auto-precision,
+which <code>precision_cap</code> bounds.</li>
+<li>
+<code><a href="../articles/general_string_formatting.html">vignette("general_string_formatting")</a></code> – the
+<code><a href="../reference/f_str.html">f_str()</a></code> system that IBM rounding feeds into.</li>
+</ul>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

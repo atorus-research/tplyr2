@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -187,8 +190,10 @@ an asymptotic risk difference with a confidence interval.</p>
 <p><strong>Omnibus mode</strong> (the default) runs your function once
 per <code>by</code> group over the <strong>raw source rows</strong> for
 that group (all treatment columns at once), and lands a single value on
-the group’s first output row. This is the shape for a per-analyte test
-that collapses across arms:</p>
+the group’s first output row. It works on <strong>count</strong>,
+<strong>shift</strong>, and <strong>desc</strong> layers (a desc layer
+is shown below). This is the shape for a per-analyte test that collapses
+across arms:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fisher_p</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">.data</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/fisher.test.html" class="external-link">fisher.test</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">.data</span><span class="op">$</span><span class="va">TRT01P</span>, <span class="va">.data</span><span class="op">$</span><span class="va">SEX</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">p.value</span><span class="op">)</span></span>
@@ -305,6 +310,16 @@ no-event) — using distinct counts and denominators when
 <code>distinct_by</code> is set. Because it is just a matrix in and a
 scalar out, any 2x2 test (Fisher, chi-square, relative risk, …) plugs
 in.</p>
+<p>These snippets show only the count layer, to keep the focus on
+<code><a href="../reference/assoc_test.html">assoc_test()</a></code>. In a real adverse-event build the enclosing
+<code><a href="../reference/tplyr_spec.html">tplyr_spec()</a></code> sets <code><a href="../reference/pop_data.html">pop_data()</a></code>, so the displayed
+incidence <em>and</em> the <code>N_ref</code>/<code>N_cmp</code> cells
+of the 2x2 use the safety population rather than only the subjects who
+had events (see <code><a href="../articles/count.html">vignette("count")</a></code> and
+<code><a href="../articles/adverse-events.html">vignette("adverse-events")</a></code>, which builds this pattern end
+to end). The <code>stat_columns</code> shown here is also optional —
+<code>format_strings</code> works identically; pairwise mode does not
+require <code>stat_columns</code>.</p>
 <p><strong>Nested layers</strong> — the AE-by-SOC/PT case — work the
 same way: give <code><a href="../reference/group_count.html">group_count()</a></code> a nested target such as
 <code>c("AEBODSYS", "AEDECOD")</code> and the <code>pval</code> columns
@@ -339,6 +354,33 @@ blank):</p>
 <span>    stat_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"n"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>    assoc_test <span class="op">=</span> <span class="fu"><a href="../reference/assoc_test.html">assoc_test</a></span><span class="op">(</span>fn <span class="op">=</span> <span class="va">ae_pval</span>,</span>
 <span>                            reference <span class="op">=</span> <span class="st">"Placebo"</span>, comparisons <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"High"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><strong>Returning several statistics.</strong> A p-value is not the
+only thing a test produces. When <code>format</code> references more
+than one variable, <code>fn</code> returns a numeric <em>vector</em>
+matching it (mapped positionally), so an effect size and its confidence
+interval land in a single cell. For example, an odds ratio with a 95% CI
+straight from <code><a href="https://rdrr.io/r/stats/fisher.test.html" class="external-link">fisher.test()</a></code>:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">or_ci</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">ft</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/fisher.test.html" class="external-link">fisher.test</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">ft</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">ft</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">ft</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span>   <span class="co"># OR, lower, upper</span></span>
+<span><span class="op">}</span></span>
+<span><span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AEDECOD"</span>,</span>
+<span>  settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>    distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
+<span>    stat_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="st">"n"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>    assoc_test <span class="op">=</span> <span class="fu"><a href="../reference/assoc_test.html">assoc_test</a></span><span class="op">(</span>fn <span class="op">=</span> <span class="va">or_ci</span>,</span>
+<span>                            reference <span class="op">=</span> <span class="st">"Placebo"</span>, comparisons <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"High"</span><span class="op">)</span>,</span>
+<span>                            format <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.xx (xx.xx, xx.xx)"</span>, <span class="st">"or"</span>, <span class="st">"lo"</span>, <span class="st">"hi"</span><span class="op">)</span>,</span>
+<span>                            label <span class="op">=</span> <span class="st">"OR (95% CI)"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Each <code>pval</code> column then reads like
+<code>1.85 (1.10, 3.02)</code> – the odds ratio and its interval in one
+cell. Any statistical procedure that emits a small tuple fits this
+pattern: an estimate with a p-value, a hazard ratio with an interval,
+and so on. The values map to the <code>format</code> variables
+positionally, so their names are free; an all-<code>NA</code> return (or
+one whose length does not match <code>format</code>) blanks the
+cell.</p>
 </div>
 <div class="section level3">
 <h3 id="single-proportion-confidence-intervals">Single-proportion confidence intervals<a class="anchor" aria-label="anchor" href="#single-proportion-confidence-intervals"></a>
@@ -348,7 +390,7 @@ each cell’s proportion (new in 0.2.0). Set <code>ci_method</code> /
 <code>ci_level</code> and reference the <code>ci_lower</code> /
 <code>ci_upper</code> (or <code>distinct_ci_lower</code> /
 <code>distinct_ci_upper</code>) keywords in a format string:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AEDECOD"</span>,</span>
 <span>  settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
 <span>    distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
@@ -398,7 +440,7 @@ matching the <code>rowlabel*</code> / <code>res*</code> shape.</li>
 <p>Here we compute a per-level p-value ourselves and bind it beside the
 <code>n (%)</code> block. (We use base R so the vignette stays
 dependency-free; swap in your own model.)</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># 1. descriptive block</span></span>
 <span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
@@ -456,7 +498,7 @@ layer-computed cells.</p>
 <p>For a p-value that belongs <em>under</em> a descriptive block
 (e.g. an ANCOVA of a continuous endpoint), format one cell and
 <code>rbind</code> a labelled row:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
@@ -518,7 +560,7 @@ statistic is <code>NA</code>. <code><a href="../reference/apply_formats.html">ap
 a truly empty string rather than a run of spaces — which keeps
 <code><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na()</a></code> / <code><a href="https://rdrr.io/r/base/nchar.html" class="external-link">nzchar()</a></code> checks and downstream
 trimming honest:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"x"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.3</span>, <span class="cn">NA</span>, <span class="fl">12.7</span><span class="op">)</span>, na <span class="op">=</span> <span class="st">""</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] " 2.3" ""     "12.7"</span></span>
 <span></span>
@@ -557,7 +599,7 @@ sees all columns) or the external-binding pattern above.</p>
 <code>labels = TRUE</code> to rename the result columns to their
 column-group headers, and see <code><a href="../articles/post_processing.html">vignette("post_processing")</a></code>
 for row masking and label collapsing.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>             layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="st">"SEX"</span>,</span>

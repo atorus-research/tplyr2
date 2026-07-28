@@ -58,6 +58,7 @@ reference in format strings.
 | Count | `distinct_pct` | Percentage of distinct subjects |
 | Count | `distinct_total` | Distinct denominator |
 | Desc | `n` | Non-missing observation count |
+| Desc | `n_records` | Records assessed (non-missing + missing) |
 | Desc | `mean` | Arithmetic mean |
 | Desc | `sd` | Standard deviation |
 | Desc | `median` | Median |
@@ -71,6 +72,9 @@ reference in format strings.
 | Shift | `n` | Number of observations |
 | Shift | `pct` | Percentage of observations |
 | Shift | `total` | Denominator for percentage |
+| Shift | `distinct_n` | Distinct subjects (requires `distinct_by`) |
+| Shift | `distinct_pct` | Percentage of distinct subjects |
+| Shift | `distinct_total` | Distinct denominator |
 | Analyze | *(user-defined)* | Names returned by `analyze_fn` |
 
 For count layers, format strings are provided as a named list with the
@@ -293,10 +297,13 @@ each measured at a different scale. This means you can write one spec
 that handles dozens of parameters, each rendered at the precision
 appropriate to its measurement.
 
-Note that auto-precision characters can also be used in count layers.
-For instance, `a` in the integer portion of a count format will
-auto-size the field width based on the data, so you do not have to guess
-how many digits the largest count will require.
+Auto-precision (`a`/`A`) is a descriptive-layer feature – it is driven
+by scanning a continuous variable’s decimal precision, which count
+layers do not do. In a count format, `x`/`X` are fixed-width fields;
+simply reserve enough `x` characters for the largest count you expect.
+See
+[`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+for the full auto-precision system.
 
 ## The empty Argument
 
@@ -332,6 +339,7 @@ you would see in a clinical study report.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -344,28 +352,28 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 collapsed <- collapse_row_labels(result, "rowlabel1", "rowlabel2", indent = "   ")
 kable(head(collapsed[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
-| row_label                                  | res1       | res2       | res3       |
-|:-------------------------------------------|:-----------|:-----------|:-----------|
-| CARDIAC DISORDERS                          |            |            |            |
-|                                            | 4 (12.5% ) | 6 (14.0% ) | 5 (10.0% ) |
-| ATRIAL FIBRILLATION                        | 0 (0.0% )  | 0 (0.0% )  | 1 (2.0% )  |
-| ATRIAL FLUTTER                             | 0 (0.0% )  | 1 (2.3% )  | 0 (0.0% )  |
-| ATRIAL HYPERTROPHY                         | 1 (3.1% )  | 0 (0.0% )  | 0 (0.0% )  |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 (3.1% )  | 0 (0.0% )  | 0 (0.0% )  |
-| CARDIAC FAILURE CONGESTIVE                 | 1 (3.1% )  | 0 (0.0% )  | 0 (0.0% )  |
-| MYOCARDIAL INFARCTION                      | 0 (0.0% )  | 1 (2.3% )  | 2 (4.0% )  |
-| SINUS BRADYCARDIA                          | 0 (0.0% )  | 3 (7.0% )  | 1 (2.0% )  |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 (3.1% )  | 0 (0.0% )  | 1 (2.0% )  |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 (0.0% )  | 0 (0.0% )  | 1 (2.0% )  |
-| TACHYCARDIA                                | 1 (3.1% )  | 0 (0.0% )  | 0 (0.0% )  |
-| VENTRICULAR EXTRASYSTOLES                  | 0 (0.0% )  | 1 (2.3% )  | 0 (0.0% )  |
-| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |            |            |            |
-|                                            | 0 (0.0% )  | 1 (2.3% )  | 0 (0.0% )  |
+| row_label                                  | res1      | res2      | res3      |
+|:-------------------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS                          |           |           |           |
+|                                            | 4 (4.7% ) | 6 (7.1% ) | 5 (6.0% ) |
+| ATRIAL FIBRILLATION                        | 0 (0.0% ) | 0 (0.0% ) | 1 (1.2% ) |
+| ATRIAL FLUTTER                             | 0 (0.0% ) | 1 (1.2% ) | 0 (0.0% ) |
+| ATRIAL HYPERTROPHY                         | 1 (1.2% ) | 0 (0.0% ) | 0 (0.0% ) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 (1.2% ) | 0 (0.0% ) | 0 (0.0% ) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 (1.2% ) | 0 (0.0% ) | 0 (0.0% ) |
+| MYOCARDIAL INFARCTION                      | 0 (0.0% ) | 1 (1.2% ) | 2 (2.4% ) |
+| SINUS BRADYCARDIA                          | 0 (0.0% ) | 3 (3.6% ) | 1 (1.2% ) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 (1.2% ) | 0 (0.0% ) | 1 (1.2% ) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 (0.0% ) | 0 (0.0% ) | 1 (1.2% ) |
+| TACHYCARDIA                                | 1 (1.2% ) | 0 (0.0% ) | 0 (0.0% ) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 (0.0% ) | 1 (1.2% ) | 0 (0.0% ) |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
+|                                            | 0 (0.0% ) | 1 (1.2% ) | 0 (0.0% ) |
 
 In this table:
 
@@ -375,7 +383,10 @@ In this table:
 - The `%` sign is literal text that appears after the percentage in
   every cell.
 - `distinct_n` and `distinct_pct` compute subject-level (not
-  event-level) summaries.
+  event-level) summaries – and because this is an adverse event table,
+  [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+  supplies the safety-population denominator from `ADSL` so the
+  percentages are correct.
 - Nested counts display body system totals alongside preferred term
   detail.
 
@@ -386,3 +397,29 @@ need fixed widths, data-driven precision, or delimiter-hugging
 alignment, the same
 [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
 interface covers all three.
+
+## Formatting Values Outside a Layer
+
+[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+also works standalone, to format a numeric vector with an `f_str`
+outside of any layer – useful when you compute a statistic yourself (an
+ANCOVA estimate, a model p-value) and want to row-bind it onto an
+assembled table with matching alignment. For that use it gains three
+extra arguments: `na` (a string to substitute when a cell’s inputs are
+all missing, e.g. `na = "NE"` or `na = ""`), and `width`/`pad` (to pad
+each token to a fixed width). See
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+for the binding workflow.
+
+## See Also
+
+- [`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+  – auto-precision and the descriptive-layer formatting features.
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  –
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  for row-binding external statistics.
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  and
+  [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  – format strings in the context of each layer type.

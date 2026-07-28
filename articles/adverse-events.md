@@ -1,0 +1,369 @@
+# Building an Adverse Events Table
+
+## Introduction
+
+The adverse events (AE) table is the most common safety display in a
+clinical study report, and it exercises more of tplyr2 than almost any
+other single table: hierarchical (system-organ-class by preferred-term)
+counts, subject-level incidence, population-based denominators, an
+overall summary row, sorting, and often a between-arm comparison. Those
+pieces are documented individually across several vignettes; this one
+puts them together and builds a complete AE table step by step.
+
+We use the bundled `tplyr_adae` (one row per adverse event) and
+`tplyr_adsl` (one row per subject) datasets, which follow the CDISC ADaM
+structure.
+
+## The Population Principle
+
+The single most important thing to get right in an AE table is the
+**denominator**. `tplyr_adae` contains only subjects who experienced at
+least one event; if you count it on its own, every percentage is
+computed against “subjects who had an AE” instead of the number of
+subjects at risk, and the incidences come out far too high.
+
+The denominator must come from the population dataset – here `ADSL`, the
+safety population. You wire it up in two places: a
+[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+mapping in the spec, and the population data frame supplied at build
+time. Throughout this vignette the spec carries
+
+``` r
+
+pop_data = pop_data(cols = c("TRTA" = "TRT01A"))
+```
+
+which maps the treatment variable in the analysis data (`TRTA`, actual
+treatment) to its counterpart in the population data (`TRT01A`). We also
+restrict the analysis data to treatment-emergent events with a
+table-level `where`, while the denominators continue to come from the
+full population. (See
+[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+and
+[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+for the underlying mechanics.)
+
+## Step 1: Incidence by System Organ Class and Preferred Term
+
+An AE table is a nested count: system organ class (`AEBODSYS`) as the
+outer level, preferred term (`AEDECOD`) as the inner level. Passing a
+two-element vector to
+[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+produces the hierarchy, and `distinct_by = "USUBJID"` counts each
+subject once (a subject with three headaches counts once for HEADACHE).
+
+``` r
+
+ae_settings <- layer_settings(
+  distinct_by = "USUBJID",
+  format_strings = list(
+    n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+  )
+)
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = TRTEMFL == "Y",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"), settings = ae_settings)
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")], 12))
+```
+
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
+|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+
+Outer (system organ class) rows carry an empty `rowlabel2` and count the
+distinct subjects with *any* event in that class; inner (preferred term)
+rows carry the term in `rowlabel2`. Because the denominators come from
+`ADSL`, the column N is the full arm size – confirm it with
+[`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md):
+
+``` r
+
+kable(tplyr_header_n(result))
+```
+
+| TRTA                 |  .n |
+|:---------------------|----:|
+| Placebo              |  86 |
+| Xanomeline High Dose |  84 |
+| Xanomeline Low Dose  |  84 |
+
+## Step 2: “Any Adverse Event” and Subjects With No Events
+
+Two summary rows round out the table. `total_row = TRUE` adds an overall
+row – the number of subjects with any adverse event – and
+`missing_subjects = TRUE` adds a row for subjects who are in the
+population but have no records in the analysis data (a large share of
+the safety population for most studies). Both depend on population data
+being present.
+
+``` r
+
+ae_settings <- layer_settings(
+  distinct_by = "USUBJID",
+  total_row = TRUE,
+  total_row_label = "Any adverse event",
+  missing_subjects = TRUE,
+  missing_subjects_label = "No adverse events",
+  format_strings = list(
+    n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+  )
+)
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = TRTEMFL == "Y",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"), settings = ae_settings)
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+
+# The "Any adverse event" and "No adverse events" summary rows
+summary_rows <- result[result$rowlabel1 %in% c("Any adverse event", "No adverse events"), ]
+kable(summary_rows[, c("rowlabel1", "res1", "res2", "res3")])
+```
+
+|     | rowlabel1         | res1       | res2       | res3       |
+|:----|:------------------|:-----------|:-----------|:-----------|
+| 102 | Any adverse event | 32 (37.2%) | 41 (48.8%) | 49 (58.3%) |
+
+## Step 3: A Between-Arm Comparison
+
+Reviewers frequently want a comparison against the control arm on every
+row.
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+in its pairwise mode does this: supply a `reference` arm and the
+`comparisons` to make, and a function that takes a 2x2 incidence matrix
+and returns a p-value. It emits one `pval` column per comparison, with a
+value on **every** row of the table – each preferred term, each
+system-organ-class subtotal, and (unless you turn it off) the “Any
+adverse event” total row. The 2x2 uses each row’s distinct counts and
+the population denominators, so it is consistent with the incidences on
+display.
+
+``` r
+
+ae_settings <- layer_settings(
+  distinct_by = "USUBJID",
+  total_row = TRUE,
+  total_row_label = "Any adverse event",
+  format_strings = list(
+    n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+  ),
+  assoc_test = assoc_test(
+    fn = function(m) suppressWarnings(fisher.test(m)$p.value),
+    reference   = "Placebo",
+    comparisons = c("Xanomeline High Dose", "Xanomeline Low Dose"),
+    format      = f_str("x.xxx", "p")
+  )
+)
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = TRTEMFL == "Y",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"), settings = ae_settings)
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3",
+                      "pval1", "pval2")], 12))
+```
+
+| rowlabel1 | rowlabel2 | res1 | res2 | res3 | pval1 | pval2 |
+|:---|:---|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) | 0.533 | 0.745 |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 0.494 |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 0.494 | 1.000 |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) | 0.494 | 0.243 |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) | 0.118 | 0.494 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 1.000 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 0.494 |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 0.494 | 1.000 |
+
+The two `pval` columns compare each Xanomeline arm to Placebo.
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+is fully general – any test that takes a 2x2 matrix plugs in, and the
+function can even return a finished display string (a significance flag,
+a `>.99` ceiling) instead of a number.
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+covers the full contract, including nested layers, the total-row toggle,
+and character returns.
+
+> **Risk difference vs. association test on a nested layer.**
+> `risk_diff` (see
+> [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md))
+> is the tool for a *single-level* count layer – it emits a risk
+> difference with a confidence interval. For the *nested* SOC/PT layout
+> above, use pairwise
+> [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+> as shown here.
+
+## Step 4: A “Most Frequent Events” Variant, With Risk Difference
+
+A common companion display drops the body-system hierarchy and lists
+preferred terms overall, sorted by descending frequency, often with a
+risk difference. This is a *single-level* count layer, which is where
+`risk_diff` applies (on a nested layer, use the pairwise
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+from Step 3).
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  where = TRTEMFL == "Y",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        order_count_method = "bycount",
+        result_order_var = "distinct_n",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        ),
+        risk_diff = list(
+          comparisons = list(c("Xanomeline High Dose", "Placebo")),
+          format = f_str("xx.x (xx.x, xx.x)", "rdiff", "lower", "upper")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+result <- result[order(result$ord_layer_1), ]
+
+kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 10))
+```
+
+| rowlabel1 | res1 | res2 | res3 | rdiff1 |
+|:---|:---|:---|:---|:---|
+| PRURITUS | 3 ( 3.5%) | 8 ( 9.5%) | 6 ( 7.1%) | 6.0 (-1.3, 13.4) |
+| APPLICATION SITE PRURITUS | 4 ( 4.7%) | 6 ( 7.1%) | 4 ( 4.8%) | 3.7 (-3.7, 11.1) |
+| ERYTHEMA | 3 ( 3.5%) | 3 ( 3.6%) | 2 ( 2.4%) | -1.1 (-7.0, 4.9) |
+| APPLICATION SITE ERYTHEMA | 0 ( 0.0%) | 3 ( 3.6%) | 4 ( 4.8%) | 3.6 (-0.4, 7.5) |
+| APPLICATION SITE DERMATITIS | 1 ( 1.2%) | 3 ( 3.6%) | 2 ( 2.4%) | 2.4 (-2.2, 7.0) |
+| APPLICATION SITE IRRITATION | 1 ( 1.2%) | 3 ( 3.6%) | 2 ( 2.4%) | 3.6 (-1.5, 8.7) |
+| UPPER RESPIRATORY TRACT INFECTION | 4 ( 4.7%) | 1 ( 1.2%) | 1 ( 1.2%) | -3.5 (-8.5, 1.6) |
+| DIARRHOEA | 3 ( 3.5%) | 1 ( 1.2%) | 1 ( 1.2%) | -2.3 (-6.8, 2.2) |
+| RASH | 0 ( 0.0%) | 2 ( 2.4%) | 3 ( 3.6%) | 2.4 (-0.9, 5.6) |
+| DIZZINESS | 0 ( 0.0%) | 1 ( 1.2%) | 3 ( 3.6%) | 1.2 (-1.1, 3.5) |
+
+`order_count_method = "bycount"` with `result_order_var = "distinct_n"`
+sorts the preferred terms by the number of distinct subjects affected,
+descending, so the most frequent events lead. The `rdiff1` column is the
+High Dose minus Placebo incidence difference with its 95% confidence
+interval. (`risk_diff` applies to single-level count layers; on the
+nested layer of Step 3 use the pairwise
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+shown there.)
+
+## Step 5: A Display-Ready Table
+
+The final step turns the machine-friendly build into something a
+renderer can consume.
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+trims the frame to just the display columns (`rowlabel*`, `res*`,
+`pval*`), dropping the internal `ord_*` columns and, with
+`labels = TRUE`, renaming the result columns to their `(N=)` header
+labels.
+[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+then merges the two row-label columns into a single indented SOC/PT
+stub. Applying
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+first keeps the header labels while leaving the `rowlabel*` columns for
+[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+to fold together.
+
+``` r
+
+# Rebuild the Step 3 table (nested + Fisher p-values)
+result <- tplyr_build(tplyr_spec(
+  cols = "TRTA",
+  where = TRTEMFL == "Y",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"), settings = ae_settings)
+  )
+), tplyr_adae, pop_data = tplyr_adsl)
+
+display <- result |>
+  as_display(labels = TRUE) |>
+  collapse_row_labels("rowlabel1", "rowlabel2", indent = "   ")
+
+kable(head(display, 14))
+```
+
+| row_label | Placebo (N=86) | Xanomeline High Dose (N=84) | Xanomeline Low Dose (N=84) | Placebo vs Xanomeline High Dose | Placebo vs Xanomeline Low Dose |
+|:---|:---|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  |  |  |  |  |
+|  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) | 0.533 | 0.745 |
+| ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 0.494 |
+| ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 0.494 | 1.000 |
+| ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) | 0.494 | 0.243 |
+| SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) | 0.118 | 0.494 |
+| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 1.000 |
+| SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) | 1.000 | 0.494 |
+| TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) | 1.000 | 1.000 |
+| VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 0.494 | 1.000 |
+| CONGENITAL, FAMILIAL AND GENETIC DISORDERS |  |  |  |  |  |
+
+The result reads like the final table shell: an indented SOC/PT stub
+column, one incidence column per arm carrying its `(N=)` header, and the
+two comparison p-value columns – built entirely within tplyr2, with the
+safety-population denominators applied throughout.
+
+## See Also
+
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  – count-layer fundamentals, population data, nested counts, and stat
+  columns.
+- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+  – denominator control in depth, including single-proportion confidence
+  intervals and the “no events reported” row.
+- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+  – risk differences on single-level count layers.
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – the full
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  contract (omnibus, pairwise, nested, character returns) and binding
+  externally computed model results.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – ordering rows by frequency, factor levels, or a VARN companion.
+- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+  –
+  [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md),
+  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),
+  and other display helpers.

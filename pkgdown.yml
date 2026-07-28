@@ -2,6 +2,7 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  adverse-events: adverse-events.html
   analyze: analyze.html
   ard: ard.html
   binding-statistics: binding-statistics.html
@@ -20,7 +21,7 @@ articles:
   sort: sort.html
   table: table.html
   tplyr2: tplyr2.html
-last_built: 2026-07-28T15:17Z
+last_built: 2026-07-28T16:11Z
 urls:
   reference: https://github.com/mstackhouse/tplyr2/reference
   article: https://github.com/mstackhouse/tplyr2/articles

@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -183,6 +186,13 @@ cell:</p>
 combined with <code>&amp;</code>, define the data subset.</li>
 <li>
 <strong>layer_index</strong>: Which layer this cell belongs to.</li>
+<li>
+<strong>statistic</strong>: Which statistic the cell displays – the
+<code>stat_columns</code> name (e.g. <code>"n (%)"</code> or
+<code>"E"</code>). This is <code>NULL</code> for ordinary layers and
+populated for <code>stat_columns</code> layers, where several statistics
+share a row and the column alone identifies which one a cell shows (see
+below).</li>
 <li>
 <strong>anti_join</strong>: <code>NULL</code> for normal cells, or a
 <code>tplyr_meta_anti_join</code> object for missing subjects rows.</li>
@@ -477,17 +487,55 @@ from the target, so the anti-join returns that one row. Omitting
 <span><span class="co">#&gt; 2   A      S2   Y</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="stat-columns-and-the-statistic-field">Stat Columns and the <code>statistic</code> Field<a class="anchor" aria-label="anchor" href="#stat-columns-and-the-statistic-field"></a>
+</h2>
+<p>When a count layer uses <code>stat_columns</code>, one row carries
+several statistics, each in its own result column. Ordinary layers leave
+<code>statistic</code> as <code>NULL</code>, but a
+<code>stat_columns</code> layer populates it so a cell’s metadata
+records <em>which</em> statistic it displays – the column alone would be
+ambiguous otherwise.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sc_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AEDECOD"</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
+<span>        stat_columns <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          <span class="st">"n (%)"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span>,</span>
+<span>          <span class="st">"E"</span>     <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">sc_result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">sc_spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span>, metadata <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">rid</span> <span class="op">&lt;-</span> <span class="va">sc_result</span><span class="op">$</span><span class="va">row_id</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span></span>
+<span></span>
+<span><span class="co"># res1 is the "n (%)" (distinct-subject) column; res2 is the "E" (event) column</span></span>
+<span><span class="fu"><a href="../reference/tplyr_meta_result.html">tplyr_meta_result</a></span><span class="op">(</span><span class="va">sc_result</span>, <span class="va">rid</span>, <span class="st">"res1"</span><span class="op">)</span><span class="op">$</span><span class="va">statistic</span></span>
+<span><span class="co">#&gt; [1] "n (%)"</span></span>
+<span><span class="fu"><a href="../reference/tplyr_meta_result.html">tplyr_meta_result</a></span><span class="op">(</span><span class="va">sc_result</span>, <span class="va">rid</span>, <span class="st">"res2"</span><span class="op">)</span><span class="op">$</span><span class="va">statistic</span></span>
+<span><span class="co">#&gt; [1] "E"</span></span></code></pre></div>
+<p>The <code>statistic</code> field lets a downstream consumer (a QC
+check, a Shiny drill-down) distinguish the distinct-subject cell from
+the event-count cell even though they share a row.</p>
+</div>
+<div class="section level2">
 <h2 id="practical-applications">Practical Applications<a class="anchor" aria-label="anchor" href="#practical-applications"></a>
 </h2>
 <p>The most common use of metadata is cell verification during QC:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">data</span>, metadata <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="va">source</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_meta_subset.html">tplyr_meta_subset</a></span><span class="op">(</span><span class="va">result</span>, row_id <span class="op">=</span> <span class="st">"1_F"</span>, column <span class="op">=</span> <span class="st">"res2"</span>, data <span class="op">=</span> <span class="va">data</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">source</span><span class="op">)</span></span></code></pre></div>
 <p>The metadata system also lends itself to Shiny applications where
 clicking a cell triggers <code><a href="../reference/tplyr_meta_subset.html">tplyr_meta_subset()</a></code>, displaying
 the source records in a detail panel:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">observeEvent</span><span class="op">(</span><span class="va">input</span><span class="op">$</span><span class="va">table_cell_click</span>, <span class="op">{</span></span>
 <span>  <span class="va">click</span> <span class="op">&lt;-</span> <span class="va">input</span><span class="op">$</span><span class="va">table_cell_click</span></span>
 <span>  <span class="va">row_id</span> <span class="op">&lt;-</span> <span class="va">result</span><span class="op">$</span><span class="va">row_id</span><span class="op">[</span><span class="va">click</span><span class="op">$</span><span class="va">row</span><span class="op">]</span></span>
@@ -532,6 +580,21 @@ target variable, by-variable, where clauses, and anti-join logic for
 missing subjects. These expressions are stored at build time but only
 evaluated when you request a subset, keeping the metadata lightweight
 while providing exact reproducibility of every number in your table.</p>
+</div>
+<div class="section level2">
+<h2 id="see-also">See Also<a class="anchor" aria-label="anchor" href="#see-also"></a>
+</h2>
+<ul>
+<li>
+<code><a href="../articles/ard.html">vignette("ard")</a></code> – exporting the raw numeric results as
+Analysis Results Data.</li>
+<li>
+<code><a href="../articles/serialization.html">vignette("serialization")</a></code> – saving the spec so a table
+(and its metadata) can be regenerated later.</li>
+<li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – the layer types whose cells the
+metadata traces back to source.</li>
+</ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -889,23 +892,28 @@ overall structure of your tplyr2 output. For details on specific layer
 types and additional features, see:</p>
 <ul>
 <li>
-<strong>Count layers</strong>: <code><a href="../reference/group_count.html">group_count()</a></code> for
-frequency tables, including nested counts, distinct subject counts, and
-missing value handling</li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – <code><a href="../reference/group_count.html">group_count()</a></code> for
+frequency tables, including nested counts, distinct subject counts,
+population data, and missing value handling.</li>
 <li>
-<strong>Descriptive statistics layers</strong>:
-<code><a href="../reference/group_desc.html">group_desc()</a></code> for summary statistics with format strings,
-auto-precision, and custom summary functions</li>
+<code><a href="../articles/denom.html">vignette("denom")</a></code> – denominator control in depth (this
+vignette and the denominators vignette both cover <code>pop_data</code>;
+that one goes deeper on <code>denoms_by</code>,
+<code>denom_where</code>, and confidence intervals).</li>
 <li>
-<strong>Shift layers</strong>: <code><a href="../reference/group_shift.html">group_shift()</a></code> for
-baseline-by-post-baseline cross-tabulations</li>
+<code><a href="../articles/adverse-events.html">vignette("adverse-events")</a></code> – a full adverse event table
+built end to end, the canonical use of population data.</li>
 <li>
-<strong>Ordering</strong>: How tplyr2 sorts rows and controls output
-order</li>
+<code><a href="../articles/desc.html">vignette("desc")</a></code> – <code><a href="../reference/group_desc.html">group_desc()</a></code> for
+summary statistics.</li>
 <li>
-<strong>Options</strong>: Package-level options via
-<code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code>
-</li>
+<code><a href="../articles/shift.html">vignette("shift")</a></code> – <code><a href="../reference/group_shift.html">group_shift()</a></code> for
+baseline-by-post-baseline cross-tabulations.</li>
+<li>
+<code><a href="../articles/sort.html">vignette("sort")</a></code> – how tplyr2 orders rows.</li>
+<li>
+<code><a href="../articles/options.html">vignette("options")</a></code> – package-level options via
+<code><a href="../reference/tplyr2_options.html">tplyr2_options()</a></code>.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

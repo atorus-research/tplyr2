@@ -297,6 +297,7 @@ display-ready table.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -311,7 +312,7 @@ spec <- tplyr_spec(
   )
 )
 
-output <- tplyr_build(spec, tplyr_adae)
+output <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 
 # Post-processing pipeline
 display <- output |>
@@ -323,25 +324,25 @@ kable(head(display[, c("row_label", "res1", "res2", "res3")], 20))
 | row_label                                  | res1      | res2      | res3      |
 |:-------------------------------------------|:----------|:----------|:----------|
 | CARDIAC DISORDERS                          |           |           |           |
-|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION                        | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                             | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA                          | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                                | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 | CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
-|                                            | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| VENTRICULAR SEPTAL DEFECT                  | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
 | GASTROINTESTINAL DISORDERS                 |           |           |           |
-|                                            | 6 (18.8%) | 4 ( 9.3%) | 3 ( 6.0%) |
-| ABDOMINAL PAIN                             | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CONSTIPATION                               | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
+|                                            | 6 ( 7.0%) | 4 ( 4.8%) | 3 ( 3.6%) |
+| ABDOMINAL PAIN                             | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| CONSTIPATION                               | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
 When combining
 [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
@@ -378,20 +379,90 @@ kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 | row_label                                  | res1      | res2      | res3      |
 |:-------------------------------------------|:----------|:----------|:----------|
 | CARDIAC DISORDERS                          |           |           |           |
-|                                            | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| ATRIAL FIBRILLATION                        | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 2.0%) |
-| ATRIAL FLUTTER                             | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY                         | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE                 | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION                      | 0 (\<1%)  | 1 ( 2.3%) | 2 ( 4.0%) |
-| SINUS BRADYCARDIA                          | 0 (\<1%)  | 3 ( 7.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| SUPRAVENTRICULAR TACHYCARDIA               | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 2.0%) |
-| TACHYCARDIA                                | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| VENTRICULAR EXTRASYSTOLES                  | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION                        | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                             | 0 (\<1%)  | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY                         | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT                  | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE                 | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION                      | 0 (\<1%)  | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA                          | 0 (\<1%)  | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES             | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA               | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                                | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES                  | 0 (\<1%)  | 1 ( 1.2%) | 0 ( 0.0%) |
 | CONGENITAL, FAMILIAL AND GENETIC DISORDERS |           |           |           |
-|                                            | 0 (\<1%)  | 1 ( 2.3%) | 0 ( 0.0%) |
+|                                            | 0 (\<1%)  | 1 ( 1.2%) | 0 ( 0.0%) |
+
+### Collapsing In Place (Nest Mode)
+
+By default
+[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+inserts a stub row for each outer group (a header row with no results).
+Passing `nest = TRUE` instead collapses the labels *in place*: the outer
+value and its indented inner value share a single column with no extra
+rows, and outer-level rows keep their own results. This matches
+`set_nest_count(TRUE)` from Tplyr v1.
+
+``` r
+
+nested <- collapse_row_labels(output, nest = TRUE, indent = "   ")
+kable(head(nested[, c("row_label", "res1", "res2", "res3")], 12))
+```
+
+| row_label                      | res1      | res2      | res3      |
+|:-------------------------------|:----------|:----------|:----------|
+| CARDIAC DISORDERS              | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION            | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                 | 0 (\<1%)  | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY             | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT      | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE     | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION          | 0 (\<1%)  | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA              | 0 (\<1%)  | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA   | 0 (\<1%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                    | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| VENTRICULAR EXTRASYSTOLES      | 0 (\<1%)  | 1 ( 1.2%) | 0 ( 0.0%) |
+
+In nest mode a single label column is allowed (the default mode requires
+at least two), which makes it convenient for one-off relabeling as well.
+
+## The Final Step: `as_display()`
+
+Once a table is post-processed,
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+trims it to just the columns a renderer needs – the `rowlabel*`, `res*`,
+`rdiff*`, and `pval*` columns – dropping the internal `ord_*` (and
+`row_id`) columns and preserving row order. Pass `labels = TRUE` to
+rename the result columns to their column-group header labels
+(e.g. `"Xanomeline High Dose (N=84)"`), ready to hand to `gt`,
+`flextable`, or a `clinify`-style renderer.
+
+``` r
+
+final <- as_display(display, labels = TRUE)
+kable(head(final, 12))
+```
+
+| Placebo (N=86) | Xanomeline High Dose (N=84) | Xanomeline Low Dose (N=84) |
+|:---------------|:----------------------------|:---------------------------|
+|                |                             |                            |
+| 4 ( 4.7%)      | 6 ( 7.1%)                   | 5 ( 6.0%)                  |
+| 0 ( 0.0%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
+| 0 ( 0.0%)      | 1 ( 1.2%)                   | 0 ( 0.0%)                  |
+| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
+| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
+| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
+| 0 ( 0.0%)      | 1 ( 1.2%)                   | 2 ( 2.4%)                  |
+| 0 ( 0.0%)      | 3 ( 3.6%)                   | 1 ( 1.2%)                  |
+| 1 ( 1.2%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
+| 0 ( 0.0%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
+| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
+
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+is layout-only; it does not change any cell values. It is the natural
+last call in a build-then-polish pipeline.
 
 ## Summary
 
@@ -401,12 +472,13 @@ designed to work together:
 | Function | Purpose |
 |:---|:---|
 | [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md) | Blank repeated row labels, optionally insert row breaks |
-| [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md) | Merge label columns into one with indentation |
-| [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md) | Pull numeric values from formatted strings |
+| [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md) | Merge label columns into one with indentation (stub-row or `nest` mode) |
 | [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md) | Conditionally reformat strings based on numeric values within them |
-| [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces |
 | [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md) | Format numeric vectors using f_str objects |
+| [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md) | Pull numeric values from formatted strings |
 | [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md) | Wrap long text with hyphenation and indentation preservation |
+| [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces |
+| [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md) | Trim to display columns (`rowlabel*`/`res*`/`rdiff*`/`pval*`), optionally with header labels |
 
 A typical pipeline runs
 [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)

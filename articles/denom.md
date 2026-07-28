@@ -355,6 +355,13 @@ behind the keywords,
 [`proportion_ci()`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md),
 is exported for standalone use.
 
+This single-proportion interval is distinct from the *between-arm*
+confidence interval that `risk_diff` produces; the two are independent
+and can appear in the same table.
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+discusses the single-proportion CI alongside the other comparative
+statistics.
+
 ## Denominators with Population Data
 
 In many clinical studies, the analysis data contains only a subset of
@@ -551,3 +558,16 @@ principle is that the numerator (what you are counting) and the
 denominator (what you are dividing by) can be controlled separately,
 giving you precise control over how percentages are computed in your
 clinical tables.
+
+## See Also
+
+- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  – count-layer fundamentals, where population data is first introduced.
+- [`vignette("table")`](https://github.com/mstackhouse/tplyr2/articles/table.md)
+  – population data and header N from the spec-level perspective.
+- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+  – these denominator controls applied in a complete adverse event
+  table.
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – the single-proportion CI alongside risk difference and association
+  tests.

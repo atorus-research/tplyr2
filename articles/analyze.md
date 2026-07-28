@@ -395,3 +395,17 @@ The key points to remember:
   as needed.
 - Build error handling into your function to handle edge cases
   gracefully.
+
+### See Also
+
+- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+  and
+  [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  – the built-in layer types a custom analyze layer usually sits
+  alongside.
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – for a comparison p-value or an externally computed model result,
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  and binding via
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  are often a simpler fit than a custom analyze layer.

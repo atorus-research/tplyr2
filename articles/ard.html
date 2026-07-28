@@ -41,6 +41,9 @@
     <li><a class="dropdown-item" href="../articles/count.html">Count Layers</a></li>
     <li><a class="dropdown-item" href="../articles/shift.html">Shift Layers</a></li>
     <li><hr class="dropdown-divider"></li>
+    <li><h6 class="dropdown-header" data-toc-skip>Worked Examples</h6></li>
+    <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
+    <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
     <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
     <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
@@ -842,11 +845,25 @@ counts displayed without percentages and only two descriptive statistics
 rows.</p>
 </div>
 <div class="section level3">
+<h3 id="layer-coverage">Layer Coverage<a class="anchor" aria-label="anchor" href="#layer-coverage"></a>
+</h3>
+<p>The examples above use count and descriptive layers, but the ARD
+round-trip covers all four layer types – <strong>count</strong>
+(including nested), <strong>desc</strong> (including multi-target),
+<strong>shift</strong>, and <strong>analyze</strong>.
+<code><a href="../reference/tplyr_from_ard.html">tplyr_from_ard()</a></code> reconstructs the appropriate layer from
+the <code>analysis_id</code> and the stored statistics. One detail worth
+knowing: for <code>stat_columns</code> layers, the pre-formatted
+sub-columns are not carried into the ARD (they are display artifacts),
+but the underlying numeric statistics they were built from are retained,
+so the values still round-trip.</p>
+</div>
+<div class="section level3">
 <h3 id="archiving-and-reproducibility">Archiving and Reproducibility<a class="anchor" aria-label="anchor" href="#archiving-and-reproducibility"></a>
 </h3>
 <p>Because the ARD captures every computed statistic as a plain numeric
 value, it serves as a durable archive of the analysis results. Paired
-with a saved spec (see <code>vignette("serialize")</code>), the full
+with a saved spec (see <code><a href="../articles/serialization.html">vignette("serialization")</a></code>), the full
 table can be reproduced at any time without re-running the analysis
 against the source data.</p>
 </div>

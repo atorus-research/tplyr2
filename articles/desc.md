@@ -422,6 +422,132 @@ kable(result[, !grepl("^ord", names(result))])
 | Demographics | WEIGHTBL  | Mean (SD) | 62.8 (12.77) | 70.0 (14.65) | 67.3 (14.12) |
 | Demographics | WEIGHTBL  | Median    | 60.5         | 69.2         | 64.9         |
 
+## Records Assessed: `n` Versus `n_records`
+
+Two counts are available and they answer different questions. `n` is the
+number of *non-missing* values – the analysis count that pairs naturally
+with mean/SD. `n_records` is the number of records *assessed*
+(non-missing plus missing), which some tables report as an “N assessed”
+line. When there are no missing values the two are identical; they
+diverge only when the target variable has `NA` values.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "N assessed"   = f_str("xxx", "n_records"),
+          "n (analyzed)" = f_str("xxx", "n"),
+          "Mean (SD)"    = f_str("xx.x (xx.xx)", "mean", "sd")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, !grepl("^ord", names(result))])
+```
+
+| rowlabel1    | res1         | res2         | res3         |
+|:-------------|:-------------|:-------------|:-------------|
+| N assessed   | 86           | 84           | 84           |
+| n (analyzed) | 86           | 84           | 84           |
+| Mean (SD)    | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
+
+## Statistics as Columns
+
+The default descriptive layout puts statistics in rows. Some tables
+instead want each statistic as its own column. Set
+`stats_as_columns = TRUE` to transpose the block: without a `by`
+variable, the treatment groups become the rows and each statistic
+becomes a column.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        stats_as_columns = TRUE,
+        format_strings = list(
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+          "Median"    = f_str("xx.x", "median"),
+          "Min, Max"  = f_str("xx, xx", "min", "max")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, !grepl("^ord", names(result))])
+```
+
+| rowlabel1                   | Mean (SD)    | Median | Min, Max |
+|:----------------------------|:-------------|:-------|:---------|
+| Placebo (N=86)              | 75.2 ( 8.59) | 76.0   | 52, 89   |
+| Xanomeline High Dose (N=84) | 74.4 ( 7.89) | 76.0   | 56, 88   |
+| Xanomeline Low Dose (N=84)  | 75.7 ( 8.29) | 77.5   | 51, 88   |
+
+When a `by` variable is present, the by-groups stay as rows and each
+column becomes a treatment-by-statistic combination (labelled
+`"<arm> | <stat>"`), so the by dimension is preserved rather than
+collapsed.
+
+## Adding a Comparison p-value
+
+A demographics table often carries a p-value comparing a continuous
+characteristic across arms – an ANOVA, a Kruskal-Wallis test, or a
+t-test. Attach one with
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+in omnibus mode: it runs a function you supply once over the raw source
+rows and lands the result in a trailing `pval` column. This is the same
+mechanism count layers use, so the continuous and categorical rows of a
+demographics table can share one p-value column.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE",
+      settings = layer_settings(
+        format_strings = list(
+          "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+          "Median"    = f_str("xx.x", "median")
+        ),
+        assoc_test = assoc_test(
+          fn = function(.data) anova(lm(AGE ~ TRT01P, .data))[["Pr(>F)"]][1],
+          format = f_str("x.xxx", "p"),
+          label = "ANOVA p"
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adsl)
+kable(result[, !grepl("^ord", names(result))])
+```
+
+| rowlabel1 | res1         | res2         | res3         | pval1 |
+|:----------|:-------------|:-------------|:-------------|:------|
+| Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) | 0.593 |
+| Median    | 76.0         | 76.0         | 77.5         |       |
+
+The p-value sits on the first statistic row of each `by` group (here
+there is no `by`, so it appears once, on the first row). The `fn`
+receives the by-group’s raw data frame and returns a scalar; a character
+return is passed through verbatim.
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+covers this in full, including how to bind externally computed model
+results.
+
 ## Where to Go From Here
 
 This vignette covered the fundamentals of descriptive statistics layers

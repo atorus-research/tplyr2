@@ -275,11 +275,12 @@ parameter in
 [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
 The available methods are:
 
-| Method       | Description                                        |
-|--------------|----------------------------------------------------|
-| `"byfactor"` | Sort by factor level position                      |
-| `"byvarn"`   | Sort by a numeric companion column (e.g., `RACEN`) |
-| `"bycount"`  | Sort by count values (descending)                  |
+| Method           | Description                                        |
+|------------------|----------------------------------------------------|
+| `"byfactor"`     | Sort by factor level position                      |
+| `"byvarn"`       | Sort by a numeric companion column (e.g., `RACEN`) |
+| `"bycount"`      | Sort by count values (descending)                  |
+| `"alphabetical"` | Sort by the target value alphabetically            |
 
 When `order_count_method` is left as `NULL` (the default), tplyr2
 auto-detects: it checks for factor levels first, then VARN companions,
@@ -287,9 +288,9 @@ then falls back to alphabetical.
 
 ### Sorting by Count
 
-The `"bycount"` method sorts rows by their count values in descending
-order, which is common for adverse event tables where the most frequent
-events should appear first.
+A frequent request – especially for adverse event tables – is to order
+rows by descending frequency so the most common events appear first. Set
+`order_count_method = "bycount"`:
 
 ``` r
 
@@ -297,40 +298,36 @@ spec <- tplyr_spec(
   cols = "TRT01P",
   layers = tplyr_layers(
     group_count("DCDECOD",
-      settings = layer_settings(
-        order_count_method = "bycount"
-      )
-    )
+      settings = layer_settings(order_count_method = "bycount"))
   )
 )
-
 result <- tplyr_build(spec, tplyr_adsl)
-sorted <- result[order(result$ord_layer_1), ]
-kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
+result <- result[order(result$ord_layer_1), ]
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
-| rowlabel1                   | res1       | res2       | res3       | ord_layer_1 |
-|:----------------------------|:-----------|:-----------|:-----------|------------:|
-| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           1 |
-| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           2 |
-| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           3 |
-| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           4 |
-| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           5 |
-| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           6 |
-| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           7 |
-| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           8 |
-| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           9 |
+| rowlabel1                   | res1       | res2       | res3       |
+|:----------------------------|:-----------|:-----------|:-----------|
+| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |
+| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |
+| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |
+| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |
+| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |
+| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
+| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |
+| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |
+| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |
 
-When using `"bycount"`, `ord_layer_1` contains the negated count values
-(so that lower values sort first for descending order).
+The rows are ordered by total count across all treatment columns,
+descending, so the most frequent disposition reasons come first. Two
+companion settings refine this:
 
-### Controlling Which Column Drives the Sort
-
-When sorting by count, you may want to sort based on a specific
-treatment column rather than all columns. The `ordering_cols` parameter
-lets you specify which column level to use for deriving the sort counts,
-and `result_order_var` specifies which statistic to sort by (defaulting
-to `"n"`).
+- `result_order_var` chooses which statistic drives the sort (defaults
+  to `"n"`; set it to `"distinct_n"` to sort by distinct subjects when
+  `distinct_by` is in play).
+- `ordering_cols` restricts the tally to a specific column level instead
+  of the total across all columns – e.g. `ordering_cols = "Placebo"`
+  sorts by the Placebo count.
 
 ``` r
 
@@ -340,29 +337,37 @@ spec <- tplyr_spec(
     group_count("DCDECOD",
       settings = layer_settings(
         order_count_method = "bycount",
-        ordering_cols = "Placebo",
-        result_order_var = "n"
-      )
-    )
+        ordering_cols = "Placebo"))
   )
 )
-
 result <- tplyr_build(spec, tplyr_adsl)
-sorted <- result[order(result$ord_layer_1), ]
-kable(sorted[, c("rowlabel1", "res1", "res2", "res3", "ord_layer_1")])
+result <- result[order(result$ord_layer_1), ]
+kable(result[, c("rowlabel1", "res1", "res2", "res3")])
 ```
 
-| rowlabel1                   | res1       | res2       | res3       | ord_layer_1 |
-|:----------------------------|:-----------|:-----------|:-----------|------------:|
-| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |           1 |
-| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |           2 |
-| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |           3 |
-| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |           4 |
-| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           5 |
-| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |           6 |
-| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |           7 |
-| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |           8 |
-| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |           9 |
+| rowlabel1                   | res1       | res2       | res3       |
+|:----------------------------|:-----------|:-----------|:-----------|
+| COMPLETED                   | 58 (67.4%) | 27 (32.1%) | 25 (29.8%) |
+| WITHDRAWAL BY SUBJECT       | 9 (10.5%)  | 8 ( 9.5%)  | 10 (11.9%) |
+| ADVERSE EVENT               | 8 ( 9.3%)  | 40 (47.6%) | 44 (52.4%) |
+| LACK OF EFFICACY            | 3 ( 3.5%)  | 1 ( 1.2%)  | 0 ( 0.0%)  |
+| DEATH                       | 2 ( 2.3%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |
+| PROTOCOL VIOLATION          | 2 ( 2.3%)  | 3 ( 3.6%)  | 1 ( 1.2%)  |
+| STUDY TERMINATED BY SPONSOR | 2 ( 2.3%)  | 3 ( 3.6%)  | 2 ( 2.4%)  |
+| LOST TO FOLLOW-UP           | 1 ( 1.2%)  | 0 ( 0.0%)  | 1 ( 1.2%)  |
+| PHYSICIAN DECISION          | 1 ( 1.2%)  | 2 ( 2.4%)  | 0 ( 0.0%)  |
+
+`"bycount"` keeps `by`-groups blocked and sorts the target within each
+group; total and missing rows always sort last regardless of their
+counts.
+
+If you need an ordering that no setting expresses, you can always sort
+the built frame yourself in post-processing – pull values out of the
+result with
+[`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)
+(or
+[`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md))
+and reorder.
 
 ## Nested Count Sorting
 
@@ -376,6 +381,7 @@ The ordering system handles both levels.
 
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -388,24 +394,24 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index",
                        "ord_layer_1", "ord_layer_2")], 12))
 ```
 
 | rowlabel1 | rowlabel2 | res1 | ord_layer_index | ord_layer_1 | ord_layer_2 |
 |:---|:---|:---|---:|---:|---:|
-| CARDIAC DISORDERS |  | 4 (12.5%) | 1 | 1 | 1 |
+| CARDIAC DISORDERS |  | 4 ( 4.7%) | 1 | 1 | 1 |
 | CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 1 | 2 | 2 |
 | CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 | 3 | 2 |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 1 | 4 | 2 |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 1 | 5 | 2 |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 1 | 6 | 2 |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 1.2%) | 1 | 4 | 2 |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 1 | 5 | 2 |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 1 | 6 | 2 |
 | CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 | 7 | 2 |
 | CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 1 | 8 | 2 |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 1 | 9 | 2 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 1 | 9 | 2 |
 | CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 1 | 10 | 2 |
-| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 3.1%) | 1 | 11 | 2 |
+| CARDIAC DISORDERS | TACHYCARDIA | 1 ( 1.2%) | 1 | 11 | 2 |
 | CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 | 12 | 2 |
 
 In nested output:
@@ -416,10 +422,43 @@ In nested output:
   system) rows, 2 for inner-level (preferred term) rows. Total rows, if
   present, get depth 0.
 
-The `outer_sort_position` parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
-controls the sort direction of outer-level groupings, accepting `"asc"`
-or `"desc"`.
+Nested layers order both levels by factor level (then VARN, then
+alphabetical). To reverse the outer level – for example to list system
+organ classes in descending rather than ascending order – set
+`outer_sort_position = "desc"`; the inner (preferred-term) order and the
+subtotal-before-detail nesting are preserved.
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        outer_sort_position = "desc"))
+  )
+)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+result <- result[order(result$ord_layer_1), ]
+kable(head(result[, c("rowlabel1", "rowlabel2", "res1")], 12))
+```
+
+| rowlabel1                              | rowlabel2            | res1      |
+|:---------------------------------------|:---------------------|:----------|
+| VASCULAR DISORDERS                     |                      | 0 ( 0.0%) |
+| VASCULAR DISORDERS                     | HYPOTENSION          | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS |                      | 7 ( 8.1%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | BLISTER              | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | DERMATITIS CONTACT   | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | ERYTHEMA             | 4 ( 4.7%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | HYPERHIDROSIS        | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | PRURITUS             | 3 ( 3.5%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | PRURITUS GENERALISED | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | RASH                 | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | RASH MACULO-PAPULAR  | 0 ( 0.0%) |
+| SKIN AND SUBCUTANEOUS TISSUE DISORDERS | RASH PRURITIC        | 0 ( 0.0%) |
 
 ## Practical Example: Preparing a Final Table
 
