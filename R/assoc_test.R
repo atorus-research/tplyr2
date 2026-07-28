@@ -33,27 +33,31 @@
 #' rows are (reference, comparison) arm, columns are (event, no event) -- where
 #' \code{n} is the cell count and \code{N} the population denominator for that
 #' arm. When the layer sets \code{distinct_by}, the distinct counts/denominators
-#' are used. \code{fn} returns a scalar p-value -- numeric (formatted with
-#' \code{format}) or a verbatim character display string (\code{NA} renders a
-#' blank).
+#' are used. \code{fn} returns either a numeric value (a scalar, or a vector of
+#' several statistics matching a multi-variable \code{format}) or a verbatim
+#' character display string (\code{NA} renders a blank).
 #'
 #' Attach it to a layer via
 #' \code{layer_settings(assoc_test = assoc_test(...))}.
 #'
 #' @param fn A function of one argument. In omnibus mode it is called with the
 #'   source-data subset (a data.frame) for a single \code{by} group; in pairwise
-#'   mode it is called with a 2x2 numeric matrix (see Details). It returns a
-#'   single value that is rendered into the cell one of two ways: a
-#'   \strong{numeric} (typically a p-value) is formatted with \code{format}, or a
-#'   \strong{character} string is passed through \emph{verbatim} -- letting the
-#'   function that computes an arbitrary test also supply the finished display,
-#'   e.g. a significance flag (\code{"0.031*"}), a ceiling/floor
-#'   (\code{">.99"}, \code{"<.0001"}), or a sentinel (\code{"NE"}). Return
+#'   mode it is called with a 2x2 numeric matrix (see Details). Its return is
+#'   rendered into the cell one of two ways: a \strong{numeric} value (or a
+#'   numeric vector matching the number of variables in \code{format}) is
+#'   formatted with \code{format} -- a scalar p-value, or several statistics such
+#'   as an odds ratio with its confidence interval mapped positionally onto a
+#'   multi-variable f_str; or a \strong{character} string is passed through
+#'   \emph{verbatim}, letting the function that computes an arbitrary test also
+#'   supply the finished display (a significance flag \code{"0.031*"}, a
+#'   ceiling/floor \code{">.99"}/\code{"<.0001"}, a sentinel \code{"NE"}). Return
 #'   \code{NA} (numeric or character) to render a blank.
 #' @param format An \code{\link{f_str}} object formatting a \strong{numeric}
-#'   return; it is ignored when \code{fn} returns a character string. The f_str
-#'   must reference a single variable (any name; the returned scalar is passed
-#'   positionally). Defaults to \code{f_str("x.xxx", "p")}.
+#'   return; it is ignored when \code{fn} returns a character string. Its
+#'   variable count sets how many values \code{fn} must return: one variable for
+#'   a scalar (e.g. \code{f_str("x.xxx", "p")}, the default), or several for a
+#'   tuple (e.g. \code{f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")}). The
+#'   returned values are passed positionally, so the variable names are free.
 #' @param label Character string used as the result column's header label. In
 #'   pairwise mode it may be a vector with one entry per comparison (or a single
 #'   value recycled across comparisons); \code{NULL} generates a default
@@ -94,6 +98,18 @@
 #'   fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
 #'   format = f_str("x.xxx", "p")
 #' )
+#'
+#' # Multiple statistics in one cell: odds ratio with a confidence interval
+#' at4 <- assoc_test(
+#'   fn = function(m) {
+#'     ft <- fisher.test(m)
+#'     c(ft$estimate, ft$conf.int[1], ft$conf.int[2])
+#'   },
+#'   reference = "Placebo",
+#'   comparisons = c("Low", "High"),
+#'   format = f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi"),
+#'   label = "OR (95% CI)"
+#' )
 #' @export
 assoc_test <- function(fn, format = f_str("x.xxx", "p"), label = NULL,
                        reference = NULL, comparisons = NULL, total_row = TRUE) {
@@ -105,9 +121,8 @@ assoc_test <- function(fn, format = f_str("x.xxx", "p"), label = NULL,
   if (!inherits(format, "tplyr_f_str")) {
     stop("`format` must be an f_str() object", call. = FALSE)
   }
-  if (length(format$vars) != 1) {
-    stop("`format` must reference exactly one variable (the returned scalar)",
-         call. = FALSE)
+  if (length(format$vars) < 1) {
+    stop("`format` must reference at least one variable", call. = FALSE)
   }
   if (!is.logical(total_row) || length(total_row) != 1 || is.na(total_row)) {
     stop("`total_row` must be a single logical (TRUE/FALSE)", call. = FALSE)
@@ -177,30 +192,43 @@ print.tplyr_assoc_test <- function(x, ...) {
 
 #' Render an \code{assoc_test} \code{fn} return value for display
 #'
-#' Turns a single value returned by a caller-supplied \code{fn} into the string
-#' shown in the \code{pval} cell:
+#' Turns the value returned by a caller-supplied \code{fn} into the string shown
+#' in the \code{pval} cell:
 #' \itemize{
-#'   \item a length-1 \strong{numeric} (or logical) is formatted with
-#'     \code{config$format}; \code{NA} renders a blank;
+#'   \item a \strong{numeric} (or logical) vector whose length equals the number
+#'     of variables in \code{format} is mapped positionally onto the format and
+#'     rendered into one cell -- a scalar with a one-variable format (a p-value),
+#'     or several values with a multi-variable format (issue #60), e.g. an odds
+#'     ratio with a confidence interval. An all-\code{NA} return (or an arity
+#'     that does not match the format) renders a blank; a single \code{NA} field
+#'     within a longer return blanks just that field via the \code{f_str}
+#'     grammar;
 #'   \item a length-1 \strong{character} is passed through verbatim (issue #47),
 #'     so a caller computing an arbitrary test can also supply the finished
 #'     display (significance flags, \code{">.99"}/\code{"<.0001"} ceilings,
 #'     \code{"NE"} sentinels, trailing-space alignment); \code{NA_character_}
 #'     renders a blank;
-#'   \item anything else (wrong length, non-atomic) renders a blank.
+#'   \item anything else (non-atomic, mismatched length) renders a blank.
 #' }
 #'
 #' @param raw The raw value returned by \code{fn} (already wrapped so errors
 #'   arrive as \code{NA}).
-#' @param format An \code{\link{f_str}} object used for numeric returns.
+#' @param format An \code{\link{f_str}} object; its variable count determines how
+#'   many values a numeric return must supply.
 #' @return A length-1 character display string.
 #' @keywords internal
 format_assoc_return <- function(raw, format) {
-  if (length(raw) != 1) return("")
-  if (is.character(raw)) return(if (is.na(raw)) "" else raw)
+  # Character escape hatch: a single string is the whole cell, verbatim.
+  if (is.character(raw) && length(raw) == 1) {
+    return(if (is.na(raw)) "" else raw)
+  }
+  # Numeric/logical: map positionally onto the format's variables (one value per
+  # variable). One value + one-variable format is the classic scalar p-value.
   if (is.numeric(raw) || is.logical(raw)) {
-    if (is.na(raw)) return("")
-    return(apply_formats(format, as.numeric(raw)))
+    n_vars <- length(format$vars)
+    if (length(raw) != n_vars) return("")   # arity mismatch -> blank
+    if (all(is.na(raw))) return("")         # nothing to show -> blank
+    return(do.call(apply_formats, c(list(format), as.list(as.numeric(raw)))))
   }
   ""
 }
