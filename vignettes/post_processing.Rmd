@@ -164,6 +164,7 @@ In practice, you will chain several post-processing steps together. Here is a co
 ```{r pipeline}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count(c("AEBODSYS", "AEDECOD"),
       settings = layer_settings(
@@ -178,7 +179,7 @@ spec <- tplyr_spec(
   )
 )
 
-output <- tplyr_build(spec, tplyr_adae)
+output <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 
 # Post-processing pipeline
 display <- output |>
@@ -205,6 +206,28 @@ display_formatted <- output |>
 kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 ```
 
+### Collapsing In Place (Nest Mode)
+
+By default `collapse_row_labels()` inserts a stub row for each outer group (a header row with no results). Passing `nest = TRUE` instead collapses the labels *in place*: the outer value and its indented inner value share a single column with no extra rows, and outer-level rows keep their own results. This matches `set_nest_count(TRUE)` from Tplyr v1.
+
+```{r nest_mode}
+nested <- collapse_row_labels(output, nest = TRUE, indent = "   ")
+kable(head(nested[, c("row_label", "res1", "res2", "res3")], 12))
+```
+
+In nest mode a single label column is allowed (the default mode requires at least two), which makes it convenient for one-off relabeling as well.
+
+## The Final Step: `as_display()`
+
+Once a table is post-processed, `as_display()` trims it to just the columns a renderer needs -- the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns -- dropping the internal `ord_*` (and `row_id`) columns and preserving row order. Pass `labels = TRUE` to rename the result columns to their column-group header labels (e.g. `"Xanomeline High Dose (N=84)"`), ready to hand to `gt`, `flextable`, or a `clinify`-style renderer.
+
+```{r as_display}
+final <- as_display(display, labels = TRUE)
+kable(head(final, 12))
+```
+
+`as_display()` is layout-only; it does not change any cell values. It is the natural last call in a build-then-polish pipeline.
+
 ## Summary
 
 The post-processing functions in tplyr2 serve distinct purposes but are designed to work together:
@@ -212,11 +235,12 @@ The post-processing functions in tplyr2 serve distinct purposes but are designed
 | Function | Purpose |
 |:---|:---|
 | `apply_row_masks()` | Blank repeated row labels, optionally insert row breaks |
-| `collapse_row_labels()` | Merge label columns into one with indentation |
-| `str_extract_num()` | Pull numeric values from formatted strings |
+| `collapse_row_labels()` | Merge label columns into one with indentation (stub-row or `nest` mode) |
 | `apply_conditional_format()` | Conditionally reformat strings based on numeric values within them |
-| `replace_leading_whitespace()` | Swap leading spaces for non-breaking spaces |
 | `apply_formats()` | Format numeric vectors using f_str objects |
+| `str_extract_num()` | Pull numeric values from formatted strings |
 | `str_indent_wrap()` | Wrap long text with hyphenation and indentation preservation |
+| `replace_leading_whitespace()` | Swap leading spaces for non-breaking spaces |
+| `as_display()` | Trim to display columns (`rowlabel*`/`res*`/`rdiff*`/`pval*`), optionally with header labels |
 
 A typical pipeline runs `apply_row_masks()` first, then `collapse_row_labels()`. Conditional formatting and whitespace replacement can be inserted wherever they make sense for your output format.

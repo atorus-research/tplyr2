@@ -283,3 +283,8 @@ The key points to remember:
 - In **pre-formatted mode**, return a data.frame with `row_label` and `formatted` columns.
 - Use `by` for row grouping, mixing text labels and data variable names as needed.
 - Build error handling into your function to handle edge cases gracefully.
+
+## See Also
+
+- `vignette("desc")` and `vignette("count")` -- the built-in layer types a custom analyze layer usually sits alongside.
+- `vignette("binding-statistics")` -- for a comparison p-value or an externally computed model result, `assoc_test()` and binding via `apply_formats()` are often a simpler fit than a custom analyze layer.

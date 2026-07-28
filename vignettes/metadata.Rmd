@@ -93,6 +93,10 @@ The `tplyr_meta` object contains:
 - **filters**: A list of R call expressions that, combined with `&`, define
   the data subset.
 - **layer_index**: Which layer this cell belongs to.
+- **statistic**: Which statistic the cell displays -- the `stat_columns` name
+  (e.g. `"n (%)"` or `"E"`). This is `NULL` for ordinary layers and populated
+  for `stat_columns` layers, where several statistics share a row and the column
+  alone identifies which one a cell shows (see below).
 - **anti_join**: `NULL` for normal cells, or a `tplyr_meta_anti_join` object
   for missing subjects rows.
 
@@ -280,6 +284,37 @@ the anti-join returns that one row. Omitting `pop_data` produces a warning:
 tplyr_meta_subset(result, ms_row$row_id, "res1", target)
 ```
 
+## Stat Columns and the `statistic` Field
+
+When a count layer uses `stat_columns`, one row carries several statistics, each in its own result column. Ordinary layers leave `statistic` as `NULL`, but a `stat_columns` layer populates it so a cell's metadata records *which* statistic it displays -- the column alone would be ambiguous otherwise.
+
+```{r stat-columns-meta}
+sc_spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count("AEDECOD",
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        stat_columns = list(
+          "n (%)" = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct"),
+          "E"     = f_str("xxx", "n")
+        )
+      )
+    )
+  )
+)
+
+sc_result <- tplyr_build(sc_spec, tplyr_adae, pop_data = tplyr_adsl, metadata = TRUE)
+rid <- sc_result$row_id[1]
+
+# res1 is the "n (%)" (distinct-subject) column; res2 is the "E" (event) column
+tplyr_meta_result(sc_result, rid, "res1")$statistic
+tplyr_meta_result(sc_result, rid, "res2")$statistic
+```
+
+The `statistic` field lets a downstream consumer (a QC check, a Shiny drill-down) distinguish the distinct-subject cell from the event-count cell even though they share a row.
+
 ## Practical Applications
 
 The most common use of metadata is cell verification during QC:
@@ -318,3 +353,9 @@ variable, by-variable, where clauses, and anti-join logic for missing subjects.
 These expressions are stored at build time but only evaluated when you request
 a subset, keeping the metadata lightweight while providing exact reproducibility
 of every number in your table.
+
+## See Also
+
+- `vignette("ard")` -- exporting the raw numeric results as Analysis Results Data.
+- `vignette("serialization")` -- saving the spec so a table (and its metadata) can be regenerated later.
+- `vignette("count")` -- the layer types whose cells the metadata traces back to source.

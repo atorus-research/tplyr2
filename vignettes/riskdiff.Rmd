@@ -26,6 +26,8 @@ The risk difference answers a straightforward question: how much more (or less) 
 
 tplyr2 computes risk differences using `stats::prop.test()` with no continuity correction, producing an asymptotic Wald-type confidence interval. This is configured entirely through the `risk_diff` parameter in `layer_settings()`, and the results appear as additional columns in the output alongside the standard count summaries.
 
+Because the proportions being compared are incidence rates, the denominators must be the treatment-arm populations, not just the subjects who had events. Every example below therefore supplies population data via `pop_data()` -- exactly as an adverse event count layer would (see `vignette("count")` and `vignette("denom")`). Without it, `prop.test()` would be handed the wrong denominators and every risk difference would be biased.
+
 ## Basic Risk Difference
 
 To add a risk difference to a count layer, pass a `risk_diff` list inside `layer_settings()`. At minimum, you need to specify which two treatment levels to compare via the `comparisons` parameter.
@@ -33,6 +35,7 @@ To add a risk difference to a count layer, pass a `risk_diff` list inside `layer
 ```{r basic}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -48,7 +51,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 10))
 ```
 
@@ -67,6 +70,7 @@ You are not limited to a single comparison. When your study has multiple active 
 ```{r multiple}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -86,7 +90,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1", "rdiff2")], 8))
 ```
 
@@ -113,6 +117,7 @@ You can include the p-value in the formatted string if your table requires it.
 ```{r format_pvalue}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -129,7 +134,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 8))
 ```
 
@@ -142,6 +147,7 @@ By default, tplyr2 computes a 95% confidence interval. You can change this with 
 ```{r ci90}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -159,7 +165,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "rdiff1")], 8))
 ```
 
@@ -172,6 +178,7 @@ Risk difference calculations naturally work with the `distinct_by` setting. When
 ```{r distinct}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -188,7 +195,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 8))
 ```
 
@@ -201,6 +208,7 @@ An important detail: risk differences are computed before special rows (total ro
 ```{r special_rows}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -219,7 +227,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 # Show the last few rows including the total row
 tail_rows <- tail(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 5)
 kable(tail_rows)
@@ -234,6 +242,7 @@ The formatted risk difference strings are useful for display, but sometimes you 
 ```{r numeric_data}
 spec <- tplyr_spec(
   cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
   layers = tplyr_layers(
     group_count("AEDECOD",
       settings = layer_settings(
@@ -250,7 +259,7 @@ spec <- tplyr_spec(
   )
 )
 
-result <- tplyr_build(spec, tplyr_adae)
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
 nd <- tplyr_numeric_data(result, layer = 1)
 kable(head(nd, 10))
 ```
@@ -273,6 +282,14 @@ kable(head(result[, c("rowlabel1", "rdiff1", "rdiff_value", "rdiff_lower", "rdif
 ```
 
 This approach is useful when you need numeric risk difference values for downstream tasks like sorting, filtering, or creating forest plots.
+
+## Risk Difference Versus Association Tests
+
+A risk difference gives an *effect size* -- the difference in incidence with a confidence interval. When you instead (or additionally) want a *p-value* per row from a formal test, use `assoc_test()` in its pairwise mode. It sits in the same place as `risk_diff` (one `pval` column per comparison, a value on every target-level row) but delegates the test to a function you supply -- typically `fisher.test()` for adverse event incidence. See `vignette("binding-statistics")` for the full treatment.
+
+`risk_diff` applies to **single-level** count layers, like the examples above. For a **nested** SOC/PT layer, pairwise `assoc_test()` is the tool that produces a per-row comparison on every level; `vignette("adverse-events")` shows that pattern.
+
+Do not confuse the two confidence-interval controls: `risk_diff`'s `ci` argument sets the coverage of the *between-arm difference* interval shown here, whereas the `ci_method`/`ci_level` layer settings (and the `ci_lower`/`ci_upper` `f_str` keywords) produce a *single-proportion* interval for each individual cell. They are independent features -- see `vignette("denom")` for the single-proportion interval.
 
 ## Summary
 

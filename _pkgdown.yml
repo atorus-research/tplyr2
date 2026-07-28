@@ -112,6 +112,11 @@ articles:
     - count
     - shift
 
+- title: Worked Examples
+  navbar: Worked Examples
+  contents:
+    - adverse-events
+
 - title: Formatting
   navbar: Formatting
   contents:

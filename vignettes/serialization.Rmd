@@ -165,21 +165,23 @@ re-parsing the format string and rebuilding the internal structure.
 
 When you use `label()` in a `by` parameter to create an explicit text label,
 the label is serialized with a type marker so it can be distinguished from a
-data variable name.
+data variable name. A single `label()` uses the key `values`:
 
 ```json
 {
-  "value": "Age (Years)",
+  "values": "Age (Years)",
   "_type": "label"
 }
 ```
 
-Regular data variable names (character strings) pass through as-is.
+When a `by` is a list mixing data variables and labels, each label *element*
+serializes with the singular key `value` instead. Regular data variable names
+(character strings) pass through as-is.
 
 ### Functions
 
 Analyze layers created with `group_analyze()` include a user-defined function.
-These are serialized by deparsing the function body to a string.
+These are serialized by deparsing the entire function definition to a string.
 
 ```json
 {
@@ -191,6 +193,28 @@ On deserialization, the string is parsed and evaluated to recreate the function
 object. Note that functions which depend on objects in a specific environment
 (closures that capture external variables) may not survive the round-trip. For
 best results, write analyze functions that are self-contained.
+
+### Layer Settings
+
+The full `layer_settings()` surface round-trips, not just the simple flags.
+Fields that hold richer objects are serialized with the same machinery shown
+above -- `f_str` objects via the `_class` marker, expressions via `_expr`,
+functions via `_fn`. In particular, all of the 0.2.0 comparative-statistics and
+formatting settings are preserved:
+
+- `stat_columns` -- the named list of `f_str` objects (one result column per
+  statistic).
+- `risk_diff` -- comparisons, `ci`, and the optional `f_str` `format`.
+- `assoc_test()` -- the `fn` (as a deparsed function), `format`, `label`,
+  `reference`, `comparisons`, and `total_row`.
+- `ci_method` / `ci_level` -- the single-proportion confidence-interval controls.
+- `denom_row_format` -- the shift denominator-row `f_str`.
+- `missing_count` (with its optional `f_str` format), `custom_summaries`
+  (expressions), and `precision_data` (a data frame).
+
+So a spec carrying an `assoc_test()` Fisher column, `stat_columns`, and a
+custom `risk_diff` format can be written to disk and read back with those
+settings intact.
 
 ## Examining the Serialized Output
 
@@ -298,6 +322,11 @@ For regulatory submissions, archiving a machine-readable table definition
 alongside the analysis output provides an additional layer of documentation.
 The JSON or YAML file describes exactly how the table was configured, in a format
 that does not require R to interpret.
+
+## See Also
+
+- `vignette("ard")` -- exporting the computed *results* (not just the spec) as Analysis Results Data, which pairs with a saved spec for full reproducibility.
+- `vignette("metadata")` -- cell-level traceability back to source data.
 
 ```{r, include=FALSE}
 # Clean up temp files

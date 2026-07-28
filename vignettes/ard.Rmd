@@ -201,11 +201,21 @@ kable(compact_result[, !grepl("^ord", names(compact_result))])
 The same underlying data now appears in a more compact layout, with counts
 displayed without percentages and only two descriptive statistics rows.
 
+### Layer Coverage
+
+The examples above use count and descriptive layers, but the ARD round-trip
+covers all four layer types -- **count** (including nested), **desc** (including
+multi-target), **shift**, and **analyze**. `tplyr_from_ard()` reconstructs the
+appropriate layer from the `analysis_id` and the stored statistics. One detail
+worth knowing: for `stat_columns` layers, the pre-formatted sub-columns are not
+carried into the ARD (they are display artifacts), but the underlying numeric
+statistics they were built from are retained, so the values still round-trip.
+
 ### Archiving and Reproducibility
 
 Because the ARD captures every computed statistic as a plain numeric value, it
 serves as a durable archive of the analysis results. Paired with a saved spec
-(see `vignette("serialize")`), the full table can be reproduced at any time
+(see `vignette("serialization")`), the full table can be reproduced at any time
 without re-running the analysis against the source data.
 
 ## Summary
