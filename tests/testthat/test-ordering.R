@@ -260,3 +260,93 @@ test_that("count by-group order falls back to alphabetical for non-factor", {
   b <- b[order(b$ord_layer_1), ]
   expect_equal(unique(b$rowlabel1), c("alpha", "mid", "zeta"))
 })
+
+# --- order_count_method = "bycount" and companions (#57) ---
+
+.bycount_data <- function() {
+  # totals across arms: Apple=24, Zebra=23, Mango=13
+  # col A: Zebra=20, Apple=6, Mango=4 ; col B: Apple=18, Mango=9, Zebra=3
+  data.frame(
+    TRT = factor(rep(c("A", "B"), each = 30), levels = c("A", "B")),
+    AE  = factor(c(rep("Zebra", 20), rep("Apple", 6), rep("Mango", 4),
+                   rep("Apple", 18), rep("Mango", 9), rep("Zebra", 3)),
+                 levels = c("Apple", "Mango", "Zebra")),
+    stringsAsFactors = FALSE
+  )
+}
+
+test_that("order_count_method = 'bycount' sorts by descending total count (#57)", {
+  d <- .bycount_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AE", settings = layer_settings(order_count_method = "bycount")))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(b$rowlabel1, c("Apple", "Zebra", "Mango"))
+})
+
+test_that("bycount keeps the total row last (#57)", {
+  d <- .bycount_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AE", settings = layer_settings(
+      order_count_method = "bycount", total_row = TRUE)))), d)
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(b$rowlabel1[nrow(b)], "Total")
+  expect_equal(b$rowlabel1[1:3], c("Apple", "Zebra", "Mango"))
+})
+
+test_that("ordering_cols sorts bycount by a specific column's count (#57)", {
+  d <- .bycount_data()
+  ord <- function(oc) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count("AE", settings = layer_settings(
+        order_count_method = "bycount", ordering_cols = oc)))), d)
+    b[order(b$ord_layer_1), ]$rowlabel1
+  }
+  expect_equal(ord("A"), c("Zebra", "Apple", "Mango"))   # col A: 20,6,4
+  expect_equal(ord("B"), c("Apple", "Mango", "Zebra"))   # col B: 18,9,3
+})
+
+test_that("bycount blocks by-groups instead of interleaving them (#57)", {
+  d <- .bycount_data()
+  d$GRP <- factor(rep(c("G1", "G2"), 30), levels = c("G1", "G2"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AE", by = "GRP", settings = layer_settings(
+      order_count_method = "byfactor")))), d)
+  b <- b[order(b$ord_layer_1), ]
+  # every G1 row comes before every G2 row (blocked, not interleaved)
+  expect_true(max(which(b$rowlabel1 == "G1")) < min(which(b$rowlabel1 == "G2")))
+})
+
+test_that("the default ordering respects target factor levels (#57)", {
+  d <- data.frame(
+    TRT = factor(rep("A", 30)),
+    AE  = factor(rep(c("Zebra", "Apple", "Mango"), 10),
+                 levels = c("Zebra", "Apple", "Mango")))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("AE"))), d)   # no order_count_method -> default
+  b <- b[order(b$ord_layer_1), ]
+  expect_equal(b$rowlabel1, c("Zebra", "Apple", "Mango"))  # factor order, not alphabetical
+})
+
+test_that("outer_sort_position = 'desc' reverses nested outer ordering (#57)", {
+  d <- data.frame(
+    TRT = factor(rep("A", 40)),
+    SOC = factor(rep(c("Alpha", "Beta", "Gamma"), c(16, 14, 10)),
+                 levels = c("Alpha", "Beta", "Gamma")),
+    PT  = factor(rep(c("p1", "p2"), 20)))
+  outer_order <- function(osp) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count(c("SOC", "PT"), settings = layer_settings(
+        outer_sort_position = osp)))), d)
+    b <- b[order(b$ord_layer_1), ]
+    unique(b$rowlabel1)
+  }
+  expect_equal(outer_order("asc"),  c("Alpha", "Beta", "Gamma"))
+  expect_equal(outer_order("desc"), c("Gamma", "Beta", "Alpha"))
+  # invalid value errors
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count(c("SOC", "PT"), settings = layer_settings(
+        outer_sort_position = "sideways")))), d),
+    "outer_sort_position must be"
+  )
+})

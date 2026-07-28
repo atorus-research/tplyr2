@@ -130,6 +130,13 @@ validate_layer <- function(layer, index, cols = NULL) {
                   "\"full\", \"count_only\", or \"blank\""),
          call. = FALSE)
   }
+  osp <- layer$settings$outer_sort_position
+  if (!is.null(osp) && (!is.character(osp) || length(osp) != 1 ||
+                        !osp %in% c("asc", "desc"))) {
+    stop(str_glue("Layer {index}: outer_sort_position must be ",
+                  "\"asc\" or \"desc\""),
+         call. = FALSE)
+  }
 
   if (!is.null(layer$settings$assoc_test) &&
       !inherits(layer$settings$assoc_test, "tplyr_assoc_test")) {

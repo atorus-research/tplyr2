@@ -125,6 +125,17 @@
 
 ## Bug fixes
 
+- Count-layer row ordering now honors the sort settings it advertised (#57).
+  `order_count_method = "bycount"` actually sorts by descending count (it
+  previously fell back to the default order); `ordering_cols` selects which
+  column's count drives that sort, and `result_order_var` which statistic;
+  `outer_sort_position = "desc"` reverses a nested layer's outer level. Any
+  explicit `order_count_method` (and the default) now also keeps `by`-groups
+  **blocked** instead of interleaving them, and the default respects the target
+  variable's factor levels (previously it ordered the target alphabetically
+  even when it was a factor). The target sort key is threaded through the cast
+  so all methods compose correctly with by-groups and special (total/missing)
+  rows.
 - `risk_diff` on a **nested** count layer now errors instead of silently
   emitting an all-blank column (#58). Risk difference is computed only on
   single-level count layers; on a nested SOC/PT layer the setting previously
