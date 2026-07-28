@@ -151,6 +151,8 @@ spec <- tplyr_spec(
     group_count("AEDECOD",
       settings = layer_settings(
         distinct_by = "USUBJID",
+        order_count_method = "bycount",
+        result_order_var = "distinct_n",
         format_strings = list(
           n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
         ),
@@ -164,17 +166,12 @@ spec <- tplyr_spec(
 )
 
 result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
-
-# Sort preferred terms by total incidence across arms (post-processing)
-totals <- str_extract_num(result$res1, 1) +
-  str_extract_num(result$res2, 1) +
-  str_extract_num(result$res3, 1)
-result <- result[order(-totals), ]
+result <- result[order(result$ord_layer_1), ]
 
 kable(head(result[, c("rowlabel1", "res1", "res2", "res3", "rdiff1")], 10))
 ```
 
-The `rdiff1` column is the High Dose minus Placebo incidence difference with its 95% confidence interval. We sorted the built frame by total frequency in post-processing (parsing the counts with `str_extract_num()`); `vignette("sort")` explains why frequency sorting is currently done this way rather than through `order_count_method`.
+`order_count_method = "bycount"` with `result_order_var = "distinct_n"` sorts the preferred terms by the number of distinct subjects affected, descending, so the most frequent events lead. The `rdiff1` column is the High Dose minus Placebo incidence difference with its 95% confidence interval. (`risk_diff` applies to single-level count layers; on the nested layer of Step 3 use the pairwise `assoc_test()` shown there.)
 
 ## Step 5: A Display-Ready Table
 
