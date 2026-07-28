@@ -87,6 +87,15 @@
   `aov`/`kruskal.test` side pipeline. Pairwise/per-level mode remains count-layer
   only; supplying `comparisons` on a desc layer is now a clear error rather than
   silently ignored.
+- `assoc_test()`'s `fn` may now return **multiple values** rendered into one
+  cell (#60). When `format` references more than one variable, `fn` returns a
+  numeric vector of matching length, mapped positionally onto the format — so a
+  procedure that emits a tuple (an odds ratio with its confidence interval, an
+  estimate with a p-value) lands as a single formatted cell, e.g.
+  `f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")`. A scalar return with a
+  one-variable format is unchanged; an all-`NA` return or an arity mismatch
+  renders a blank; the character-return passthrough (#47) still wins for a
+  finished display string.
 - New `shift_denom` setting for shift layers (#18). `shift_denom = "column"`
   computes percentages column-wise — out of each shift column group (the
   "from"/baseline group) within the treatment arm — the standard
@@ -116,6 +125,12 @@
 
 ## Bug fixes
 
+- `risk_diff` on a **nested** count layer now errors instead of silently
+  emitting an all-blank column (#58). Risk difference is computed only on
+  single-level count layers; on a nested SOC/PT layer the setting previously
+  produced an empty `rdiff` column with no warning. The error points to
+  pairwise `assoc_test()`, which does compute a per-level comparison on nested
+  layers.
 - `group_shift(denom_row = TRUE)` no longer renders the literal string `"NA"`
   for a baseline (shift-column) group that is absent within a `by` group (#55);
   an absent group's denominator is zero, so the cell now reads `0` (consistent
