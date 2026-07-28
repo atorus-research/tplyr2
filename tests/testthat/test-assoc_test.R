@@ -3,8 +3,11 @@
 test_that("assoc_test validates its arguments", {
   expect_error(assoc_test(fn = "notafn"), "must be a function")
   expect_error(assoc_test(fn = function(d) 1, format = "x.xxx"), "f_str")
-  expect_error(assoc_test(fn = function(d) 1, format = f_str("xx xx", "a", "b")),
-               "exactly one variable")
+  # multi-variable formats are accepted (issue #60): fn may return a tuple
+  expect_s3_class(
+    assoc_test(fn = function(d) c(1, 2), format = f_str("xx (xx)", "a", "b")),
+    "tplyr_assoc_test"
+  )
 })
 
 test_that("assoc_test object prints", {
@@ -894,4 +897,75 @@ test_that("omnibus assoc_test lands on each by-group's first display row (#54)",
     expect_equal(sum(trimws(grp$pval1) != ""), 1L)
     expect_true(trimws(grp$pval1[grp$rowlabel2 == "Lo"]) != "")
   }
+})
+
+# --- Multiple values in one cell (#60) ---
+
+test_that("format_assoc_return maps a numeric vector onto a multi-variable f_str (#60)", {
+  fmt <- f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")
+  # three values, three variables -> one formatted cell (fields are width-padded)
+  cell <- tplyr2:::format_assoc_return(c(1.85, 1.10, 3.02), fmt)
+  expect_match(cell, "^\\s*1\\.85 \\(\\s*1\\.10,\\s*3\\.02\\)$")
+  # arity mismatch (too few / too many) -> blank
+  expect_identical(tplyr2:::format_assoc_return(c(1.85, 1.10), fmt), "")
+  expect_identical(tplyr2:::format_assoc_return(c(1, 2, 3, 4), fmt), "")
+  # all-NA -> blank; a single NA field blanks just that field
+  expect_identical(tplyr2:::format_assoc_return(c(NA_real_, NA_real_, NA_real_), fmt), "")
+  partial <- tplyr2:::format_assoc_return(c(1.85, NA_real_, 3.02), fmt)
+  expect_true(grepl("1.85", partial))
+  # character escape hatch still wins, even with a multi-variable format
+  expect_identical(tplyr2:::format_assoc_return("NE", fmt), "NE")
+  # scalar + one-variable format is unchanged
+  expect_equal(trimws(tplyr2:::format_assoc_return(0.0312, f_str("x.xxx", "p"))), "0.031")
+})
+
+test_that("assoc_test constructor accepts a multi-variable format (#60)", {
+  at <- assoc_test(fn = function(m) c(1, 2, 3),
+                   format = f_str("xx (xx, xx)", "or", "lo", "hi"),
+                   reference = "Placebo", comparisons = "Low")
+  expect_s3_class(at, "tplyr_assoc_test")
+  expect_equal(length(at$format$vars), 3L)
+})
+
+test_that("pairwise assoc_test renders an odds ratio with CI in one cell (#60)", {
+  set.seed(4)
+  d <- data.frame(
+    TRT = factor(rep(c("Placebo", "Low", "High"), each = 40),
+                 levels = c("Placebo", "Low", "High")),
+    RESP = factor(sample(c("Y", "N"), 120, replace = TRUE), levels = c("N", "Y")))
+  at <- assoc_test(
+    fn = function(m) {
+      ft <- suppressWarnings(fisher.test(m))
+      c(ft$estimate, ft$conf.int[1], ft$conf.int[2])
+    },
+    reference = "Placebo", comparisons = c("Low", "High"),
+    format = f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi"),
+    label = "OR (95% CI)")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d)
+
+  expect_true(all(c("pval1", "pval2") %in% names(b)))
+  expect_equal(attr(b$pval1, "label"), "OR (95% CI)")
+  # cells look like "or (lo, hi)"
+  vals <- b$pval1[trimws(b$pval1) != ""]
+  expect_true(all(grepl("^\\s*[0-9.]+ \\([0-9. ]+, [0-9. ]+\\)$", vals)))
+})
+
+test_that("omnibus assoc_test renders multiple statistics in one cell (#60)", {
+  set.seed(5)
+  d <- data.frame(
+    TRT = factor(rep(c("A", "B"), each = 30)),
+    RESP = factor(sample(c("Y", "N"), 60, replace = TRUE)))
+  at <- assoc_test(
+    fn = function(.data) {
+      ch <- suppressWarnings(chisq.test(table(.data$TRT, .data$RESP)))
+      c(unname(ch$statistic), ch$p.value)
+    },
+    format = f_str("xx.x (p=x.xxx)", "stat", "p"), label = "chi-square")
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("RESP", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d)
+  val <- b$pval1[trimws(b$pval1) != ""][1]
+  expect_true(grepl("p=", val))
 })

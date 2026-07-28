@@ -16,19 +16,23 @@ assoc_test(
 \arguments{
 \item{fn}{A function of one argument. In omnibus mode it is called with the
 source-data subset (a data.frame) for a single \code{by} group; in pairwise
-mode it is called with a 2x2 numeric matrix (see Details). It returns a
-single value that is rendered into the cell one of two ways: a
-\strong{numeric} (typically a p-value) is formatted with \code{format}, or a
-\strong{character} string is passed through \emph{verbatim} -- letting the
-function that computes an arbitrary test also supply the finished display,
-e.g. a significance flag (\code{"0.031*"}), a ceiling/floor
-(\code{">.99"}, \code{"<.0001"}), or a sentinel (\code{"NE"}). Return
+mode it is called with a 2x2 numeric matrix (see Details). Its return is
+rendered into the cell one of two ways: a \strong{numeric} value (or a
+numeric vector matching the number of variables in \code{format}) is
+formatted with \code{format} -- a scalar p-value, or several statistics such
+as an odds ratio with its confidence interval mapped positionally onto a
+multi-variable f_str; or a \strong{character} string is passed through
+\emph{verbatim}, letting the function that computes an arbitrary test also
+supply the finished display (a significance flag \code{"0.031*"}, a
+ceiling/floor \code{">.99"}/\code{"<.0001"}, a sentinel \code{"NE"}). Return
 \code{NA} (numeric or character) to render a blank.}
 
 \item{format}{An \code{\link{f_str}} object formatting a \strong{numeric}
-return; it is ignored when \code{fn} returns a character string. The f_str
-must reference a single variable (any name; the returned scalar is passed
-positionally). Defaults to \code{f_str("x.xxx", "p")}.}
+return; it is ignored when \code{fn} returns a character string. Its
+variable count sets how many values \code{fn} must return: one variable for
+a scalar (e.g. \code{f_str("x.xxx", "p")}, the default), or several for a
+tuple (e.g. \code{f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")}). The
+returned values are passed positionally, so the variable names are free.}
 
 \item{label}{Character string used as the result column's header label. In
 pairwise mode it may be a vector with one entry per comparison (or a single
@@ -89,9 +93,9 @@ comparison) pair, a 2x2 contingency \strong{matrix}
 rows are (reference, comparison) arm, columns are (event, no event) -- where
 \code{n} is the cell count and \code{N} the population denominator for that
 arm. When the layer sets \code{distinct_by}, the distinct counts/denominators
-are used. \code{fn} returns a scalar p-value -- numeric (formatted with
-\code{format}) or a verbatim character display string (\code{NA} renders a
-blank).
+are used. \code{fn} returns either a numeric value (a scalar, or a vector of
+several statistics matching a multi-variable \code{format}) or a verbatim
+character display string (\code{NA} renders a blank).
 
 Attach it to a layer via
 \code{layer_settings(assoc_test = assoc_test(...))}.
@@ -116,5 +120,17 @@ at2 <- assoc_test(
 at3 <- assoc_test(
   fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
   format = f_str("x.xxx", "p")
+)
+
+# Multiple statistics in one cell: odds ratio with a confidence interval
+at4 <- assoc_test(
+  fn = function(m) {
+    ft <- fisher.test(m)
+    c(ft$estimate, ft$conf.int[1], ft$conf.int[2])
+  },
+  reference = "Placebo",
+  comparisons = c("Low", "High"),
+  format = f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi"),
+  label = "OR (95\% CI)"
 )
 }
