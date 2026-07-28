@@ -391,7 +391,11 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # Sort for correct interleaving: outer value, then level, then inner value
   sort_nested(combined, target_vars, by_data_vars, dt = dt,
-              outer_sort_position = settings$outer_sort_position)
+              outer_sort_position = settings$outer_sort_position,
+              order_count_method = settings$order_count_method,
+              result_order_var = settings$result_order_var %||% "n",
+              ordering_cols = settings$ordering_cols,
+              cols = cols)
 
   # --- Pairwise per-level association test (#49) ---
   # Computed on the category rows (all nesting levels) before the special rows
@@ -637,7 +641,9 @@ build_nested_row_labels_special <- function(dt, by_labels, by_data_vars,
 #' Sort nested count data for correct interleaving
 #' @keywords internal
 sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL,
-                        outer_sort_position = NULL) {
+                        outer_sort_position = NULL, order_count_method = NULL,
+                        result_order_var = "n", ordering_cols = NULL,
+                        cols = character(0)) {
   n_levels <- length(target_vars)
 
   # Compute sort keys for each level. Coerce to character so the source factor
@@ -656,15 +662,37 @@ sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL,
   }
 
   if (n_levels >= 2) {
-    # Inner rank: same priority, applied to the inner target var. A global key
-    # orders inner values consistently across outer groups; combined with the
-    # outer/nest_level sort below it interleaves correctly.
+    # Inner rank, applied to the inner target var. By default a factor/VARN/
+    # alphabetical key orders inner values consistently across outer groups.
+    # With order_count_method = "bycount" the inner level is instead sorted by
+    # descending count *within each outer group* (issue #64) -- the AE-by-SOC/PT
+    # convention -- while the outer level keeps its own order (outer_sort_position
+    # above). Either way the outer/nest_level sort keeps groups blocked.
     combined[, .sort_inner := 0L]
     inner_rows <- combined[.nest_level >= 2]
     if (nrow(inner_rows) > 0) {
-      inner_rows[, .sort_inner := compute_var_order(
-        as.character(get(target_vars[2])), var_name = target_vars[2], data_dt = dt
-      )]
+      if (identical(order_count_method, "bycount")) {
+        order_var <- if (result_order_var %in% names(inner_rows)) {
+          result_order_var
+        } else {
+          "n"
+        }
+        agg_src <- inner_rows
+        if (!is.null(ordering_cols) && length(cols) >= 1 &&
+            cols[1] %in% names(agg_src)) {
+          agg_src <- agg_src[as.character(get(cols[1])) %in%
+                               as.character(ordering_cols)]
+        }
+        keyv <- c(by_data_vars, target_vars[1], target_vars[2])
+        agg <- agg_src[, list(.ic = sum(get(order_var), na.rm = TRUE)),
+                       by = keyv]
+        inner_rows[, .sort_inner := 0]
+        inner_rows[agg, .sort_inner := -i..ic, on = keyv]  # descending count
+      } else {
+        inner_rows[, .sort_inner := compute_var_order(
+          as.character(get(target_vars[2])), var_name = target_vars[2], data_dt = dt
+        )]
+      }
       # Update combined via join
       join_cols <- intersect(names(combined), names(inner_rows))
       join_cols <- setdiff(join_cols, ".sort_inner")

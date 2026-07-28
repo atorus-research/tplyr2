@@ -350,3 +350,54 @@ test_that("outer_sort_position = 'desc' reverses nested outer ordering (#57)", {
     "outer_sort_position must be"
   )
 })
+
+# --- bycount on the inner level of a nested count layer (#64) ---
+
+.nested_bycount_data <- function() {
+  # SOC1: p1=5, p2=2 ; SOC2: q1=1, q2=4  (distinct subjects)
+  mk <- function(soc, pt, n) do.call(rbind, Map(
+    function(p, k) data.frame(SOC = soc, PT = p,
+                              USUBJID = paste0(soc, p, seq_len(k)),
+                              stringsAsFactors = FALSE), pt, n))
+  d <- rbind(mk("SOC1", c("p1", "p2"), c(5, 2)),
+             mk("SOC2", c("q1", "q2"), c(1, 4)))
+  d$TRT <- factor("High", levels = "High")
+  d
+}
+
+.nested_order <- function(d, ...) {
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "USUBJID",
+      format_strings = list(n_counts = f_str("xx", "distinct_n")), ...)))), d)
+  b <- b[order(b$ord_layer_1), ]
+  sprintf("%s/%s", trimws(b$rowlabel1), trimws(b$rowlabel2))
+}
+
+test_that("bycount sorts the inner level by descending count within each outer group (#64)", {
+  d <- .nested_bycount_data()
+  ord <- .nested_order(d, order_count_method = "bycount")
+  # SOC1 subtotal, then p1(5) before p2(2); SOC2 subtotal, then q2(4) before q1(1)
+  expect_equal(ord, c("SOC1/", "SOC1/p1", "SOC1/p2",
+                      "SOC2/", "SOC2/q2", "SOC2/q1"))
+})
+
+test_that("nested bycount leaves the outer level in its default (factor) order (#64)", {
+  d <- .nested_bycount_data()
+  # SOC2 has more total subjects (5) than SOC1 (7? no: SOC1=7) -- regardless,
+  # outer stays alphabetical SOC1 then SOC2, not reordered by count
+  ord <- .nested_order(d, order_count_method = "bycount")
+  outer <- unique(sub("/.*$", "", ord))
+  expect_equal(outer, c("SOC1", "SOC2"))
+})
+
+test_that("nested bycount honors result_order_var and composes with outer_sort_position (#64)", {
+  d <- .nested_bycount_data()
+  # result_order_var = distinct_n (same as n here) still sorts inner by count
+  ord <- .nested_order(d, order_count_method = "bycount",
+                       result_order_var = "distinct_n",
+                       outer_sort_position = "desc")
+  # outer reversed (SOC2 first), inner still by descending count within each
+  expect_equal(ord, c("SOC2/", "SOC2/q2", "SOC2/q1",
+                      "SOC1/", "SOC1/p1", "SOC1/p2"))
+})

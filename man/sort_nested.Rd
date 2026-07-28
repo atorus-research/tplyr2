@@ -9,7 +9,11 @@ sort_nested(
   target_vars,
   by_data_vars,
   dt = NULL,
-  outer_sort_position = NULL
+  outer_sort_position = NULL,
+  order_count_method = NULL,
+  result_order_var = "n",
+  ordering_cols = NULL,
+  cols = character(0)
 )
 }
 \description{
