@@ -144,6 +144,19 @@ validate_layer <- function(layer, index, cols = NULL) {
          call. = FALSE)
   }
 
+  # risk_diff is computed only on single-level count layers. On a nested count
+  # layer it would otherwise emit a silently-blank column (issue #58); fail
+  # loudly and point to pairwise assoc_test(), which does work per-level on
+  # nested layers.
+  if (!is.null(layer$settings$risk_diff) &&
+      inherits(layer, "tplyr_count_layer") &&
+      length(layer$target_var) > 1) {
+    stop(str_glue("Layer {index}: risk_diff is not supported on nested count ",
+                  "layers. Use a pairwise assoc_test() for a per-level ",
+                  "comparison column (see vignette(\"binding-statistics\"))."),
+         call. = FALSE)
+  }
+
   # denom_row_format (shift layers): a single-variable f_str
   drf <- layer$settings$denom_row_format
   if (!is.null(drf)) {

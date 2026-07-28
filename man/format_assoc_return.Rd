@@ -10,23 +10,30 @@ format_assoc_return(raw, format)
 \item{raw}{The raw value returned by \code{fn} (already wrapped so errors
 arrive as \code{NA}).}
 
-\item{format}{An \code{\link{f_str}} object used for numeric returns.}
+\item{format}{An \code{\link{f_str}} object; its variable count determines how
+many values a numeric return must supply.}
 }
 \value{
 A length-1 character display string.
 }
 \description{
-Turns a single value returned by a caller-supplied \code{fn} into the string
-shown in the \code{pval} cell:
+Turns the value returned by a caller-supplied \code{fn} into the string shown
+in the \code{pval} cell:
 \itemize{
-\item a length-1 \strong{numeric} (or logical) is formatted with
-\code{config$format}; \code{NA} renders a blank;
+\item a \strong{numeric} (or logical) vector whose length equals the number
+of variables in \code{format} is mapped positionally onto the format and
+rendered into one cell -- a scalar with a one-variable format (a p-value),
+or several values with a multi-variable format (issue #60), e.g. an odds
+ratio with a confidence interval. An all-\code{NA} return (or an arity
+that does not match the format) renders a blank; a single \code{NA} field
+within a longer return blanks just that field via the \code{f_str}
+grammar;
 \item a length-1 \strong{character} is passed through verbatim (issue #47),
 so a caller computing an arbitrary test can also supply the finished
 display (significance flags, \code{">.99"}/\code{"<.0001"} ceilings,
 \code{"NE"} sentinels, trailing-space alignment); \code{NA_character_}
 renders a blank;
-\item anything else (wrong length, non-atomic) renders a blank.
+\item anything else (non-atomic, mismatched length) renders a blank.
 }
 }
 \keyword{internal}

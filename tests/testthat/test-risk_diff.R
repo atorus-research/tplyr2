@@ -300,3 +300,24 @@ test_that("risk_diff respects a custom ci level", {
   result <- tplyr_build(spec, d)
   expect_true(any(grepl("^rdiff", names(result))))
 })
+
+test_that("risk_diff on a nested count layer errors loudly (#58)", {
+  d <- data.frame(
+    TRT = factor(rep(c("Placebo", "Active"), each = 20), levels = c("Placebo", "Active")),
+    SOC = rep(c("GI", "NERVOUS"), 20),
+    PT  = rep(c("NAUSEA", "HEADACHE"), 20),
+    stringsAsFactors = FALSE
+  )
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      risk_diff = list(comparisons = list(c("Active", "Placebo")))))))
+  expect_error(tplyr_build(spec, d),
+               "risk_diff is not supported on nested count layers")
+
+  # single-level risk_diff is unaffected
+  spec1 <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("PT", settings = layer_settings(
+      risk_diff = list(comparisons = list(c("Active", "Placebo")))))))
+  expect_silent(b <- tplyr_build(spec1, d))
+  expect_true("rdiff1" %in% names(b))
+})
