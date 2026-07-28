@@ -97,21 +97,25 @@ n(\<!-- %) (or statistic) block. Two modes are supported, selected by whether --
 <dl><dt id="arg-fn">fn<a class="anchor" aria-label="anchor" href="#arg-fn"></a></dt>
 <dd><p>A function of one argument. In omnibus mode it is called with the
 source-data subset (a data.frame) for a single <code>by</code> group; in pairwise
-mode it is called with a 2x2 numeric matrix (see Details). It returns a
-single value that is rendered into the cell one of two ways: a
-<strong>numeric</strong> (typically a p-value) is formatted with <code>format</code>, or a
-<strong>character</strong> string is passed through <em>verbatim</em> – letting the
-function that computes an arbitrary test also supply the finished display,
-e.g. a significance flag (<code>"0.031*"</code>), a ceiling/floor
-(<code>"&gt;.99"</code>, <code>"&lt;.0001"</code>), or a sentinel (<code>"NE"</code>). Return
+mode it is called with a 2x2 numeric matrix (see Details). Its return is
+rendered into the cell one of two ways: a <strong>numeric</strong> value (or a
+numeric vector matching the number of variables in <code>format</code>) is
+formatted with <code>format</code> – a scalar p-value, or several statistics such
+as an odds ratio with its confidence interval mapped positionally onto a
+multi-variable f_str; or a <strong>character</strong> string is passed through
+<em>verbatim</em>, letting the function that computes an arbitrary test also
+supply the finished display (a significance flag <code>"0.031*"</code>, a
+ceiling/floor <code>"&gt;.99"</code>/<code>"&lt;.0001"</code>, a sentinel <code>"NE"</code>). Return
 <code>NA</code> (numeric or character) to render a blank.</p></dd>
 
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
 <dd><p>An <code><a href="f_str.html">f_str</a></code> object formatting a <strong>numeric</strong>
-return; it is ignored when <code>fn</code> returns a character string. The f_str
-must reference a single variable (any name; the returned scalar is passed
-positionally). Defaults to <code>f_str("x.xxx", "p")</code>.</p></dd>
+return; it is ignored when <code>fn</code> returns a character string. Its
+variable count sets how many values <code>fn</code> must return: one variable for
+a scalar (e.g. <code>f_str("x.xxx", "p")</code>, the default), or several for a
+tuple (e.g. <code>f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")</code>). The
+returned values are passed positionally, so the variable names are free.</p></dd>
 
 
 <dt id="arg-label">label<a class="anchor" aria-label="anchor" href="#arg-label"></a></dt>
@@ -177,9 +181,9 @@ comparison) pair, a 2x2 contingency <strong>matrix</strong>
 rows are (reference, comparison) arm, columns are (event, no event) – where
 <code>n</code> is the cell count and <code>N</code> the population denominator for that
 arm. When the layer sets <code>distinct_by</code>, the distinct counts/denominators
-are used. <code>fn</code> returns a scalar p-value – numeric (formatted with
-<code>format</code>) or a verbatim character display string (<code>NA</code> renders a
-blank).</p>
+are used. <code>fn</code> returns either a numeric value (a scalar, or a vector of
+several statistics matching a multi-variable <code>format</code>) or a verbatim
+character display string (<code>NA</code> renders a blank).</p>
 <p>Attach it to a layer via
 <code>layer_settings(assoc_test = assoc_test(...))</code>.</p>
     </div>
@@ -205,6 +209,18 @@ blank).</p>
 <span class="r-in"><span><span class="va">at3</span> <span class="op">&lt;-</span> <span class="fu">assoc_test</span><span class="op">(</span></span></span>
 <span class="r-in"><span>  fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">.data</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/stats/anova.html" class="external-link">anova</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/lm.html" class="external-link">lm</a></span><span class="op">(</span><span class="va">AGE</span> <span class="op">~</span> <span class="va">TRT</span>, <span class="va">.data</span><span class="op">)</span><span class="op">)</span><span class="op">[[</span><span class="st">"Pr(&gt;F)"</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span></span>
 <span class="r-in"><span>  format <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"x.xxx"</span>, <span class="st">"p"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Multiple statistics in one cell: odds ratio with a confidence interval</span></span></span>
+<span class="r-in"><span><span class="va">at4</span> <span class="op">&lt;-</span> <span class="fu">assoc_test</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>    <span class="va">ft</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/fisher.test.html" class="external-link">fisher.test</a></span><span class="op">(</span><span class="va">m</span><span class="op">)</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">ft</span><span class="op">$</span><span class="va">estimate</span>, <span class="va">ft</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>, <span class="va">ft</span><span class="op">$</span><span class="va">conf.int</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">}</span>,</span></span>
+<span class="r-in"><span>  reference <span class="op">=</span> <span class="st">"Placebo"</span>,</span></span>
+<span class="r-in"><span>  comparisons <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Low"</span>, <span class="st">"High"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  format <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.xx (xx.xx, xx.xx)"</span>, <span class="st">"or"</span>, <span class="st">"lo"</span>, <span class="st">"hi"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  label <span class="op">=</span> <span class="st">"OR (95% CI)"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>

@@ -22,22 +22,26 @@ assoc_test(
 
   A function of one argument. In omnibus mode it is called with the
   source-data subset (a data.frame) for a single `by` group; in pairwise
-  mode it is called with a 2x2 numeric matrix (see Details). It returns
-  a single value that is rendered into the cell one of two ways: a
-  **numeric** (typically a p-value) is formatted with `format`, or a
-  **character** string is passed through *verbatim* – letting the
-  function that computes an arbitrary test also supply the finished
-  display, e.g. a significance flag (`"0.031*"`), a ceiling/floor
-  (`">.99"`, `"<.0001"`), or a sentinel (`"NE"`). Return `NA` (numeric
-  or character) to render a blank.
+  mode it is called with a 2x2 numeric matrix (see Details). Its return
+  is rendered into the cell one of two ways: a **numeric** value (or a
+  numeric vector matching the number of variables in `format`) is
+  formatted with `format` – a scalar p-value, or several statistics such
+  as an odds ratio with its confidence interval mapped positionally onto
+  a multi-variable f_str; or a **character** string is passed through
+  *verbatim*, letting the function that computes an arbitrary test also
+  supply the finished display (a significance flag `"0.031*"`, a
+  ceiling/floor `">.99"`/`"<.0001"`, a sentinel `"NE"`). Return `NA`
+  (numeric or character) to render a blank.
 
 - format:
 
   An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
   object formatting a **numeric** return; it is ignored when `fn`
-  returns a character string. The f_str must reference a single variable
-  (any name; the returned scalar is passed positionally). Defaults to
-  `f_str("x.xxx", "p")`.
+  returns a character string. Its variable count sets how many values
+  `fn` must return: one variable for a scalar (e.g.
+  `f_str("x.xxx", "p")`, the default), or several for a tuple (e.g.
+  `f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi")`). The returned
+  values are passed positionally, so the variable names are free.
 
 - label:
 
@@ -103,8 +107,9 @@ pair, a 2x2 contingency **matrix**
 are (reference, comparison) arm, columns are (event, no event) – where
 `n` is the cell count and `N` the population denominator for that arm.
 When the layer sets `distinct_by`, the distinct counts/denominators are
-used. `fn` returns a scalar p-value – numeric (formatted with `format`)
-or a verbatim character display string (`NA` renders a blank).
+used. `fn` returns either a numeric value (a scalar, or a vector of
+several statistics matching a multi-variable `format`) or a verbatim
+character display string (`NA` renders a blank).
 
 Attach it to a layer via `layer_settings(assoc_test = assoc_test(...))`.
 
@@ -130,5 +135,17 @@ at2 <- assoc_test(
 at3 <- assoc_test(
   fn = function(.data) anova(lm(AGE ~ TRT, .data))[["Pr(>F)"]][1],
   format = f_str("x.xxx", "p")
+)
+
+# Multiple statistics in one cell: odds ratio with a confidence interval
+at4 <- assoc_test(
+  fn = function(m) {
+    ft <- fisher.test(m)
+    c(ft$estimate, ft$conf.int[1], ft$conf.int[2])
+  },
+  reference = "Placebo",
+  comparisons = c("Low", "High"),
+  format = f_str("xx.xx (xx.xx, xx.xx)", "or", "lo", "hi"),
+  label = "OR (95% CI)"
 )
 ```
