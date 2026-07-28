@@ -160,6 +160,13 @@
 
 ### Bug fixes
 
+- `risk_diff` on a **nested** count layer now errors instead of silently
+  emitting an all-blank column (#58). Risk difference is computed only
+  on single-level count layers; on a nested SOC/PT layer the setting
+  previously produced an empty `rdiff` column with no warning. The error
+  points to pairwise
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md),
+  which does compute a per-level comparison on nested layers.
 - `group_shift(denom_row = TRUE)` no longer renders the literal string
   `"NA"` for a baseline (shift-column) group that is absent within a
   `by` group (#55); an absent group’s denominator is zero, so the cell
