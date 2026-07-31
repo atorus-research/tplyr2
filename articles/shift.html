@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -477,22 +478,38 @@ one used across all of tplyr2.</p>
 <div class="section level2">
 <h2 id="shift-denominators">Shift Denominators<a class="anchor" aria-label="anchor" href="#shift-denominators"></a>
 </h2>
-<p>Every percentage needs a denominator, and a shift table has two
-natural choices. The <code>shift_denom</code> setting selects between
-them:</p>
+<p>Every percentage needs a denominator, and a shift table offers more
+than one reading. The <code>shift_denom</code> setting selects between
+two of them:</p>
 <ul>
 <li>
 <code>shift_denom = "total"</code> (the default) computes each
 percentage out of the <strong>treatment-arm total</strong> – every cell
-in an arm shares one denominator.</li>
+in an arm shares one denominator, so the whole matrix sums to 100% per
+arm.</li>
 <li>
 <code>shift_denom = "column"</code> computes each percentage out of
-its <strong>shift-column group</strong> – the “from”/baseline group
-within the arm. This is the classic “% within the baseline category”
-reading, in which each baseline row’s cells sum to 100% across the
-post-baseline columns.</li>
+its <strong>result column group</strong> – the treatment arm crossed
+with the <em>post-baseline</em> (“shift to”) category, which is the
+shift variable that defines the columns. Read down a single result
+column and the percentages sum to 100%; a cell says “of the subjects who
+ended up here, this share started there”.</li>
 </ul>
+<p>The mirror-image reading – each <strong>baseline</strong> group
+summing to 100%, so a cell says “of the subjects who started here, this
+share ended up there” – is not a <code>shift_denom</code> value. Name
+the denominator groups directly with <code>denoms_by</code> instead,
+listing the column variable(s), any <code>by</code> variables, and the
+baseline row variable:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">settings</span> <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>  denoms_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span>, <span class="st">"PARAM"</span>, <span class="st">"VISIT"</span>, <span class="st">"BNRIND"</span><span class="op">)</span>,</span>
+<span>  format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xxx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p><code>denoms_by</code> must list every variable that scopes the
+denominator or the groups pool together, and it overrides
+<code>shift_denom</code> entirely.</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  where <span class="op">=</span> <span class="va">PARAMCD</span> <span class="op">==</span> <span class="st">"CK"</span>,</span>
@@ -595,12 +612,14 @@ An explicit <code>denoms_by</code> overrides both choices – see
 <div class="section level2">
 <h2 id="the-denominator-row">The Denominator Row<a class="anchor" aria-label="anchor" href="#the-denominator-row"></a>
 </h2>
-<p>Threshold and shift tables often print an “n” row above the shift-to
-rows giving the size of each baseline (from) group – the denominator
-behind the column-group percentages. Set <code>denom_row = TRUE</code>
-to emit it directly from the layer rather than computing it
-separately:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<p>Threshold and shift tables often print an “n” row above the shift
+rows giving the size of each result column group – the denominator
+behind the <code>shift_denom = "column"</code> percentages. Set
+<code>denom_row = TRUE</code> to emit it directly from the layer rather
+than computing it separately (it reports that denominator, so it pairs
+with <code>shift_denom = "column"</code> rather than with a row-wise
+<code>denoms_by</code>):</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  where <span class="op">=</span> <span class="va">PARAMCD</span> <span class="op">==</span> <span class="st">"CK"</span>,</span>
@@ -713,9 +732,9 @@ separately:</p>
 (<code>denom_row_label</code>). Without <code>denom_row_format</code>
 its integers are padded to the width of the shift cells; supplying an
 <code>f_str</code> – here <code>f_str("xx", "n")</code> – gives the row
-its own width, independent of the <code>n_counts</code> format. A
-baseline group that is absent within a by-group renders as
-<code>0</code> in this row rather than a blank.</p>
+its own width, independent of the <code>n_counts</code> format. A column
+group that is absent within a by-group renders as <code>0</code> in this
+row rather than a blank.</p>
 </div>
 <div class="section level2">
 <h2 id="zero-cells-and-percent-thresholds">Zero Cells and Percent Thresholds<a class="anchor" aria-label="anchor" href="#zero-cells-and-percent-thresholds"></a>
@@ -728,8 +747,11 @@ because both route through the same formatting engine.
 <code>"blank"</code> (empty) – and <code>pct_lt</code> /
 <code>pct_gt</code> apply the regulatory “less-than / greater-than”
 percent conventions (e.g. a nonzero cell whose percent rounds below 1
-shows <code>&lt;1</code>). These are described in
-<code><a href="../articles/count.html">vignette("count")</a></code>.</p>
+shows <code>&lt;1</code>). Shift layers also compute the four
+single-proportion confidence-interval keywords (<code>ci_lower</code>,
+<code>ci_upper</code>, and the <code>distinct_</code> variants), against
+whichever denominator <code>shift_denom</code> selects. These are
+described in <code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="distinct-subject-level-shifts">Distinct (Subject-Level) Shifts<a class="anchor" aria-label="anchor" href="#distinct-subject-level-shifts"></a>
@@ -778,9 +800,16 @@ here as well. For further reading:</p>
 customized (<code>denoms_by</code>, <code>denom_where</code>), which
 directly affects shift percentages.</li>
 <li>
-<code><a href="../articles/count.html">vignette("count")</a></code> – the shared count machinery,
-including <code>zero_count_display</code> and the
-<code>pct_lt</code>/<code>pct_gt</code> conventions.</li>
+<code><a href="../articles/count.html">vignette("count")</a></code> – the shared count machinery.</li>
+<li>
+<code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code> –
+<code>zero_count_display</code>, the
+<code>pct_lt</code>/<code>pct_gt</code> conventions, and the
+<code>shift_denom</code>/<code>denom_row</code> combination shown
+above.</li>
+<li>
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> – the statistic keywords
+available in <code>n_counts</code>.</li>
 <li>
 <code><a href="../articles/sort.html">vignette("sort")</a></code> – how row and column ordering works,
 including the role of factor levels touched on here.</li>

@@ -5,7 +5,15 @@ Process a count layer
 ## Usage
 
 ``` r
-build_count_layer(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL)
+build_count_layer(
+  dt,
+  layer,
+  cols,
+  layer_index,
+  col_n = NULL,
+  pop_dt = NULL,
+  col_levels = NULL
+)
 ```
 
 ## Arguments

@@ -2,11 +2,11 @@
 
 Returns just the display content of a
 [`tplyr_build`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
-result — the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns — and
-drops the internal ordering helpers (`ord_layer_index`, `ord_layer_*`)
-and the `row_id` metadata column, giving a frame ready to hand to a
-table-rendering package (clinify, flextable, gt, ...). The build output
-is already ordered, so no re-sorting is performed.
+result, dropping the internal ordering helpers (`ord_layer_index`,
+`ord_layer_*`) and the `row_id` metadata column, and giving a frame
+ready to hand to a table-rendering package (clinify, flextable, gt,
+...). The build output is already ordered, so no re-sorting is
+performed.
 
 ## Usage
 
@@ -32,6 +32,13 @@ as_display(x, labels = FALSE)
 ## Value
 
 A data.frame of display columns.
+
+## Details
+
+Everything that is not an internal helper is kept. That is normally the
+`rowlabel*`, `res*`, `rdiff*`, and `pval*` columns, but a
+`stats_as_columns` desc layer with no `by` variable names its result
+columns after the statistics themselves, and those are retained too.
 
 ## Examples
 

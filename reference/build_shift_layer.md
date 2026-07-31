@@ -7,7 +7,15 @@ dimension, producing result columns like "Placebo_H", "Placebo_N", etc.
 ## Usage
 
 ``` r
-build_shift_layer(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL)
+build_shift_layer(
+  dt,
+  layer,
+  cols,
+  layer_index,
+  col_n = NULL,
+  pop_dt = NULL,
+  col_levels = NULL
+)
 ```
 
 ## Arguments

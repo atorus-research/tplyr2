@@ -94,12 +94,18 @@ layer – you simply reference them by name in your format strings.
 | `q1` | First quartile (25th percentile) | `quantile(x, 0.25, type = ...)` |
 | `q3` | Third quartile (75th percentile) | `quantile(x, 0.75, type = ...)` |
 | `missing` | Missing count | `sum(is.na(x))` |
+| `total` | Denominator for `pct` | The column population, per `denoms_by` |
+| `pct` | Percent of the population with data | `n / total * 100` |
 
 A few important notes about these built-in summaries:
 
 - All statistics use `na.rm = TRUE` by default, so missing values are
   excluded from calculations (except for `missing` itself, which counts
   them).
+- `total` and `pct` give a desc layer an `n (%)` row – the number of
+  subjects who contributed data and what share of the arm that is. They
+  respect `denoms_by` and `denom_where` just as a count layer would. See
+  [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md).
 - `min` and `max` operate on finite values only. If all values in a
   group are `NA`, the result is `NA_real_` rather than `Inf` or `-Inf`.
   This avoids formatting issues where infinity symbols would appear in
@@ -555,17 +561,16 @@ in tplyr2: built-in summaries, custom summaries, quantile algorithms,
 and multi-variable analysis. But there is more to explore when it comes
 to controlling how your numbers look on the page.
 
-The
-[`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
-vignette dives into advanced formatting topics including:
-
-- **Auto-precision**: Dynamically adjusting decimal places based on the
-  precision of collected data, using `precision_by`, `precision_on`, and
-  `precision_cap` in
-  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
-- **Empty value handling**: Controlling what appears when all values in
-  a group are missing, using the `empty` parameter of
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md).
-- **Parenthesis hugging**: Eliminating the gap between parentheses and
-  numbers so that formats like `( 5.2)` become `(5.2 )` using the `X`
-  character in format strings.
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+  – the format string grammar, the complete statistic keyword reference,
+  rounding, and what happens when a statistic is `NA` (including the
+  `empty` argument of
+  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)).
+- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+  – **auto-precision**, which lets the data set the decimal width via
+  `precision_by`, `precision_on`, `precision_data`, and `precision_cap`,
+  and **parenthesis hugging**, which closes the gap between a number and
+  its delimiter.
+- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+  – **`stats_as_columns`**, which transposes the statistics into
+  columns, plus the other display rules a shell may impose.

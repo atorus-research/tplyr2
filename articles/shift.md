@@ -209,17 +209,35 @@ kable(result_counts[, !grepl("^ord_", names(result_counts))])
 
 ## Shift Denominators
 
-Every percentage needs a denominator, and a shift table has two natural
-choices. The `shift_denom` setting selects between them:
+Every percentage needs a denominator, and a shift table offers more than
+one reading. The `shift_denom` setting selects between two of them:
 
 - `shift_denom = "total"` (the default) computes each percentage out of
   the **treatment-arm total** – every cell in an arm shares one
-  denominator.
-- `shift_denom = "column"` computes each percentage out of its
-  **shift-column group** – the “from”/baseline group within the arm.
-  This is the classic “% within the baseline category” reading, in which
-  each baseline row’s cells sum to 100% across the post-baseline
-  columns.
+  denominator, so the whole matrix sums to 100% per arm.
+- `shift_denom = "column"` computes each percentage out of its **result
+  column group** – the treatment arm crossed with the *post-baseline*
+  (“shift to”) category, which is the shift variable that defines the
+  columns. Read down a single result column and the percentages sum to
+  100%; a cell says “of the subjects who ended up here, this share
+  started there”.
+
+The mirror-image reading – each **baseline** group summing to 100%, so a
+cell says “of the subjects who started here, this share ended up there”
+– is not a `shift_denom` value. Name the denominator groups directly
+with `denoms_by` instead, listing the column variable(s), any `by`
+variables, and the baseline row variable:
+
+``` r
+
+settings = layer_settings(
+  denoms_by = c("TRTA", "PARAM", "VISIT", "BNRIND"),
+  format_strings = list(n_counts = f_str("xx (xxx.x%)", "n", "pct"))
+)
+```
+
+`denoms_by` must list every variable that scopes the denominator or the
+groups pool together, and it overrides `shift_denom` entirely.
 
 ``` r
 
@@ -257,10 +275,12 @@ total. An explicit `denoms_by` overrides both choices – see
 
 ## The Denominator Row
 
-Threshold and shift tables often print an “n” row above the shift-to
-rows giving the size of each baseline (from) group – the denominator
-behind the column-group percentages. Set `denom_row = TRUE` to emit it
-directly from the layer rather than computing it separately:
+Threshold and shift tables often print an “n” row above the shift rows
+giving the size of each result column group – the denominator behind the
+`shift_denom = "column"` percentages. Set `denom_row = TRUE` to emit it
+directly from the layer rather than computing it separately (it reports
+that denominator, so it pairs with `shift_denom = "column"` rather than
+with a row-wise `denoms_by`):
 
 ``` r
 
@@ -296,9 +316,9 @@ kable(result[, !grepl("^ord_", names(result))])
 The row is labelled `"n"` by default (`denom_row_label`). Without
 `denom_row_format` its integers are padded to the width of the shift
 cells; supplying an `f_str` – here `f_str("xx", "n")` – gives the row
-its own width, independent of the `n_counts` format. A baseline group
-that is absent within a by-group renders as `0` in this row rather than
-a blank.
+its own width, independent of the `n_counts` format. A column group that
+is absent within a by-group renders as `0` in this row rather than a
+blank.
 
 ## Zero Cells and Percent Thresholds
 
@@ -308,8 +328,11 @@ controls how a zero cell renders – `"full"` (default, e.g. `0 (0.0%)`),
 `"count_only"` (just the count, e.g. `0`), or `"blank"` (empty) – and
 `pct_lt` / `pct_gt` apply the regulatory “less-than / greater-than”
 percent conventions (e.g. a nonzero cell whose percent rounds below 1
-shows `<1`). These are described in
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md).
+shows `<1`). Shift layers also compute the four single-proportion
+confidence-interval keywords (`ci_lower`, `ci_upper`, and the
+`distinct_` variants), against whichever denominator `shift_denom`
+selects. These are described in
+[`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
 
 ## Distinct (Subject-Level) Shifts
 
@@ -356,8 +379,12 @@ well. For further reading:
   – how denominators are computed and customized (`denoms_by`,
   `denom_where`), which directly affects shift percentages.
 - [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
-  – the shared count machinery, including `zero_count_display` and the
-  `pct_lt`/`pct_gt` conventions.
+  – the shared count machinery.
+- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+  – `zero_count_display`, the `pct_lt`/`pct_gt` conventions, and the
+  `shift_denom`/`denom_row` combination shown above.
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+  – the statistic keywords available in `n_counts`.
 - [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
   – how row and column ordering works, including the role of factor
   levels touched on here.

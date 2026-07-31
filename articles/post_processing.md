@@ -216,6 +216,21 @@ expression using the variable name `x` that tests the selected number.
 When `full_string = FALSE` (the default), the replacement is padded to
 preserve column alignment within the format group’s character space.
 
+> **Reach for the layer settings first.** The two conventions this
+> function is most often used for – rendering small percentages as `<1%`
+> and suppressing the percent on zero counts – have declarative
+> equivalents in
+> [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md):
+> `pct_lt`/`pct_gt` and `zero_count_display`. Those run at build time,
+> so the underlying numeric data stays intact and the convention
+> survives serialization, metadata, and ARD conversion. See
+> [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
+> Use
+> [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)
+> for the rules that have no setting – flagging a threshold, blanking a
+> cell on a condition the layer does not know about, reformatting a
+> bound external statistic.
+
 ## Replacing Leading Whitespace
 
 tplyr2 uses leading spaces to align numbers within format fields. This
@@ -254,6 +269,27 @@ fmt <- f_str("xxx.x (xxx.xx)", "mean", "sd")
 apply_formats(fmt, c(75.3, 68.1, 80.5), c(8.21, 7.55, 9.03))
 #> [1] " 75.3 (  8.21)" " 68.1 (  7.55)" " 80.5 (  9.03)"
 ```
+
+Three arguments exist for exactly that case. `na` substitutes a string
+for cells whose inputs are all `NA`, including a genuinely empty one
+(the default is a blank of the field’s width). `width` and `pad` pad the
+whole token to a fixed total width.
+
+``` r
+
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7))               # blank of field width
+#> [1] " 2.3" "    " "12.7"
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7), na = "NE")    # a sentinel
+#> [1] " 2.3" "NE"   "12.7"
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7), width = 8)    # padded to 8
+#> [1] " 2.3    " "        " "12.7    "
+```
+
+When `na` applies to a cell, it wins and that cell is *not* padded. See
+[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+for the full argument list and
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+for a worked example of binding external results onto a built table.
 
 This is useful when you need to format numbers from external data
 sources using the same format strings that drive your tplyr2 tables. The
@@ -432,10 +468,13 @@ at least two), which makes it convenient for one-off relabeling as well.
 
 Once a table is post-processed,
 [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
-trims it to just the columns a renderer needs – the `rowlabel*`, `res*`,
-`rdiff*`, and `pval*` columns – dropping the internal `ord_*` (and
-`row_id`) columns and preserving row order. Pass `labels = TRUE` to
-rename the result columns to their column-group header labels
+trims it to just the columns a renderer needs, dropping the internal
+`ord_*` (and `row_id`) columns and preserving row order. That is
+normally the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns – but it
+removes the internal helpers rather than whitelisting the display ones,
+so a `stats_as_columns` desc layer that names its columns after the
+statistics keeps them too. Pass `labels = TRUE` to rename the result
+columns to their column-group header labels
 (e.g. `"Xanomeline High Dose (N=84)"`), ready to hand to `gt`,
 `flextable`, or a `clinify`-style renderer.
 
@@ -445,24 +484,36 @@ final <- as_display(display, labels = TRUE)
 kable(head(final, 12))
 ```
 
-| Placebo (N=86) | Xanomeline High Dose (N=84) | Xanomeline Low Dose (N=84) |
-|:---------------|:----------------------------|:---------------------------|
-|                |                             |                            |
-| 4 ( 4.7%)      | 6 ( 7.1%)                   | 5 ( 6.0%)                  |
-| 0 ( 0.0%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
-| 0 ( 0.0%)      | 1 ( 1.2%)                   | 0 ( 0.0%)                  |
-| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
-| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
-| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
-| 0 ( 0.0%)      | 1 ( 1.2%)                   | 2 ( 2.4%)                  |
-| 0 ( 0.0%)      | 3 ( 3.6%)                   | 1 ( 1.2%)                  |
-| 1 ( 1.2%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
-| 0 ( 0.0%)      | 0 ( 0.0%)                   | 1 ( 1.2%)                  |
-| 1 ( 1.2%)      | 0 ( 0.0%)                   | 0 ( 0.0%)                  |
+| row_label | Placebo (N=86) | Xanomeline High Dose (N=84) | Xanomeline Low Dose (N=84) |
+|:---|:---|:---|:---|
+| CARDIAC DISORDERS |  |  |  |
+|  | 4 ( 4.7%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
 [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
 is layout-only; it does not change any cell values. It is the natural
-last call in a build-then-polish pipeline.
+last call in a build-then-polish pipeline – and it has to be last,
+because
+[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+reads `ord_layer_index` to avoid blanking labels across a layer
+boundary, and
+[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+removes it.
+
+The header labels follow a small grammar renderers can rely on:
+column-variable values joined by `" | "`, with an `(N=n)` suffix when a
+population count is available. A `stat_columns` or `stats_as_columns`
+layer extends it to `"<group> (N=n) | <statistic>"`, so splitting on
+`" | "` gives you the levels of a spanning header.
 
 ## Summary
 

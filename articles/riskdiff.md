@@ -495,3 +495,43 @@ The key points to remember:
   [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md),
   and formatted values can be parsed with
   [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md).
+
+## Single-Level Layers Only
+
+`risk_diff` works on single-level count layers. Attaching it to a
+**nested** count layer – the `group_count(c("AEBODSYS", "AEDECOD"))`
+shape most adverse event tables use – is a hard error rather than a
+silent partial result:
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        risk_diff = list(
+          comparisons = list(c("Xanomeline High Dose", "Placebo"))
+        )
+      )
+    )
+  )
+)
+
+tplyr_build(spec, tplyr_adae)
+#> Error in `map2()`:
+#> ℹ In index: 1.
+#> Caused by error:
+#> ! Layer 1: risk_diff is not supported on nested count layers. Use a pairwise assoc_test() for a per-level comparison column (see vignette("binding-statistics")).
+```
+
+For a per-level comparison column on a nested layer, use a pairwise
+[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+instead. It emits one `pval` column per comparison with a value on every
+preferred-term row *and* every body-system subtotal row, and it accepts
+any 2x2 test you supply. See
+[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md),
+which also covers association tests on single-level and descriptive
+layers and the pattern for binding externally fitted model results onto
+a built table.

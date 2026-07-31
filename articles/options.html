@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -160,11 +161,14 @@ option.</p>
 <p>Let’s see the difference in practice. We will build a simple
 descriptive statistics table and compare the mean under both rounding
 methods.</p>
+<p>The difference only shows when a value lands exactly on a rounding
+boundary at the displayed precision, so the data below is chosen to do
+that: the two group means are exactly 2.5 and 4.5, displayed with no
+decimals.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create data where rounding makes a visible difference</span></span>
-<span><span class="va">demo_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">demo_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  TRT <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Drug"</span>, <span class="st">"Placebo"</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">4</span><span class="op">)</span>,</span>
-<span>  VAL <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.5</span>, <span class="fl">3.5</span>, <span class="fl">4.5</span>, <span class="fl">5.5</span>, <span class="fl">1.5</span>, <span class="fl">2.5</span>, <span class="fl">3.5</span>, <span class="fl">4.5</span><span class="op">)</span></span>
+<span>  VAL <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span>, <span class="fl">4</span>,   <span class="fl">3</span>, <span class="fl">4</span>, <span class="fl">5</span>, <span class="fl">6</span><span class="op">)</span>   <span class="co"># means of exactly 2.5 and 4.5</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
@@ -173,7 +177,7 @@ methods.</p>
 <span>    <span class="fu"><a href="../reference/group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"VAL"</span>,</span>
 <span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
 <span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>          <span class="st">"Mean"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"x.x"</span>, <span class="st">"mean"</span><span class="op">)</span></span>
+<span>          <span class="st">"Mean"</span> <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx"</span>, <span class="st">"mean"</span><span class="op">)</span></span>
 <span>        <span class="op">)</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">)</span></span>
@@ -193,8 +197,8 @@ methods.</p>
 </tr></thead>
 <tbody><tr class="odd">
 <td align="left">Mean</td>
-<td align="left">4.0</td>
-<td align="left">3.0</td>
+<td align="left">2</td>
+<td align="left">4</td>
 </tr></tbody>
 </table>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -213,20 +217,25 @@ methods.</p>
 </tr></thead>
 <tbody><tr class="odd">
 <td align="left">Mean</td>
-<td align="left">4.0</td>
-<td align="left">3.0</td>
+<td align="left">3</td>
+<td align="left">5</td>
 </tr></tbody>
 </table>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span></span>
 <span><span class="co"># Reset to default</span></span>
 <span><span class="fu"><a href="../reference/tplyr2_options.html">tplyr2_options</a></span><span class="op">(</span>IBMRounding <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
-<p>The difference is subtle but consequential for regulatory
-submissions. When the mean falls exactly on a rounding boundary (e.g.,
-4.0 with one decimal rounds to “4.0” either way, but values like 2.25
-rounded to one decimal show the difference), IBM rounding consistently
-rounds the 5 away from zero, while banker’s rounding alternates based on
-the preceding digit.</p>
+<p>Both cells change. Banker’s rounding sends 2.5 down to the even 2 and
+4.5 down to the even 4; IBM rounding sends both up, to 3 and 5. A value
+that is <em>not</em> on a boundary rounds identically under either rule,
+which is why the difference is easy to miss until a reviewer reconciles
+your output against SAS.</p>
+<p>The setting applies to every rounded value in a build — percentages,
+means, quartiles, risk differences — so a table is internally consistent
+either way. Negative values round away from zero as well, so
+<code>-2.5</code> becomes <code>-3</code>. See
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> for how rounding interacts with
+format string widths.</p>
 </div>
 <div class="section level2">
 <h2 id="quantile-algorithm">Quantile Algorithm<a class="anchor" aria-label="anchor" href="#quantile-algorithm"></a>
@@ -416,6 +425,12 @@ default. If a specific layer provides its own <code>precision_cap</code>
 in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>, the layer-level cap takes priority.
 This gives you a safety net at the session level while allowing
 individual layers to override when needed.</p>
+<p>The cap applies to the width measured from the data, <em>before</em>
+any <code>+N</code> offset in the format string is added – so
+<code>dec = 1</code> does not guarantee one decimal in the output.
+<code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code> covers the auto-precision
+system in full, including <code>precision_by</code>,
+<code>precision_on</code>, and <code>precision_data</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="custom-summaries">Custom Summaries<a class="anchor" aria-label="anchor" href="#custom-summaries"></a>
@@ -595,11 +610,11 @@ new R session. If you want your options to persist, place the
 <code><a href="../articles/desc.html">vignette("desc")</a></code> – descriptive statistics, where
 <code>quantile_type</code> and <code>custom_summaries</code> apply.</li>
 <li>
-<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> – auto-precision,
-which <code>precision_cap</code> bounds.</li>
+<code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code> – auto-precision, which
+<code>precision_cap</code> bounds.</li>
 <li>
-<code><a href="../articles/general_string_formatting.html">vignette("general_string_formatting")</a></code> – the
-<code><a href="../reference/f_str.html">f_str()</a></code> system that IBM rounding feeds into.</li>
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> – the <code><a href="../reference/f_str.html">f_str()</a></code>
+system that IBM rounding feeds into.</li>
 </ul>
 </div>
 </div>

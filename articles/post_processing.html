@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -622,6 +623,20 @@ in the string to evaluate (1st number, 2nd number, etc.). The
 <code>full_string = FALSE</code> (the default), the replacement is
 padded to preserve column alignment within the format group’s character
 space.</p>
+<blockquote>
+<p><strong>Reach for the layer settings first.</strong> The two
+conventions this function is most often used for – rendering small
+percentages as <code>&lt;1%</code> and suppressing the percent on zero
+counts – have declarative equivalents in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>:
+<code>pct_lt</code>/<code>pct_gt</code> and
+<code>zero_count_display</code>. Those run at build time, so the
+underlying numeric data stays intact and the convention survives
+serialization, metadata, and ARD conversion. See
+<code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code>. Use
+<code><a href="../reference/apply_conditional_format.html">apply_conditional_format()</a></code> for the rules that have no
+setting – flagging a threshold, blanking a cell on a condition the layer
+does not know about, reformatting a bound external statistic.</p>
+</blockquote>
 </div>
 <div class="section level2">
 <h2 id="replacing-leading-whitespace">Replacing Leading Whitespace<a class="anchor" aria-label="anchor" href="#replacing-leading-whitespace"></a>
@@ -655,6 +670,22 @@ formatted character strings.</p>
 <code class="sourceCode R"><span><span class="va">fmt</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx.x (xxx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="va">fmt</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">75.3</span>, <span class="fl">68.1</span>, <span class="fl">80.5</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">8.21</span>, <span class="fl">7.55</span>, <span class="fl">9.03</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] " 75.3 (  8.21)" " 68.1 (  7.55)" " 80.5 (  9.03)"</span></span></code></pre></div>
+<p>Three arguments exist for exactly that case. <code>na</code>
+substitutes a string for cells whose inputs are all <code>NA</code>,
+including a genuinely empty one (the default is a blank of the field’s
+width). <code>width</code> and <code>pad</code> pad the whole token to a
+fixed total width.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"v"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.3</span>, <span class="cn">NA</span>, <span class="fl">12.7</span><span class="op">)</span><span class="op">)</span>               <span class="co"># blank of field width</span></span>
+<span><span class="co">#&gt; [1] " 2.3" "    " "12.7"</span></span>
+<span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"v"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.3</span>, <span class="cn">NA</span>, <span class="fl">12.7</span><span class="op">)</span>, na <span class="op">=</span> <span class="st">"NE"</span><span class="op">)</span>    <span class="co"># a sentinel</span></span>
+<span><span class="co">#&gt; [1] " 2.3" "NE"   "12.7"</span></span>
+<span><span class="fu"><a href="../reference/apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x"</span>, <span class="st">"v"</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2.3</span>, <span class="cn">NA</span>, <span class="fl">12.7</span><span class="op">)</span>, width <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>    <span class="co"># padded to 8</span></span>
+<span><span class="co">#&gt; [1] " 2.3    " "        " "12.7    "</span></span></code></pre></div>
+<p>When <code>na</code> applies to a cell, it wins and that cell is
+<em>not</em> padded. See <code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> for the
+full argument list and <code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code> for a
+worked example of binding external results onto a built table.</p>
 <p>This is useful when you need to format numbers from external data
 sources using the same format strings that drive your tplyr2 tables. The
 precision system is also available through the <code>precision</code>
@@ -666,7 +697,7 @@ parameter for auto-precision formatting.</p>
 <p><code><a href="../reference/str_indent_wrap.html">str_indent_wrap()</a></code> wraps long text strings to a specified
 width while automatically preserving any existing indentation and
 applying hyphenation to words that exceed the column width.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ex_text</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RENAL AND URINARY DISORDERS"</span>, <span class="st">"   NEPHROLITHIASIS"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste</a></span><span class="op">(</span><span class="fu"><a href="../reference/str_indent_wrap.html">str_indent_wrap</a></span><span class="op">(</span><span class="va">ex_text</span>, width <span class="op">=</span> <span class="fl">8</span><span class="op">)</span>, collapse <span class="op">=</span> <span class="st">"\n\n"</span><span class="op">)</span>, <span class="st">"\n"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; RENAL</span></span>
@@ -689,7 +720,7 @@ using the <code>tab_width</code> parameter (default 5).</p>
 <p>In practice, you will chain several post-processing steps together.
 Here is a complete pipeline that takes raw build output and produces a
 display-ready table.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -864,7 +895,7 @@ first can still be useful.</p>
 collapsing labels. Here we replace the percentage with
 <code>(&lt;1%)</code> in the placebo arm when the percentage rounds to 0
 but the count is non-zero.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Apply conditional formatting before collapsing labels</span></span>
 <span><span class="va">output</span><span class="op">$</span><span class="va">res1</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/apply_conditional_format.html">apply_conditional_format</a></span><span class="op">(</span></span>
 <span>  <span class="va">output</span><span class="op">$</span><span class="va">res1</span>, <span class="fl">2</span>, <span class="va">x</span> <span class="op">==</span> <span class="fl">0</span>, <span class="st">"(&lt;1%)"</span></span>
@@ -990,7 +1021,7 @@ each outer group (a header row with no results). Passing
 the outer value and its indented inner value share a single column with
 no extra rows, and outer-level rows keep their own results. This matches
 <code>set_nest_count(TRUE)</code> from Tplyr v1.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">nested</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/collapse_row_labels.html">collapse_row_labels</a></span><span class="op">(</span><span class="va">output</span>, nest <span class="op">=</span> <span class="cn">TRUE</span>, indent <span class="op">=</span> <span class="st">"   "</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">nested</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row_label"</span>, <span class="st">"res1"</span>, <span class="st">"res2"</span>, <span class="st">"res3"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
@@ -1084,85 +1115,102 @@ as well.</p>
 <h2 id="the-final-step-as_display">The Final Step: <code>as_display()</code><a class="anchor" aria-label="anchor" href="#the-final-step-as_display"></a>
 </h2>
 <p>Once a table is post-processed, <code><a href="../reference/as_display.html">as_display()</a></code> trims it to
-just the columns a renderer needs – the <code>rowlabel*</code>,
-<code>res*</code>, <code>rdiff*</code>, and <code>pval*</code> columns –
-dropping the internal <code>ord_*</code> (and <code>row_id</code>)
-columns and preserving row order. Pass <code>labels = TRUE</code> to
-rename the result columns to their column-group header labels
+just the columns a renderer needs, dropping the internal
+<code>ord_*</code> (and <code>row_id</code>) columns and preserving row
+order. That is normally the <code>rowlabel*</code>, <code>res*</code>,
+<code>rdiff*</code>, and <code>pval*</code> columns – but it removes the
+internal helpers rather than whitelisting the display ones, so a
+<code>stats_as_columns</code> desc layer that names its columns after
+the statistics keeps them too. Pass <code>labels = TRUE</code> to rename
+the result columns to their column-group header labels
 (e.g. <code>"Xanomeline High Dose (N=84)"</code>), ready to hand to
 <code>gt</code>, <code>flextable</code>, or a <code>clinify</code>-style
 renderer.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">final</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_display.html">as_display</a></span><span class="op">(</span><span class="va">display</span>, labels <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">final</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="21%">
-<col width="40%">
-<col width="38%">
+<col width="30%">
+<col width="14%">
+<col width="27%">
+<col width="26%">
 </colgroup>
 <thead><tr class="header">
+<th align="left">row_label</th>
 <th align="left">Placebo (N=86)</th>
 <th align="left">Xanomeline High Dose (N=84)</th>
 <th align="left">Xanomeline Low Dose (N=84)</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
 <tr class="even">
+<td align="left"></td>
 <td align="left">4 ( 4.7%)</td>
 <td align="left">6 ( 7.1%)</td>
 <td align="left">5 ( 6.0%)</td>
 </tr>
 <tr class="odd">
+<td align="left">ATRIAL FIBRILLATION</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="even">
+<td align="left">ATRIAL FLUTTER</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
+<td align="left">ATRIAL HYPERTROPHY</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
+<td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="odd">
+<td align="left">CARDIAC FAILURE CONGESTIVE</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 </tr>
 <tr class="even">
+<td align="left">MYOCARDIAL INFARCTION</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">2 ( 2.4%)</td>
 </tr>
 <tr class="odd">
+<td align="left">SINUS BRADYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">3 ( 3.6%)</td>
 <td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="even">
+<td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="odd">
+<td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">1 ( 1.2%)</td>
 </tr>
 <tr class="even">
+<td align="left">TACHYCARDIA</td>
 <td align="left">1 ( 1.2%)</td>
 <td align="left">0 ( 0.0%)</td>
 <td align="left">0 ( 0.0%)</td>
@@ -1170,7 +1218,17 @@ renderer.</p>
 </tbody>
 </table>
 <p><code><a href="../reference/as_display.html">as_display()</a></code> is layout-only; it does not change any cell
-values. It is the natural last call in a build-then-polish pipeline.</p>
+values. It is the natural last call in a build-then-polish pipeline –
+and it has to be last, because <code><a href="../reference/apply_row_masks.html">apply_row_masks()</a></code> reads
+<code>ord_layer_index</code> to avoid blanking labels across a layer
+boundary, and <code><a href="../reference/as_display.html">as_display()</a></code> removes it.</p>
+<p>The header labels follow a small grammar renderers can rely on:
+column-variable values joined by <code>" | "</code>, with an
+<code>(N=n)</code> suffix when a population count is available. A
+<code>stat_columns</code> or <code>stats_as_columns</code> layer extends
+it to <code>"&lt;group&gt; (N=n) | &lt;statistic&gt;"</code>, so
+splitting on <code>" | "</code> gives you the levels of a spanning
+header.</p>
 </div>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>

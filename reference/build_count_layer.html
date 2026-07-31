@@ -29,8 +29,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -77,7 +78,15 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">build_count_layer</span><span class="op">(</span><span class="va">dt</span>, <span class="va">layer</span>, <span class="va">cols</span>, <span class="va">layer_index</span>, col_n <span class="op">=</span> <span class="cn">NULL</span>, pop_dt <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">build_count_layer</span><span class="op">(</span></span>
+<span>  <span class="va">dt</span>,</span>
+<span>  <span class="va">layer</span>,</span>
+<span>  <span class="va">cols</span>,</span>
+<span>  <span class="va">layer_index</span>,</span>
+<span>  col_n <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pop_dt <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  col_levels <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">

@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -328,6 +329,13 @@ by-variables:</p>
 <code class="sourceCode R"><span><span class="va">source_rows</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_meta_subset.html">tplyr_meta_subset</a></span><span class="op">(</span><span class="va">result</span>, <span class="va">total_row</span><span class="op">$</span><span class="va">row_id</span>, <span class="st">"res1"</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">source_rows</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 86</span></span></code></pre></div>
+<p>That holds for the default
+<code>total_row_count_missings = TRUE</code>, where the total counts
+every record in the column. Set it to <code>FALSE</code> and the total
+row’s metadata gains the matching exclusions –
+<code>!is.na(&lt;target&gt;)</code>, plus a not-in filter for any
+<code>missing_count$missing_values</code> – so the subset stays exactly
+the rows the total counted.</p>
 </div>
 </div>
 <div class="section level2">

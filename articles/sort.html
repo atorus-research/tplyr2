@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -1027,12 +1028,159 @@ interleaved structure.</li>
 outer-level (body system) rows, 2 for inner-level (preferred term) rows.
 Total rows, if present, get depth 0.</li>
 </ul>
-<p>Nested layers order both levels by factor level (then VARN, then
-alphabetical). To reverse the outer level – for example to list system
-organ classes in descending rather than ascending order – set
+<div class="section level3">
+<h3 id="sorting-preferred-terms-by-frequency">Sorting Preferred Terms by Frequency<a class="anchor" aria-label="anchor" href="#sorting-preferred-terms-by-frequency"></a>
+</h3>
+<p>The canonical adverse event display sorts preferred terms by
+descending frequency <em>within</em> each body system.
+<code>order_count_method = "bycount"</code> reaches the inner level of a
+nested layer and does exactly that, with <code>ordering_cols</code>
+choosing which treatment column drives the sort:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>, <span class="st">"AEDECOD"</span><span class="op">)</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        distinct_by         <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
+<span>        order_count_method  <span class="op">=</span> <span class="st">"bycount"</span>,</span>
+<span>        ordering_cols       <span class="op">=</span> <span class="st">"Xanomeline High Dose"</span>,</span>
+<span>        format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span><span class="op">)</span></span>
+<span><span class="fu">kable</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span>, <span class="st">"res2"</span>, <span class="st">"ord_layer_1"</span>,</span>
+<span>                      <span class="st">"ord_layer_2"</span><span class="op">)</span><span class="op">]</span>, <span class="fl">12</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<table class="table">
+<colgroup>
+<col width="21%">
+<col width="37%">
+<col width="12%">
+<col width="14%">
+<col width="14%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">rowlabel1</th>
+<th align="left">rowlabel2</th>
+<th align="left">res2</th>
+<th align="right">ord_layer_1</th>
+<th align="right">ord_layer_2</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left"></td>
+<td align="left">6 ( 7.1%)</td>
+<td align="right">1</td>
+<td align="right">1</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">SINUS BRADYCARDIA</td>
+<td align="left">3 ( 3.6%)</td>
+<td align="right">2</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">ATRIAL FLUTTER</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="right">3</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">MYOCARDIAL INFARCTION</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="right">4</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">VENTRICULAR EXTRASYSTOLES</td>
+<td align="left">1 ( 1.2%)</td>
+<td align="right">5</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">ATRIAL FIBRILLATION</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">6</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">ATRIAL HYPERTROPHY</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">7</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">BUNDLE BRANCH BLOCK RIGHT</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">8</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">CARDIAC FAILURE CONGESTIVE</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">9</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">SUPRAVENTRICULAR EXTRASYSTOLES</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">10</td>
+<td align="right">2</td>
+</tr>
+<tr class="odd">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">SUPRAVENTRICULAR TACHYCARDIA</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">11</td>
+<td align="right">2</td>
+</tr>
+<tr class="even">
+<td align="left">CARDIAC DISORDERS</td>
+<td align="left">TACHYCARDIA</td>
+<td align="left">0 ( 0.0%)</td>
+<td align="right">12</td>
+<td align="right">2</td>
+</tr>
+</tbody>
+</table>
+<p>Within Cardiac Disorders the terms now run 3, 1, 1, 1, 0, 0, … on the
+<code>Xanomeline High Dose</code> column, with ties broken
+alphabetically. Each body system is sorted independently, and its own
+subtotal row stays at the top of its block.</p>
+<p><strong>The outer level is not sorted by frequency.</strong>
+<code>bycount</code> applies to the inner level only; absent it, nested
+layers order both levels by factor level (then VARN, then alphabetical),
+and with it the outer level keeps that default order.</p>
+<p><code>outer_sort_position</code> accepts <code>"asc"</code> or
+<code>"desc"</code>, but <code>"desc"</code> <em>reverses</em> the outer
+level’s default order rather than ranking the system organ classes by
+count – so Vascular Disorders, last alphabetically and with no High Dose
+subjects at all, leads. If your shell needs the body systems in
+descending frequency too, reorder the outer blocks yourself after the
+build: pull each system’s subtotal from <code>ord_layer_2 == 1</code>,
+rank those, and use the ranking as the primary sort key ahead of
+<code>ord_layer_1</code>.</p>
+<p>To reverse the outer level – for example to list system organ classes
+in descending rather than ascending order – set
 <code>outer_sort_position = "desc"</code>; the inner (preferred-term)
 order and the subtotal-before-detail nesting are preserved.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
 <span>  pop_data <span class="op">=</span> <span class="fu"><a href="../reference/pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01A"</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -1121,6 +1269,7 @@ order and the subtotal-before-detail nesting are preserved.</p>
 </tbody>
 </table>
 </div>
+</div>
 <div class="section level2">
 <h2 id="practical-example-preparing-a-final-table">Practical Example: Preparing a Final Table<a class="anchor" aria-label="anchor" href="#practical-example-preparing-a-final-table"></a>
 </h2>
@@ -1128,7 +1277,7 @@ order and the subtotal-before-detail nesting are preserved.</p>
 post-processing. When you are ready to produce a final display table,
 you will typically sort your data using the <code>ord_layer_*</code>
 columns and then drop them before rendering.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
 <span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span>
 <span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>

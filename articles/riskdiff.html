@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -1092,6 +1093,42 @@ via the <code>ci</code> parameter.</li>
 <code><a href="../reference/tplyr_numeric_data.html">tplyr_numeric_data()</a></code>, and formatted values can be parsed
 with <code><a href="../reference/str_extract_num.html">str_extract_num()</a></code>.</li>
 </ul>
+</div>
+<div class="section level2">
+<h2 id="single-level-layers-only">Single-Level Layers Only<a class="anchor" aria-label="anchor" href="#single-level-layers-only"></a>
+</h2>
+<p><code>risk_diff</code> works on single-level count layers. Attaching
+it to a <strong>nested</strong> count layer – the
+<code>group_count(c("AEBODSYS", "AEDECOD"))</code> shape most adverse
+event tables use – is a hard error rather than a silent partial
+result:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span>
+<span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span>
+<span>  layers <span class="op">=</span> <span class="fu"><a href="../reference/tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span>
+<span>    <span class="fu"><a href="../reference/group_count.html">group_count</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>, <span class="st">"AEDECOD"</span><span class="op">)</span>,</span>
+<span>      settings <span class="op">=</span> <span class="fu"><a href="../reference/layer_settings.html">layer_settings</a></span><span class="op">(</span></span>
+<span>        distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span>,</span>
+<span>        risk_diff <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>          comparisons <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Xanomeline High Dose"</span>, <span class="st">"Placebo"</span><span class="op">)</span><span class="op">)</span></span>
+<span>        <span class="op">)</span></span>
+<span>      <span class="op">)</span></span>
+<span>    <span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adae</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;"> in `map2()`:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> In index: 1.</span></span>
+<span><span class="co">#&gt; <span style="font-weight: bold;">Caused by error:</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Layer 1: risk_diff is not supported on nested count layers. Use a pairwise assoc_test() for a per-level comparison column (see vignette("binding-statistics")).</span></span></code></pre></div>
+<p>For a per-level comparison column on a nested layer, use a pairwise
+<code><a href="../reference/assoc_test.html">assoc_test()</a></code> instead. It emits one <code>pval</code> column
+per comparison with a value on every preferred-term row <em>and</em>
+every body-system subtotal row, and it accepts any 2x2 test you supply.
+See <code><a href="../articles/binding-statistics.html">vignette("binding-statistics")</a></code>, which also covers
+association tests on single-level and descriptive layers and the pattern
+for binding externally fitted model results onto a built table.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

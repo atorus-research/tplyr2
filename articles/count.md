@@ -440,11 +440,12 @@ to keep in mind:
 You may notice that tplyr2 carefully aligns numbers within their format
 fields, padding with leading spaces so that decimal points and
 parentheses line up across rows. For even tighter alignment, tplyr2
-supports “parenthesis hugging” using uppercase `X` characters in format
-strings. When you use `X` instead of `x`, leading spaces shift outside
-the parenthesis so the opening delimiter sits right next to the number.
-This is a more advanced feature covered in detail in the format strings
-documentation.
+supports “parenthesis hugging”: writing a format group with uppercase
+`X` moves its leading spaces *past* the number, so the opening
+parenthesis sits flush against the first digit while the cell keeps its
+total width. See
+[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+for the mechanics and the caveats.
 
 ## Nested Count Summaries
 
@@ -660,3 +661,16 @@ in other vignettes:
 - [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
   – Row masks, conditional formatting, and row label collapsing to
   polish your final output.
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+  – The complete count-layer statistic keyword reference and the
+  `n_counts` rule.
+- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+  – `<1%` and `>99%` percents (`pct_lt`, `pct_gt`), zero-count
+  suppression (`zero_count_display`), showing only selected levels
+  (`keep_levels`), and missing rows (`missing_count`).
+
+One note on the total row: it inherits the layer’s own format string,
+and there is no `total_row_format` setting. If the total needs a
+different width from the category rows, reformat that row after the
+build with
+[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md).

@@ -201,6 +201,12 @@ nrow(source_rows)
 #> [1] 86
 ```
 
+That holds for the default `total_row_count_missings = TRUE`, where the
+total counts every record in the column. Set it to `FALSE` and the total
+row’s metadata gains the matching exclusions – `!is.na(<target>)`, plus
+a not-in filter for any `missing_count$missing_values` – so the subset
+stays exactly the rows the total counted.
+
 ## Metadata for Descriptive Statistics Layers
 
 Each row in a desc layer represents a statistic (n, mean, etc.), not a

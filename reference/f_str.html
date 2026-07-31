@@ -29,8 +29,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -93,7 +94,14 @@
 
 
 <dt id="arg-empty">empty<a class="anchor" aria-label="anchor" href="#arg-empty"></a></dt>
-<dd><p>Value(s) to display when data is NA/missing</p></dd>
+<dd><p>Value to display when data is NA/missing. Supplied as
+<code>c(.overall = "...")</code>, it replaces the entire cell, but only once
+<em>every</em> format group in the string is NA. Supplied unnamed (e.g.
+<code>empty = "NA"</code>), it instead fills each NA format group in place,
+right-justified to the width that group would have occupied, so a partially
+missing cell keeps its alignment — <code>f_str("xx (xxx)", "n", "pct",
+empty = "NA")</code> renders <code>"NA ( NA)"</code>. The default (<code>NULL</code>) leaves
+NA groups as blanks of the field width.</p></dd>
 
 </dl></div>
     <div class="section level2">

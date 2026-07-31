@@ -422,9 +422,73 @@ In nested output:
   system) rows, 2 for inner-level (preferred term) rows. Total rows, if
   present, get depth 0.
 
-Nested layers order both levels by factor level (then VARN, then
-alphabetical). To reverse the outer level – for example to list system
-organ classes in descending rather than ascending order – set
+### Sorting Preferred Terms by Frequency
+
+The canonical adverse event display sorts preferred terms by descending
+frequency *within* each body system. `order_count_method = "bycount"`
+reaches the inner level of a nested layer and does exactly that, with
+`ordering_cols` choosing which treatment column drives the sort:
+
+``` r
+
+spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by         = "USUBJID",
+        order_count_method  = "bycount",
+        ordering_cols       = "Xanomeline High Dose",
+        format_strings = list(
+          n_counts = f_str("xxx (xx.x%)", "distinct_n", "distinct_pct")
+        )
+      )
+    )
+  )
+)
+
+result <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+kable(head(result[, c("rowlabel1", "rowlabel2", "res2", "ord_layer_1",
+                      "ord_layer_2")], 12))
+```
+
+| rowlabel1 | rowlabel2 | res2 | ord_layer_1 | ord_layer_2 |
+|:---|:---|:---|---:|---:|
+| CARDIAC DISORDERS |  | 6 ( 7.1%) | 1 | 1 |
+| CARDIAC DISORDERS | SINUS BRADYCARDIA | 3 ( 3.6%) | 2 | 2 |
+| CARDIAC DISORDERS | ATRIAL FLUTTER | 1 ( 1.2%) | 3 | 2 |
+| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 1 ( 1.2%) | 4 | 2 |
+| CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 5 | 2 |
+| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 6 | 2 |
+| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 0 ( 0.0%) | 7 | 2 |
+| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 0 ( 0.0%) | 8 | 2 |
+| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 0 ( 0.0%) | 9 | 2 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 10 | 2 |
+| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 11 | 2 |
+| CARDIAC DISORDERS | TACHYCARDIA | 0 ( 0.0%) | 12 | 2 |
+
+Within Cardiac Disorders the terms now run 3, 1, 1, 1, 0, 0, … on the
+`Xanomeline High Dose` column, with ties broken alphabetically. Each
+body system is sorted independently, and its own subtotal row stays at
+the top of its block.
+
+**The outer level is not sorted by frequency.** `bycount` applies to the
+inner level only; absent it, nested layers order both levels by factor
+level (then VARN, then alphabetical), and with it the outer level keeps
+that default order.
+
+`outer_sort_position` accepts `"asc"` or `"desc"`, but `"desc"`
+*reverses* the outer level’s default order rather than ranking the
+system organ classes by count – so Vascular Disorders, last
+alphabetically and with no High Dose subjects at all, leads. If your
+shell needs the body systems in descending frequency too, reorder the
+outer blocks yourself after the build: pull each system’s subtotal from
+`ord_layer_2 == 1`, rank those, and use the ranking as the primary sort
+key ahead of `ord_layer_1`.
+
+To reverse the outer level – for example to list system organ classes in
+descending rather than ascending order – set
 `outer_sort_position = "desc"`; the inner (preferred-term) order and the
 subtotal-before-detail nesting are preserved.
 

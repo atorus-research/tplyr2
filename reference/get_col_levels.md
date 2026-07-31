@@ -11,7 +11,7 @@ by factor levels rather than alphabetically.
 ## Usage
 
 ``` r
-get_col_levels(source_dt, cols)
+get_col_levels(source_dt, cols, complete = FALSE)
 ```
 
 ## Arguments

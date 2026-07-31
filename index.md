@@ -179,23 +179,57 @@ for full flexibility.
 
 ## Learning More
 
+Getting started
+
 - [`vignette("tplyr2")`](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md)
   – Getting started
+- [`vignette("table")`](https://github.com/mstackhouse/tplyr2/articles/table.md)
+  – Spec-level table properties
+
+Layers
+
 - [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
   – Count layers in depth
 - [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
   – Descriptive statistics layers
 - [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
   – Shift layers
+- [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
+  – Custom analyze layers
+- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+  – A full adverse event table, end to end
+
+Formatting
+
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+  – The format string system
+- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+  – Data-driven precision and parenthesis hugging
+- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+  – `<1%`, zero-count suppression, statistics as columns
+
+Table customization
+
 - [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
-  – Population data, header N, total and custom groups
-- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
-  – Format string system
+  – Denominators, population data, header N
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  – Ordering rows and layers
+- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+  – Session options
+- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+  – Post-processing helpers
+
+Statistics and traceability
+
+- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+  – Risk difference columns
+- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+  – Association tests and binding external model results
 - [`vignette("metadata")`](https://github.com/mstackhouse/tplyr2/articles/metadata.md)
   – Cell-level metadata and traceability
 - [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)
   – Saving and loading specs
-- [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
-  – Custom analyze layers
-- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
-  – Post-processing helpers
+- [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md)
+  – Analysis Results Data conversion
+- [`vignette("migration")`](https://github.com/mstackhouse/tplyr2/articles/migration.md)
+  – Moving from Tplyr v1

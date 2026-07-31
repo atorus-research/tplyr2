@@ -47,8 +47,9 @@
     <li><a class="dropdown-item" href="articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -225,11 +226,11 @@
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">result</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grepl</a></span><span class="op">(</span><span class="st">"^ord"</span>, <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span><span class="op">)</span><span class="op">]</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="20%">
-<col width="20%">
-<col width="20%">
-<col width="20%">
-<col width="20%">
+<col width="22%">
+<col width="39%">
+<col width="12%">
+<col width="12%">
+<col width="12%">
 </colgroup>
 <thead><tr>
 <th align="left">rowlabel1</th>
@@ -360,9 +361,15 @@
 <div class="section level2">
 <h2 id="learning-more">Learning More<a class="anchor" aria-label="anchor" href="#learning-more"></a>
 </h2>
+<p>Getting started</p>
 <ul>
 <li>
 <code><a href="articles/tplyr2.html">vignette("tplyr2")</a></code> – Getting started</li>
+<li>
+<code><a href="articles/table.html">vignette("table")</a></code> – Spec-level table properties</li>
+</ul>
+<p>Layers</p>
+<ul>
 <li>
 <code><a href="articles/count.html">vignette("count")</a></code> – Count layers in depth</li>
 <li>
@@ -370,17 +377,44 @@
 <li>
 <code><a href="articles/shift.html">vignette("shift")</a></code> – Shift layers</li>
 <li>
-<code><a href="articles/denom.html">vignette("denom")</a></code> – Population data, header N, total and custom groups</li>
+<code><a href="articles/analyze.html">vignette("analyze")</a></code> – Custom analyze layers</li>
 <li>
-<code><a href="articles/general_string_formatting.html">vignette("general_string_formatting")</a></code> – Format string system</li>
+<code><a href="articles/adverse-events.html">vignette("adverse-events")</a></code> – A full adverse event table, end to end</li>
+</ul>
+<p>Formatting</p>
+<ul>
+<li>
+<code><a href="articles/format_strings.html">vignette("format_strings")</a></code> – The format string system</li>
+<li>
+<code><a href="articles/precision_alignment.html">vignette("precision_alignment")</a></code> – Data-driven precision and parenthesis hugging</li>
+<li>
+<code><a href="articles/display_conventions.html">vignette("display_conventions")</a></code> – <code>&lt;1%</code>, zero-count suppression, statistics as columns</li>
+</ul>
+<p>Table customization</p>
+<ul>
+<li>
+<code><a href="articles/denom.html">vignette("denom")</a></code> – Denominators, population data, header N</li>
+<li>
+<code><a href="articles/sort.html">vignette("sort")</a></code> – Ordering rows and layers</li>
+<li>
+<code><a href="articles/options.html">vignette("options")</a></code> – Session options</li>
+<li>
+<code><a href="articles/post_processing.html">vignette("post_processing")</a></code> – Post-processing helpers</li>
+</ul>
+<p>Statistics and traceability</p>
+<ul>
+<li>
+<code><a href="articles/riskdiff.html">vignette("riskdiff")</a></code> – Risk difference columns</li>
+<li>
+<code><a href="articles/binding-statistics.html">vignette("binding-statistics")</a></code> – Association tests and binding external model results</li>
 <li>
 <code><a href="articles/metadata.html">vignette("metadata")</a></code> – Cell-level metadata and traceability</li>
 <li>
 <code><a href="articles/serialization.html">vignette("serialization")</a></code> – Saving and loading specs</li>
 <li>
-<code><a href="articles/analyze.html">vignette("analyze")</a></code> – Custom analyze layers</li>
+<code><a href="articles/ard.html">vignette("ard")</a></code> – Analysis Results Data conversion</li>
 <li>
-<code><a href="articles/post_processing.html">vignette("post_processing")</a></code> – Post-processing helpers</li>
+<code><a href="articles/migration.html">vignette("migration")</a></code> – Moving from Tplyr v1</li>
 </ul>
 </div>
 </div>

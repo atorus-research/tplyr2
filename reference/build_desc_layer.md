@@ -5,7 +5,15 @@ Process a descriptive statistics layer
 ## Usage
 
 ``` r
-build_desc_layer(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL)
+build_desc_layer(
+  dt,
+  layer,
+  cols,
+  layer_index,
+  col_n = NULL,
+  pop_dt = NULL,
+  col_levels = NULL
+)
 ```
 
 ## Arguments

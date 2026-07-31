@@ -12,6 +12,7 @@ complete_shift_counts(
   all_cols,
   by_data_vars,
   row_var,
-  denom_group = NULL
+  denom_group = NULL,
+  col_levels = NULL
 )
 ```

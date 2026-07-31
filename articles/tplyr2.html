@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -321,34 +322,38 @@ optional decimal point) that determines width and precision.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Two decimal places for mean, two for SD, with parentheses</span></span>
 <span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.xx (xx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; tplyr format string: "xx.xx (xx.xx)"Variables: mean, sd</span></span>
+<span><span class="co">#&gt; tplyr format string: "xx.xx (xx.xx)"</span></span>
+<span><span class="co">#&gt;   Variables: mean, sd</span></span>
 <span></span>
 <span><span class="co"># Integer count only</span></span>
 <span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; tplyr format string: "xxx"Variables: n</span></span>
+<span><span class="co">#&gt; tplyr format string: "xxx"</span></span>
+<span><span class="co">#&gt;   Variables: n</span></span>
 <span></span>
 <span><span class="co"># Count with percentage</span></span>
 <span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; tplyr format string: "xx (xx.x%)"Variables: n, pct</span></span></code></pre></div>
+<span><span class="co">#&gt; tplyr format string: "xx (xx.x%)"</span></span>
+<span><span class="co">#&gt;   Variables: n, pct</span></span></code></pre></div>
 <p>The number of <code>x</code> characters in the integer part sets the
 total width (including leading spaces for alignment). Characters after
 the decimal point set decimal precision. Everything between format
 groups is literal text.</p>
 <p>For <strong>descriptive statistics layers</strong>, format strings
-are a named list. Each name becomes a row label. Built-in statistics
-available are: <code>n</code>, <code>mean</code>, <code>sd</code>,
-<code>median</code>, <code>var</code>, <code>min</code>,
-<code>max</code>, <code>iqr</code>, <code>q1</code>, <code>q3</code>,
-<code>missing</code>, <code>pct</code>, and <code>total</code>.</p>
-<p>For <strong>count layers</strong>, the format string uses
-<code>n</code>, <code>pct</code>, <code>distinct_n</code>, and
-<code>distinct_pct</code>:</p>
+are a named list and each name becomes a row label. For <strong>count
+and shift layers</strong>, a single format string goes under the
+reserved key <code>n_counts</code>:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># n (pct%) -- the default</span></span>
-<span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># count layer: n (pct%) -- the default</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># Distinct count and percentage</span></span>
-<span><span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co"># count layer: distinct subjects rather than records</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="../reference/f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"distinct_n"</span>, <span class="st">"distinct_pct"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Each layer type computes its own set of statistics, and
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> carries the complete reference.
+Two more characters extend the template: <code>a</code> lets the
+<em>data</em> determine the decimal width, and uppercase <code>X</code>
+closes the gap between a number and its delimiter – both covered in
+<code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code>.</p>
 <p>Because the format and source variables are declared together, the
 package knows exactly which numbers produced each cell – this is the
 foundation of the metadata and traceability system.</p>
@@ -1198,9 +1203,17 @@ association-test p-value columns.</li>
 <code><a href="../articles/sort.html">vignette("sort")</a></code> – Row ordering by frequency, factor
 levels, or a VARN companion.</li>
 <li>
-<code><a href="../articles/general_string_formatting.html">vignette("general_string_formatting")</a></code> and
-<code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> – The
-<code><a href="../reference/f_str.html">f_str()</a></code> format-string system.</li>
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> – The <code><a href="../reference/f_str.html">f_str()</a></code>
+format-string system: the grammar, the complete statistic keyword
+reference per layer type, rounding, and missing-value handling.</li>
+<li>
+<code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code> – Data-driven decimal
+precision (<code>a</code>/<code>A</code>) and parenthesis hugging
+(<code>X</code>/<code>A</code>).</li>
+<li>
+<code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code> – <code>&lt;1%</code>
+and <code>&gt;99%</code> percents, zero-count suppression, statistics as
+columns, missing rows.</li>
 <li>
 <code><a href="../articles/post_processing.html">vignette("post_processing")</a></code> – Row masks, row label
 collapsing, conditional formatting, <code><a href="../reference/as_display.html">as_display()</a></code>, and text

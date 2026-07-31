@@ -16,6 +16,7 @@ build_desc_single(
   col_n,
   var_label = NULL,
   var_index = NULL,
-  pop_dt = NULL
+  pop_dt = NULL,
+  col_levels = NULL
 )
 ```

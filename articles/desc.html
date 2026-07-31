@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -291,6 +292,18 @@ reference them by name in your format strings.</p>
 <td>Missing count</td>
 <td><code>sum(is.na(x))</code></td>
 </tr>
+<tr class="odd">
+<td><code>total</code></td>
+<td>Denominator for <code>pct</code>
+</td>
+<td>The column population, per <code>denoms_by</code>
+</td>
+</tr>
+<tr class="even">
+<td><code>pct</code></td>
+<td>Percent of the population with data</td>
+<td><code>n / total * 100</code></td>
+</tr>
 </tbody>
 </table>
 <p>A few important notes about these built-in summaries:</p>
@@ -298,6 +311,12 @@ reference them by name in your format strings.</p>
 <li>All statistics use <code>na.rm = TRUE</code> by default, so missing
 values are excluded from calculations (except for <code>missing</code>
 itself, which counts them).</li>
+<li>
+<code>total</code> and <code>pct</code> give a desc layer an
+<code>n (%)</code> row – the number of subjects who contributed data and
+what share of the arm that is. They respect <code>denoms_by</code> and
+<code>denom_where</code> just as a count layer would. See
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code>.</li>
 <li>
 <code>min</code> and <code>max</code> operate on finite values only.
 If all values in a group are <code>NA</code>, the result is
@@ -1036,23 +1055,24 @@ including how to bind externally computed model results.</p>
 layers in tplyr2: built-in summaries, custom summaries, quantile
 algorithms, and multi-variable analysis. But there is more to explore
 when it comes to controlling how your numbers look on the page.</p>
-<p>The <code><a href="../articles/desc_layer_formatting.html">vignette("desc_layer_formatting")</a></code> vignette dives
-into advanced formatting topics including:</p>
 <ul>
 <li>
-<strong>Auto-precision</strong>: Dynamically adjusting decimal
-places based on the precision of collected data, using
-<code>precision_by</code>, <code>precision_on</code>, and
-<code>precision_cap</code> in <code><a href="../reference/layer_settings.html">layer_settings()</a></code>.</li>
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> – the format string grammar,
+the complete statistic keyword reference, rounding, and what happens
+when a statistic is <code>NA</code> (including the <code>empty</code>
+argument of <code><a href="../reference/f_str.html">f_str()</a></code>).</li>
 <li>
-<strong>Empty value handling</strong>: Controlling what appears when
-all values in a group are missing, using the <code>empty</code>
-parameter of <code><a href="../reference/f_str.html">f_str()</a></code>.</li>
+<code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code> –
+<strong>auto-precision</strong>, which lets the data set the decimal
+width via <code>precision_by</code>, <code>precision_on</code>,
+<code>precision_data</code>, and <code>precision_cap</code>, and
+<strong>parenthesis hugging</strong>, which closes the gap between a
+number and its delimiter.</li>
 <li>
-<strong>Parenthesis hugging</strong>: Eliminating the gap between
-parentheses and numbers so that formats like <code>( 5.2)</code> become
-<code>(5.2 )</code> using the <code>X</code> character in format
-strings.</li>
+<code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code> –
+<strong><code>stats_as_columns</code></strong>, which transposes the
+statistics into columns, plus the other display rules a shell may
+impose.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

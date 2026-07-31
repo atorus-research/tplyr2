@@ -68,12 +68,16 @@ The formula used when IBM rounding is enabled is:
 Let’s see the difference in practice. We will build a simple descriptive
 statistics table and compare the mean under both rounding methods.
 
+The difference only shows when a value lands exactly on a rounding
+boundary at the displayed precision, so the data below is chosen to do
+that: the two group means are exactly 2.5 and 4.5, displayed with no
+decimals.
+
 ``` r
 
-# Create data where rounding makes a visible difference
 demo_data <- data.frame(
   TRT = rep(c("Drug", "Placebo"), each = 4),
-  VAL = c(2.5, 3.5, 4.5, 5.5, 1.5, 2.5, 3.5, 4.5)
+  VAL = c(1, 2, 3, 4,   3, 4, 5, 6)   # means of exactly 2.5 and 4.5
 )
 
 spec <- tplyr_spec(
@@ -82,7 +86,7 @@ spec <- tplyr_spec(
     group_desc("VAL",
       settings = layer_settings(
         format_strings = list(
-          "Mean" = f_str("x.x", "mean")
+          "Mean" = f_str("xx", "mean")
         )
       )
     )
@@ -97,7 +101,7 @@ kable(result_bankers[, !grepl("^ord", names(result_bankers))],
 
 | rowlabel1 | res1 | res2 |
 |:----------|:-----|:-----|
-| Mean      | 4.0  | 3.0  |
+| Mean      | 2    | 4    |
 
 Banker’s rounding (default) {.table}
 
@@ -113,7 +117,7 @@ kable(result_ibm[, !grepl("^ord", names(result_ibm))],
 
 | rowlabel1 | res1 | res2 |
 |:----------|:-----|:-----|
-| Mean      | 4.0  | 3.0  |
+| Mean      | 3    | 5    |
 
 IBM rounding (round-half-away-from-zero) {.table}
 
@@ -124,12 +128,18 @@ IBM rounding (round-half-away-from-zero) {.table}
 tplyr2_options(IBMRounding = FALSE)
 ```
 
-The difference is subtle but consequential for regulatory submissions.
-When the mean falls exactly on a rounding boundary (e.g., 4.0 with one
-decimal rounds to “4.0” either way, but values like 2.25 rounded to one
-decimal show the difference), IBM rounding consistently rounds the 5
-away from zero, while banker’s rounding alternates based on the
-preceding digit.
+Both cells change. Banker’s rounding sends 2.5 down to the even 2 and
+4.5 down to the even 4; IBM rounding sends both up, to 3 and 5. A value
+that is *not* on a boundary rounds identically under either rule, which
+is why the difference is easy to miss until a reviewer reconciles your
+output against SAS.
+
+The setting applies to every rounded value in a build — percentages,
+means, quartiles, risk differences — so a table is internally consistent
+either way. Negative values round away from zero as well, so `-2.5`
+becomes `-3`. See
+[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+for how rounding interacts with format string widths.
 
 ## Quantile Algorithm
 
@@ -270,6 +280,13 @@ specific layer provides its own `precision_cap` in
 [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
 the layer-level cap takes priority. This gives you a safety net at the
 session level while allowing individual layers to override when needed.
+
+The cap applies to the width measured from the data, *before* any `+N`
+offset in the format string is added – so `dec = 1` does not guarantee
+one decimal in the output.
+[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+covers the auto-precision system in full, including `precision_by`,
+`precision_on`, and `precision_data`.
 
 ## Custom Summaries
 
@@ -435,9 +452,9 @@ script.
 - [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
   – descriptive statistics, where `quantile_type` and `custom_summaries`
   apply.
-- [`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
   – auto-precision, which `precision_cap` bounds.
-- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
   – the
   [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
   system that IBM rounding feeds into.

@@ -187,15 +187,18 @@ width and precision.
 
 # Two decimal places for mean, two for SD, with parentheses
 f_str("xx.xx (xx.xx)", "mean", "sd")
-#> tplyr format string: "xx.xx (xx.xx)"Variables: mean, sd
+#> tplyr format string: "xx.xx (xx.xx)"
+#>   Variables: mean, sd
 
 # Integer count only
 f_str("xxx", "n")
-#> tplyr format string: "xxx"Variables: n
+#> tplyr format string: "xxx"
+#>   Variables: n
 
 # Count with percentage
 f_str("xx (xx.x%)", "n", "pct")
-#> tplyr format string: "xx (xx.x%)"Variables: n, pct
+#> tplyr format string: "xx (xx.x%)"
+#>   Variables: n, pct
 ```
 
 The number of `x` characters in the integer part sets the total width
@@ -203,22 +206,25 @@ The number of `x` characters in the integer part sets the total width
 point set decimal precision. Everything between format groups is literal
 text.
 
-For **descriptive statistics layers**, format strings are a named list.
-Each name becomes a row label. Built-in statistics available are: `n`,
-`mean`, `sd`, `median`, `var`, `min`, `max`, `iqr`, `q1`, `q3`,
-`missing`, `pct`, and `total`.
-
-For **count layers**, the format string uses `n`, `pct`, `distinct_n`,
-and `distinct_pct`:
+For **descriptive statistics layers**, format strings are a named list
+and each name becomes a row label. For **count and shift layers**, a
+single format string goes under the reserved key `n_counts`:
 
 ``` r
 
-# n (pct%) -- the default
-f_str("xx (xx.x%)", "n", "pct")
+# count layer: n (pct%) -- the default
+list(n_counts = f_str("xx (xx.x%)", "n", "pct"))
 
-# Distinct count and percentage
-f_str("xx (xx.x%)", "distinct_n", "distinct_pct")
+# count layer: distinct subjects rather than records
+list(n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct"))
 ```
+
+Each layer type computes its own set of statistics, and
+[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+carries the complete reference. Two more characters extend the template:
+`a` lets the *data* determine the decimal width, and uppercase `X`
+closes the gap between a number and its delimiter – both covered in
+[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md).
 
 Because the format and source variables are declared together, the
 package knows exactly which numbers produced each cell – this is the
@@ -590,12 +596,17 @@ other vignettes:
   – Risk differences and association-test p-value columns.
 - [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
   – Row ordering by frequency, factor levels, or a VARN companion.
-- [`vignette("general_string_formatting")`](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md)
-  and
-  [`vignette("desc_layer_formatting")`](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md)
+- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
   – The
   [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
-  format-string system.
+  format-string system: the grammar, the complete statistic keyword
+  reference per layer type, rounding, and missing-value handling.
+- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+  – Data-driven decimal precision (`a`/`A`) and parenthesis hugging
+  (`X`/`A`).
+- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+  – `<1%` and `>99%` percents, zero-count suppression, statistics as
+  columns, missing rows.
 - [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
   – Row masks, row label collapsing, conditional formatting,
   [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),

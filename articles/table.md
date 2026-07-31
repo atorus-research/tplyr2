@@ -206,10 +206,12 @@ while the original dose-level columns are preserved.
 
 ### Combining Total and Custom Groups
 
-You can use both together. Custom groups are applied first, and then
-total groups duplicate all rows (including the custom group rows). This
-means the “Total” column will include subjects from the custom group as
-well.
+You can use both together. Each synthetic column is built by duplicating
+the rows it needs: a custom group copies the rows of the levels it
+pools, and a total group copies the original rows. The total group
+deliberately ignores the custom group’s copies, so every subject is
+counted exactly once in the “Total” column – its N matches the study
+population, not the population plus the pooled arms.
 
 ``` r
 
@@ -235,8 +237,8 @@ kable(result[, c("rowlabel1", grep("^res", names(result), value = TRUE))])
 
 | rowlabel1 | res1       | res2        | res3       | res4       | res5       |
 |:----------|:-----------|:------------|:-----------|:-----------|:-----------|
-| F         | 53 (61.6%) | 233 (55.2%) | 90 (53.6%) | 40 (47.6%) | 50 (59.5%) |
-| M         | 33 (38.4%) | 189 (44.8%) | 78 (46.4%) | 44 (52.4%) | 34 (40.5%) |
+| F         | 53 (61.6%) | 143 (56.3%) | 90 (53.6%) | 40 (47.6%) | 50 (59.5%) |
+| M         | 33 (38.4%) | 111 (43.7%) | 78 (46.4%) | 44 (52.4%) | 34 (40.5%) |
 
 ## Population Data
 

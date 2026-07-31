@@ -45,8 +45,9 @@
     <li><a class="dropdown-item" href="../articles/adverse-events.html">Building an Adverse Events Table</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Formatting</h6></li>
-    <li><a class="dropdown-item" href="../articles/general_string_formatting.html">General String Formatting</a></li>
-    <li><a class="dropdown-item" href="../articles/desc_layer_formatting.html">Advanced Descriptive Statistics Formatting</a></li>
+    <li><a class="dropdown-item" href="../articles/format_strings.html">Format Strings</a></li>
+    <li><a class="dropdown-item" href="../articles/precision_alignment.html">Precision and Alignment</a></li>
+    <li><a class="dropdown-item" href="../articles/display_conventions.html">Clinical Display Conventions</a></li>
     <li><hr class="dropdown-divider"></li>
     <li><h6 class="dropdown-header" data-toc-skip>Table Customization</h6></li>
     <li><a class="dropdown-item" href="../articles/sort.html">Sorting a tplyr2 Table</a></li>
@@ -941,11 +942,11 @@ in another when their variables differ in missingness.</li>
 <p>You may notice that tplyr2 carefully aligns numbers within their
 format fields, padding with leading spaces so that decimal points and
 parentheses line up across rows. For even tighter alignment, tplyr2
-supports “parenthesis hugging” using uppercase <code>X</code> characters
-in format strings. When you use <code>X</code> instead of
-<code>x</code>, leading spaces shift outside the parenthesis so the
-opening delimiter sits right next to the number. This is a more advanced
-feature covered in detail in the format strings documentation.</p>
+supports “parenthesis hugging”: writing a format group with uppercase
+<code>X</code> moves its leading spaces <em>past</em> the number, so the
+opening parenthesis sits flush against the first digit while the cell
+keeps its total width. See <code><a href="../articles/precision_alignment.html">vignette("precision_alignment")</a></code>
+for the mechanics and the caveats.</p>
 </div>
 </div>
 <div class="section level2">
@@ -1521,7 +1522,21 @@ deviation.</li>
 <li>
 <code><a href="../articles/post_processing.html">vignette("post_processing")</a></code> – Row masks, conditional
 formatting, and row label collapsing to polish your final output.</li>
+<li>
+<code><a href="../articles/format_strings.html">vignette("format_strings")</a></code> – The complete count-layer
+statistic keyword reference and the <code>n_counts</code> rule.</li>
+<li>
+<code><a href="../articles/display_conventions.html">vignette("display_conventions")</a></code> – <code>&lt;1%</code>
+and <code>&gt;99%</code> percents (<code>pct_lt</code>,
+<code>pct_gt</code>), zero-count suppression
+(<code>zero_count_display</code>), showing only selected levels
+(<code>keep_levels</code>), and missing rows
+(<code>missing_count</code>).</li>
 </ul>
+<p>One note on the total row: it inherits the layer’s own format string,
+and there is no <code>total_row_format</code> setting. If the total
+needs a different width from the category rows, reformat that row after
+the build with <code><a href="../reference/apply_formats.html">apply_formats()</a></code>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

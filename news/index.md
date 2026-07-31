@@ -160,6 +160,150 @@
 
 ### Bug fixes
 
+- A layer whose `where` clause left a column group with no rows emitted
+  fewer result columns than its sibling layers, and those columns were
+  then aligned positionally — putting that layer’s values **under the
+  wrong treatment arm**. In `tplyr_adae`, for example, a
+  `where = AESEV == "SEVERE"` layer alongside an unfiltered one reported
+  Xanomeline Low Dose’s severe events under the Placebo label. The
+  column-variable level set is now captured from the table’s full data
+  and pinned for every layer, so an empty column group completes with
+  zeros in its own position.
+
+- A
+  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  combined with a
+  [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+  on the same column variable double-counted the pooled subjects: the
+  total duplicated the custom group’s copies as well as the originals,
+  so a 254-subject study reported `Total (N=422)` and a sex count of 233
+  where 143 was correct. Duplicated rows now record which column
+  variable they were created for, so a total group skips copies made on
+  its own variable while still spanning copies made for a different one.
+
+- A shift layer or a `stats_as_columns` desc layer combined with a
+  standard layer produced a table whose `res` columns meant different
+  things in different row blocks, keeping only the first layer’s column
+  labels. Those combinations are now rejected by
+  [`validate_spec()`](https://github.com/mstackhouse/tplyr2/reference/validate_spec.md)
+  with a message pointing at separate specs. (This replaces a silently
+  mislabeled table, so a spec that “worked” before may now error — it
+  was not producing a correct table.)
+
+- [`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md)
+  treated an empty filter set as “nothing matches” and returned zero
+  rows. A cell can legitimately have no filters — a
+  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  column crossed with a total row, or with a desc statistic in a layer
+  that has no `by` variable — and those cells describe the whole
+  dataset. It now returns all rows.
+
+- Cell metadata dropped the `by` filter when a `by` level was an empty
+  string, and aborted the entire metadata build with “missing value
+  where TRUE/FALSE needed” when a `by` level was `NA`. Both are real
+  levels: an empty string now filters on `""` and `NA` filters with
+  [`is.na()`](https://rdrr.io/r/base/NA.html). A nested layer’s
+  structurally absent inner label still contributes no filter, as
+  before.
+
+- Cell metadata compared `by` values against the *trimmed* row label, so
+  a `by` variable whose values carry leading or trailing whitespace
+  (common in SAS-derived character data) produced filters matching zero
+  rows. Filters now use the untrimmed value.
+
+- [`generate_row_ids()`](https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.md)
+  silently produced duplicate IDs when row labels had been blanked by
+  [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+  or when a target level collided with a `total_row_label`, so metadata
+  lookups resolved to the wrong cell. It now warns.
+
+- A missing-subjects row built without `distinct_by` carried filters
+  resolving to the subjects that *do* appear — the exact complement of
+  what the cell counts. Row-level missing-subjects counting is a
+  population-minus-target difference that no filter set can express, so
+  no metadata is emitted for it and the build warns.
+
+- Cell metadata for a `stats_as_columns` desc layer resolved to nothing.
+  That layout labels its result columns `"<arm> (N=n) | <statistic>"`,
+  the same grammar count-layer `stat_columns` uses, but the trailing
+  statistic segment was stripped only for count layers — so every filter
+  read `TRT == "A | n"` and matched zero rows.
+  [`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md)
+  now returns the correct source rows.
+
+- A count layer’s total row rendered a **blank** instead of `0` for any
+  column group with no rows in the analysis data, while the category
+  rows above it correctly showed `0` (#66). `n` is counted from the raw
+  analysis rows, so an empty column group never appears there; the
+  denominator join now brings it in from the completed category counts
+  and zero-fills it. Nothing errored or warned, so the value silently
+  vanished from a delivered table.
+
+- A count layer’s total row counted `n` by summing the category rows
+  while `distinct_n` counted from the raw data, so the two disagreed in
+  the same cell and `total_row_count_missings` had no effect on `n`.
+  Category rows exclude NA target values (data completion drops them)
+  and any level folded into the Missing row, so the sum silently omitted
+  them. `n` is now counted from the raw rows with the same missing
+  handling as `distinct_n`, making `n`, `distinct_n`, and the cell’s
+  metadata agree. **A total row over data with missing target values
+  will change**: with the default `total_row_count_missings = TRUE` it
+  now includes them, as documented.
+
+- `tplyr_build(metadata = TRUE)` now warns when a `stats_as_columns`
+  desc layer has no `by` variable. That layout names its result columns
+  after the statistics rather than `res1`, `res2`, …, and cell metadata
+  is keyed on `res` columns, so none was produced — previously without
+  any indication.
+
+- `missing_count`’s `missing_values` no longer double-counts. Values
+  named there are folded into the Missing row, but they also kept their
+  own category row, so the same records were counted twice and the
+  column summed past 100%. They are now removed from the category rows,
+  matching Tplyr v1’s `set_missing_count()` and the exclusion
+  [`tplyr_meta()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta.md)
+  already assumed. On a nested count layer, naming an outer-level value
+  removes its inner rows along with it. **This changes the numbers in
+  any table that used `missing_values`** — previously those tables were
+  wrong.
+
+- `f_str(empty = )` now honors its unnamed form. Only
+  `c(.overall = "...")` was implemented; an unnamed `empty = "NA"` was
+  silently ignored. It now fills each NA format group in place,
+  right-justified to that group’s field width, so
+  `f_str("xx (xxx)", "n", "pct", empty = "NA")` renders `"NA ( NA)"` and
+  a partially missing cell keeps its alignment. This restores v1 parity;
+  `.overall` is unchanged and still replaces the whole cell only when
+  every group is NA.
+
+- Shift layers now compute the single-proportion confidence-interval
+  keywords (`ci_lower`, `ci_upper`, `distinct_ci_lower`,
+  `distinct_ci_upper`). They were accepted by validation but never
+  computed, so a shift format referencing one rendered an empty field
+  with no warning. Bounds follow whichever denominator `shift_denom`
+  selects.
+
+- [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+  no longer discards the result columns of a `stats_as_columns` desc
+  layer built without a `by` variable. That layout names its columns
+  after the statistics rather than `res1`, `res2`, …, and the whitelist
+  dropped them, returning row labels alone. It now removes the internal
+  `ord_layer_*`/`row_id` helpers and keeps everything else.
+
+- `stats_as_columns` with no `by` variable now orders its columns by
+  format-string order rather than alphabetically by statistic label.
+
+- [`collect_precision()`](https://github.com/mstackhouse/tplyr2/reference/collect_precision.md)
+  now warns when `precision_data` does not cover every `precision_by`
+  group present in the data (those cells render blank), and when
+  `precision_data` omits the `precision_by` columns entirely (its widths
+  are applied to every group). Both were silent.
+
+- [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  now warns when a format group requests parenthesis hugging (`X`/`A`)
+  but has no literal text in front of it — there is nothing to hug, and
+  the number is left-justified with trailing spaces instead.
+
 - Count-layer row ordering now honors the sort settings it advertised
   (#57). `order_count_method = "bycount"` actually sorts by descending
   count (it previously fell back to the default order); `ordering_cols`
@@ -172,6 +316,7 @@
   when it was a factor). The target sort key is threaded through the
   cast so all methods compose correctly with by-groups and special
   (total/missing) rows.
+
 - `order_count_method = "bycount"` now also reaches the **inner** level
   of a nested count layer (#64), sorting (e.g.) preferred terms by
   descending count within each system organ class – the AE-by-SOC/PT
@@ -179,6 +324,7 @@
   Previously it only affected single-level layers. The outer level keeps
   its own order (controlled by `outer_sort_position`), so the useful
   “outer alphabetical, inner by descending count” layout comes for free.
+
 - `risk_diff` on a **nested** count layer now errors instead of silently
   emitting an all-blank column (#58). Risk difference is computed only
   on single-level count layers; on a nested SOC/PT layer the setting
@@ -186,6 +332,7 @@
   points to pairwise
   [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md),
   which does compute a per-level comparison on nested layers.
+
 - `group_shift(denom_row = TRUE)` no longer renders the literal string
   `"NA"` for a baseline (shift-column) group that is absent within a
   `by` group (#55); an absent group’s denominator is zero, so the cell
@@ -194,6 +341,7 @@
   carry its own `f_str` width independent of the `n_counts` cells
   (e.g. `denom_row_format = f_str("xx", "n")` for a plain narrow
   integer) instead of inheriting their padding.
+
 - Omnibus
   [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
   no longer lets
@@ -208,6 +356,7 @@
   [`chisq.test()`](https://rdrr.io/r/stats/chisq.test.html) return
   `NaN`) — are dropped before `fn` runs, so it sees only the real
   observations.
+
 - Omnibus
   [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
   now places its p-value on the layer’s **first display row**, not the
@@ -216,6 +365,7 @@
   strand on the wrong category (landing on `65-80` instead of `<65`,
   etc.); placement is now derived from the ordering columns, per
   by-group.
+
 - [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
   `missing_count` now always emits the Missing row when set,
   zero-filling every column/by group that has no missing values, so the
@@ -223,6 +373,7 @@
   total missing count is zero) or leaving empty cells (when only some
   columns have missings) (#33). Matches classic Tplyr
   `set_missing_count()`.
+
 - `group_shift(shift_denom = "column")` with a `by` variable now scopes
   the column (from-group) denominator within each by-group instead of
   pooling it across them (#28). A shift-by-visit table now gets
@@ -230,6 +381,7 @@
   the arm total (the per-column-group denominator varies by by-group, so
   no single header N can represent it); the no-`by` behavior (from-group
   N in the header) is unchanged.
+
 - [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
   now honors the `zero_count_display`, `pct_lt`, and `pct_gt` layer
   settings, applying them the same way
@@ -237,13 +389,16 @@
   does (#31). Previously a shift layer ignored them (e.g. a zero cell
   always rendered as `0 ( 0%)` even with
   `zero_count_display = "count_only"`).
+
 - Descriptive statistics that round to negative zero now display as
   `0.0` instead of `-0.0`, matching base R
   [`format()`](https://rdrr.io/r/base/format.html) (#29).
+
 - Result and risk-difference columns are now ordered by their numeric
   suffix when layers are combined and when metadata is built. Previously
   tables with more than 9 result columns sorted them lexicographically
   (`res10` before `res2`), scrambling column order.
+
 - Count layers now order their `res*` columns by the `cols` variable’s
   factor levels, matching
   [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
@@ -252,6 +407,7 @@
   renderer assuming `res1` is the first `cols` level) could get
   inconsistent column order. Shift layers likewise order their column
   dimension by the shift variable’s factor levels.
+
 - [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
   now orders its `by`-group rows by the `by` variable’s factor levels
   (then a VARN companion, then alphabetically) instead of always
@@ -260,6 +416,7 @@
   [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
   and
   [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
+
 - Fixed
   [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
   total/missing rows with a `by` variable (#24): each by-group’s `Total`
@@ -268,6 +425,7 @@
   group (previously e.g. `Total` was interleaved alphabetically among
   the target values, and with a `by` variable the row label was dropped
   entirely).
+
 - `group_count(order_count_method = "byfactor")` now orders category
   rows by the target variable’s factor levels instead of alphabetically
   (#16). The target column is coerced to character while counts are
@@ -276,12 +434,14 @@
   Nested count layers likewise order their outer and inner categories by
   factor levels (previously they fell back to the dcast’s alphabetical
   row order).
+
 - `group_desc(stats_as_columns = TRUE)` combined with a `by` variable no
   longer drops the by-groups and returns only the last group’s
   statistics (#20). It now keeps the by-groups as rows and produces one
   result column per treatment x statistic (labelled `"<arm> | <stat>"`).
   Behavior without a `by` variable (treatment groups as rows, statistics
   as columns) is unchanged.
+
 - [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
   now orders its `by`-group rows by the `by` variable’s factor levels
   (then a VARN companion, then alphabetically) instead of always
@@ -291,6 +451,94 @@
 
 ### Documentation
 
+- **The formatting vignettes have been reorganized.** The two previous
+  articles, *“General String Formatting”* and *“Advanced Descriptive
+  Statistics Formatting”*, are replaced by three organized around what
+  the user is trying to do rather than by layer type:
+  - [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+    — the format string grammar, where format strings attach per layer
+    type, the complete statistic keyword reference for count/shift/desc
+    layers, rounding, missing-value handling, and standalone
+    [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md).
+  - [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+    — auto-precision (`a`/`A`, `+N`, `precision_on`, `precision_by`,
+    `precision_cap`, `precision_data`) and parenthesis hugging
+    (`X`/`A`).
+  - [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+    — the display rules imposed by shells and SAPs: `pct_lt`/`pct_gt`,
+    `zero_count_display`, `stat_columns` and `stats_as_columns`,
+    `keep_levels`, `missing_count`, shift denominators, and
+    indenting/wrapping nested terms.
+
+  The old vignettes duplicated auto-precision, hugging, and `empty` at
+  similar depth while disagreeing about what hugging does, and their
+  four statistic keyword lists contradicted each other and the source.
+  The following were previously documented in no vignette at all and are
+  now covered: `pct_lt`, `pct_gt`, `zero_count_display`, `keep_levels`,
+  `missing_count`, `total_row_count_missings`, `stats_as_columns`,
+  `shift_denom`, `denom_row`, `denom_row_label`, `denom_row_format`, the
+  desc-layer `total`/`pct` keywords, and
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)’s
+  `na`/`width`/`pad`/`lt`/`gt` arguments.
+- Corrected the description of parenthesis hugging. tplyr2 moves a
+  hugged group’s leading spaces to just inside the trailing literal’s
+  last character (`12 (34.5% )`); Tplyr v1 moved them to the left of the
+  opening delimiter (`12 (34.5%)`). Two vignettes described v1’s
+  behavior. The difference is now stated explicitly for anyone
+  reconciling output against v1.
+- Corrected the description of `shift_denom = "column"`: it denominates
+  by the result column group (arm × post-baseline category), so each
+  result *column* sums to 100%.
+  [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+  now shows all three shift denominators, including how to get row-wise
+  percentages with `denoms_by`.
+- Documented that auto-precision (`a`/`A`) resolves against the data
+  only in
+  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  layers; elsewhere it degrades to a fixed width equal to the number of
+  characters written.
+- Documented several other scope limits that were previously unstated:
+  the four confidence-interval keywords are count-layer only (a shift
+  layer accepts them and renders them empty); the desc-layer `total`
+  keyword is a **record** count, so `pct` is a share of the arm only on
+  one-row-per-subject data; `keep_levels` filters after the denominators
+  are computed, so the kept percentages do not re-base; `precision_data`
+  validates only `max_int`/`max_dec`, rendering a blank cell for any
+  group it fails to cover; `pct_lt`/`pct_gt` and `zero_count_display`
+  target the first matching format group; and
+  [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)
+  charges an existing indent against `width` twice.
+- Documented that literal text in a format string cannot contain `x`,
+  `X`, `a`, or `A` — those characters are always parsed as format
+  groups, so a template like `"xx days"` silently gains a second group.
+- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+  now covers `order_count_method = "bycount"` on nested count layers,
+  including that it sorts the inner level only and that
+  `outer_sort_position` reverses the outer order rather than ranking it
+  by count.
+- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+  now covers
+  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),
+  `collapse_row_labels(nest = TRUE)`, and the
+  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  `na`/`width` arguments, and points at the declarative
+  `pct_lt`/`zero_count_display` settings before
+  [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md).
+- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+  now states that `risk_diff` errors on nested count layers and points
+  to pairwise
+  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md).
+- Fixed the IBM-rounding example in
+  [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md),
+  which showed two identical tables under captions promising a
+  difference.
+- Fixed a broken `vignette("serialize")` cross-reference in
+  [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md),
+  and expanded the vignette indexes in the README and
+  [`vignette("tplyr2")`](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md),
+  which listed 10 and 8 of the 19 articles respectively.
+- [`print()`](https://rdrr.io/r/base/print.html) on an `f_str` object no
+  longer runs its fields together on one line.
 - New vignette *“Comparative Statistics and Binding External Results”*
   ([`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md))
   — how to attach cross-arm comparisons

@@ -23,10 +23,12 @@
 
 ### Formatting
 
-- [General String
-  Formatting](https://github.com/mstackhouse/tplyr2/articles/general_string_formatting.md):
-- [Advanced Descriptive Statistics
-  Formatting](https://github.com/mstackhouse/tplyr2/articles/desc_layer_formatting.md):
+- [Format
+  Strings](https://github.com/mstackhouse/tplyr2/articles/format_strings.md):
+- [Precision and
+  Alignment](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md):
+- [Clinical Display
+  Conventions](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md):
 
 ### Table Customization
 
