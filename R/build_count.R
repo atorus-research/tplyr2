@@ -1043,7 +1043,13 @@ compute_total_row <- function(counts, dt, cols, by_data_vars, tv, total_label,
     denoms <- unique(src[, c(summary_group, "total"), with = FALSE],
                      by = summary_group)
     total_dt <- raw_n[, list(n = .N), by = summary_group]
-    total_dt <- merge(total_dt, denoms, by = summary_group, all.x = TRUE)
+    # `all = TRUE`, not `all.x`: a column group with no rows in the analysis data
+    # never appears in raw_n, and keeping only raw_n's groups would leave the
+    # total row with no cell there at all -- it rendered blank while the category
+    # rows above it correctly showed 0 (#66). `denoms` comes from the completed
+    # counts, so it carries every group the layer displays.
+    total_dt <- merge(total_dt, denoms, by = summary_group, all = TRUE)
+    total_dt[is.na(n), n := 0L]
   } else {
     total_dt <- data.table::data.table(
       n = nrow(raw_n),

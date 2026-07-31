@@ -171,6 +171,12 @@
   count-layer `stat_columns` uses, but the trailing statistic segment was stripped
   only for count layers — so every filter read `TRT == "A | n"` and matched zero
   rows. `tplyr_meta_subset()` now returns the correct source rows.
+- A count layer's total row rendered a **blank** instead of `0` for any column
+  group with no rows in the analysis data, while the category rows above it
+  correctly showed `0` (#66). `n` is counted from the raw analysis rows, so an
+  empty column group never appears there; the denominator join now brings it in
+  from the completed category counts and zero-fills it. Nothing errored or
+  warned, so the value silently vanished from a delivered table.
 - A count layer's total row counted `n` by summing the category rows while
   `distinct_n` counted from the raw data, so the two disagreed in the same cell
   and `total_row_count_missings` had no effect on `n`. Category rows exclude NA
