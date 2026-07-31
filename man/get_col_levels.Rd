@@ -4,7 +4,7 @@
 \alias{get_col_levels}
 \title{Ordered factor levels for the column variable(s)}
 \usage{
-get_col_levels(source_dt, cols)
+get_col_levels(source_dt, cols, complete = FALSE)
 }
 \arguments{
 \item{source_dt}{data.table with the original (factor-typed) input data}

@@ -1,36 +1,28 @@
+---
+output: github_document
+---
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+
 
 # tplyr2
 
 <!-- badges: start -->
-
 [![R-CMD-check](https://github.com/atorus-research/tplyr2/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/atorus-research/tplyr2/actions/workflows/R-CMD-check.yaml)
-[![Codecov test
-coverage](https://codecov.io/gh/atorus-research/tplyr2/graph/badge.svg)](https://app.codecov.io/gh/atorus-research/tplyr2)
+[![Codecov test coverage](https://codecov.io/gh/atorus-research/tplyr2/graph/badge.svg)](https://app.codecov.io/gh/atorus-research/tplyr2)
 [<img src="https://img.shields.io/badge/License-MIT-blue.svg">](https://github.com/atorus-research/tplyr2/blob/main/LICENSE.md)
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
-**{tplyr2}** is a grammar of clinical summary tables. Clinical reports –
-demographics tables, adverse event summaries, lab shift tables – all
-share a common structural pattern. Each section is some kind of summary:
-a set of counts, a block of descriptive statistics, or a
-cross-tabulation. Rather than writing bespoke data manipulation code for
-every table, **{tplyr2}** lets you describe *what* the table should
-contain using a declarative specification, and handles the computing,
-formatting, and assembly for you.
+**{tplyr2}** is a grammar of clinical summary tables. Clinical reports -- demographics tables, adverse event summaries, lab shift tables -- all share a common structural pattern. Each section is some kind of summary: a set of counts, a block of descriptive statistics, or a cross-tabulation. Rather than writing bespoke data manipulation code for every table, **{tplyr2}** lets you describe _what_ the table should contain using a declarative specification, and handles the computing, formatting, and assembly for you.
 
-**{tplyr2}** is a ground-up rewrite of
-[**{Tplyr}**](https://github.com/atorus-research/Tplyr), built on
-[data.table](https://rdatatable.gitlab.io/data.table/) for performance.
-The spec-based API separates configuration from data, making specs
-portable, reusable, and serializable to JSON/YAML.
+**{tplyr2}** is a ground-up rewrite of [**{Tplyr}**](https://github.com/atorus-research/Tplyr), built on [data.table](https://rdatatable.gitlab.io/data.table/) for performance. The spec-based API separates configuration from data, making specs portable, reusable, and serializable to JSON/YAML.
 
 ## Installation
 
 You can install the development version of **{tplyr2}** from GitHub:
+
 
 ``` r
 # install.packages("devtools")
@@ -39,9 +31,8 @@ devtools::install_github("atorus-research/tplyr2")
 
 ## Example
 
-Every table starts with a `tplyr_spec()` that declares the column
-structure and layers. Data is supplied at build time with
-`tplyr_build()`.
+Every table starts with a `tplyr_spec()` that declares the column structure and layers. Data is supplied at build time with `tplyr_build()`.
+
 
 ``` r
 library(tplyr2)
@@ -69,34 +60,32 @@ result <- tplyr_build(spec, tplyr_adsl)
 knitr::kable(result[, !grepl("^ord", names(result))])
 ```
 
-| rowlabel1   | rowlabel2 | res1         | res2         | res3         |
-|:------------|:----------|:-------------|:-------------|:-------------|
-| Sex n (%)   | F         | 53 (61.6%)   | 40 (47.6%)   | 50 (59.5%)   |
-| Sex n (%)   | M         | 33 (38.4%)   | 44 (52.4%)   | 34 (40.5%)   |
-| Age (Years) | n         | 86           | 84           | 84           |
-| Age (Years) | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
-| Age (Years) | Median    | 76.0         | 76.0         | 77.5         |
-| Age (Years) | Min, Max  | 52, 89       | 56, 88       | 51, 88       |
+
+
+|rowlabel1   |rowlabel2 |res1         |res2         |res3         |
+|:-----------|:---------|:------------|:------------|:------------|
+|Sex n (%)   |F         |53 (61.6%)   |40 (47.6%)   |50 (59.5%)   |
+|Sex n (%)   |M         |33 (38.4%)   |44 (52.4%)   |34 (40.5%)   |
+|Age (Years) |n         |86           |84           |84           |
+|Age (Years) |Mean (SD) |75.2 ( 8.59) |74.4 ( 7.89) |75.7 ( 8.29) |
+|Age (Years) |Median    |76.0         |76.0         |77.5         |
+|Age (Years) |Min, Max  |52, 89       |56, 88       |51, 88       |
+
+
 
 ## Key Concepts
 
-- **Spec**: A `tplyr_spec()` object is pure configuration – no data, no
-  side effects. It describes the column variable, filters, population
-  data, and layers.
-- **Layers**: Each layer is a summary block created with
-  `group_count()`, `group_desc()`, `group_shift()`, or
-  `group_analyze()`.
-- **Build**: `tplyr_build(spec, data)` executes the spec against a
-  dataset and returns a formatted data frame.
-- **Format strings**: `f_str()` declarations control numeric precision
-  and alignment (e.g., `f_str("xx.x (xx.xx)", "mean", "sd")`).
+- **Spec**: A `tplyr_spec()` object is pure configuration -- no data, no side effects. It describes the column variable, filters, population data, and layers.
+- **Layers**: Each layer is a summary block created with `group_count()`, `group_desc()`, `group_shift()`, or `group_analyze()`.
+- **Build**: `tplyr_build(spec, data)` executes the spec against a dataset and returns a formatted data frame.
+- **Format strings**: `f_str()` declarations control numeric precision and alignment (e.g., `f_str("xx.x (xx.xx)", "mean", "sd")`).
 
 ## Layer Types
 
 ### Count Layers
 
-Tabulate frequencies of categorical variables, with support for nested
-counts, distinct subject counting, and total rows.
+Tabulate frequencies of categorical variables, with support for nested counts, distinct subject counting, and total rows.
+
 
 ``` r
 spec <- tplyr_spec(
@@ -118,66 +107,80 @@ result <- tplyr_build(spec, tplyr_adae)
 knitr::kable(head(result[, !grepl("^ord", names(result))], 10))
 ```
 
-| rowlabel1 | rowlabel2 | res1 | res2 | res3 |
-|:---|:---|:---|:---|:---|
-| CARDIAC DISORDERS |  | 4 (12.5%) | 6 (14.0%) | 5 (10.0%) |
-| CARDIAC DISORDERS | ATRIAL FIBRILLATION | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | ATRIAL FLUTTER | 0 ( 0.0%) | 1 ( 2.3%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | ATRIAL HYPERTROPHY | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | BUNDLE BRANCH BLOCK RIGHT | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | CARDIAC FAILURE CONGESTIVE | 1 ( 3.1%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC DISORDERS | MYOCARDIAL INFARCTION | 0 ( 0.0%) | 1 ( 2.3%) | 2 ( 4.0%) |
-| CARDIAC DISORDERS | SINUS BRADYCARDIA | 0 ( 0.0%) | 3 ( 7.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 3.1%) | 0 ( 0.0%) | 1 ( 2.0%) |
-| CARDIAC DISORDERS | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 2.0%) |
+
+
+|rowlabel1         |rowlabel2                      |res1      |res2      |res3      |
+|:-----------------|:------------------------------|:---------|:---------|:---------|
+|CARDIAC DISORDERS |                               |4 (12.5%) |6 (14.0%) |5 (10.0%) |
+|CARDIAC DISORDERS |ATRIAL FIBRILLATION            |0 ( 0.0%) |0 ( 0.0%) |1 ( 2.0%) |
+|CARDIAC DISORDERS |ATRIAL FLUTTER                 |0 ( 0.0%) |1 ( 2.3%) |0 ( 0.0%) |
+|CARDIAC DISORDERS |ATRIAL HYPERTROPHY             |1 ( 3.1%) |0 ( 0.0%) |0 ( 0.0%) |
+|CARDIAC DISORDERS |BUNDLE BRANCH BLOCK RIGHT      |1 ( 3.1%) |0 ( 0.0%) |0 ( 0.0%) |
+|CARDIAC DISORDERS |CARDIAC FAILURE CONGESTIVE     |1 ( 3.1%) |0 ( 0.0%) |0 ( 0.0%) |
+|CARDIAC DISORDERS |MYOCARDIAL INFARCTION          |0 ( 0.0%) |1 ( 2.3%) |2 ( 4.0%) |
+|CARDIAC DISORDERS |SINUS BRADYCARDIA              |0 ( 0.0%) |3 ( 7.0%) |1 ( 2.0%) |
+|CARDIAC DISORDERS |SUPRAVENTRICULAR EXTRASYSTOLES |1 ( 3.1%) |0 ( 0.0%) |1 ( 2.0%) |
+|CARDIAC DISORDERS |SUPRAVENTRICULAR TACHYCARDIA   |0 ( 0.0%) |0 ( 0.0%) |1 ( 2.0%) |
+
+
 
 ### Descriptive Statistics Layers
 
-Summarize continuous variables with built-in statistics (`n`, `mean`,
-`sd`, `median`, `min`, `max`, `q1`, `q3`, `var`, `iqr`, `missing`) or
-custom summary functions.
+Summarize continuous variables with built-in statistics (`n`, `mean`, `sd`, `median`, `min`, `max`, `q1`, `q3`, `var`, `iqr`, `missing`) or custom summary functions.
 
 ### Shift Layers
 
-Cross-tabulate a baseline value against a post-baseline value within
-each treatment arm using `group_shift()`.
+Cross-tabulate a baseline value against a post-baseline value within each treatment arm using `group_shift()`.
 
 ### Analyze Layers
 
-Run user-defined analysis functions with `group_analyze()` for full
-flexibility.
+Run user-defined analysis functions with `group_analyze()` for full flexibility.
 
 ## Features
 
-- **Population data**: Control denominators with `pop_data()` and
-  display `(N=n)` header counts with `tplyr_header_n()`
-- **Total & custom groups**: Add “Total” columns or combine treatment
-  arms with `total_group()` and `custom_group()`
-- **Auto-precision**: Dynamically set decimal places based on collected
-  precision with the precision cap system
-- **Risk difference**: Compute risk differences and confidence intervals
-  on count layers
-- **Post-processing**: Row masks, row label collapsing, conditional
-  formatting, and text wrapping helpers
-- **Metadata**: Cell-level traceability to trace any result back to its
-  source records
-- **Numeric data**: Access raw unformatted results via
-  `tplyr_numeric_data()`
-- **Serialization**: Save and load specs as JSON or YAML with
-  `tplyr_write_spec()` / `tplyr_read_spec()`
-- **ARD**: Convert to and from Analysis Results Data format with
-  `tplyr_to_ard()` / `tplyr_from_ard()`
+- **Population data**: Control denominators with `pop_data()` and display `(N=n)` header counts with `tplyr_header_n()`
+- **Total & custom groups**: Add "Total" columns or combine treatment arms with `total_group()` and `custom_group()`
+- **Auto-precision**: Dynamically set decimal places based on collected precision with the precision cap system
+- **Risk difference**: Compute risk differences and confidence intervals on count layers
+- **Post-processing**: Row masks, row label collapsing, conditional formatting, and text wrapping helpers
+- **Metadata**: Cell-level traceability to trace any result back to its source records
+- **Numeric data**: Access raw unformatted results via `tplyr_numeric_data()`
+- **Serialization**: Save and load specs as JSON or YAML with `tplyr_write_spec()` / `tplyr_read_spec()`
+- **ARD**: Convert to and from Analysis Results Data format with `tplyr_to_ard()` / `tplyr_from_ard()`
 
 ## Learning More
 
-- `vignette("tplyr2")` – Getting started
-- `vignette("count")` – Count layers in depth
-- `vignette("desc")` – Descriptive statistics layers
-- `vignette("shift")` – Shift layers
-- `vignette("denom")` – Population data, header N, total and custom
-  groups
-- `vignette("general_string_formatting")` – Format string system
-- `vignette("metadata")` – Cell-level metadata and traceability
-- `vignette("serialization")` – Saving and loading specs
-- `vignette("analyze")` – Custom analyze layers
-- `vignette("post_processing")` – Post-processing helpers
+Getting started
+
+- `vignette("tplyr2")` -- Getting started
+- `vignette("table")` -- Spec-level table properties
+
+Layers
+
+- `vignette("count")` -- Count layers in depth
+- `vignette("desc")` -- Descriptive statistics layers
+- `vignette("shift")` -- Shift layers
+- `vignette("analyze")` -- Custom analyze layers
+- `vignette("adverse-events")` -- A full adverse event table, end to end
+
+Formatting
+
+- `vignette("format_strings")` -- The format string system
+- `vignette("precision_alignment")` -- Data-driven precision and parenthesis hugging
+- `vignette("display_conventions")` -- `<1%`, zero-count suppression, statistics as columns
+
+Table customization
+
+- `vignette("denom")` -- Denominators, population data, header N
+- `vignette("sort")` -- Ordering rows and layers
+- `vignette("options")` -- Session options
+- `vignette("post_processing")` -- Post-processing helpers
+
+Statistics and traceability
+
+- `vignette("riskdiff")` -- Risk difference columns
+- `vignette("binding-statistics")` -- Association tests and binding external model results
+- `vignette("metadata")` -- Cell-level metadata and traceability
+- `vignette("serialization")` -- Saving and loading specs
+- `vignette("ard")` -- Analysis Results Data conversion
+- `vignette("migration")` -- Moving from Tplyr v1

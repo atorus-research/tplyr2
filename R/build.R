@@ -68,6 +68,17 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
     pop_dt <- apply_total_groups(pop_dt, spec$total_groups)
   }
 
+  # --- Pin the column-variable universe ---
+  # Each layer derives its result columns from the levels present in its own
+  # (where-filtered) data. A layer whose `where` leaves a column group empty
+  # emitted fewer columns, and harmonize_and_bind() then lined those up
+  # positionally under a neighbouring layer's labels — putting that layer's
+  # values under the wrong treatment arm. Capturing the level set here, from the
+  # table's full data, pins the column set for every layer. The underlying
+  # columns are left untouched so nothing that reads the data's own ordering
+  # (e.g. an assoc_test reference default) changes.
+  spec_col_levels <- get_col_levels(dt, cols, complete = TRUE)
+
   # --- Compute header N per column group ---
   if (length(cols) > 0) {
     if (!is.null(pop_dt)) {
@@ -98,13 +109,16 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
 
     if (inherits(layer, "tplyr_count_layer")) {
       layer_results[[i]] <- build_count_layer(layer_dt, layer, cols, i,
-                                               col_n = col_n, pop_dt = pop_dt)
+                                               col_n = col_n, pop_dt = pop_dt,
+                                               col_levels = spec_col_levels)
     } else if (inherits(layer, "tplyr_desc_layer")) {
       layer_results[[i]] <- build_desc_layer(layer_dt, layer, cols, i,
-                                              col_n = col_n, pop_dt = pop_dt)
+                                              col_n = col_n, pop_dt = pop_dt,
+                                              col_levels = spec_col_levels)
     } else if (inherits(layer, "tplyr_shift_layer")) {
       layer_results[[i]] <- build_shift_layer(layer_dt, layer, cols, i,
-                                               col_n = col_n, pop_dt = pop_dt)
+                                               col_n = col_n, pop_dt = pop_dt,
+                                               col_levels = spec_col_levels)
     } else if (inherits(layer, "tplyr_analyze_layer")) {
       layer_results[[i]] <- build_analyze_layer(layer_dt, layer, cols, i,
                                                  col_n = col_n, pop_dt = pop_dt)
@@ -242,6 +256,34 @@ harmonize_and_bind <- function(layer_results) {
   data.table::rbindlist(layer_results, use.names = TRUE, fill = TRUE)
 }
 
+#' Name of the per-column-variable synthetic-row marker
+#'
+#' Records which column variable a duplicated row was created for, so a total
+#' group can skip copies made on its own variable while still spanning copies
+#' made for a different one.
+#'
+#' @param col_var Character(1) column variable name
+#' @return Character(1) marker column name
+#' @keywords internal
+synth_marker <- function(col_var) {
+  str_c(".tplyr_synth__", col_var)
+}
+
+#' Zero-fill synthetic markers after a bind
+#'
+#' `rbindlist(fill = TRUE)` sets a marker absent from one side to NA; those rows
+#' are originals for that variable.
+#'
+#' @param dt data.table
+#' @return `dt`
+#' @keywords internal
+fill_synth_markers <- function(dt) {
+  for (mk in str_subset(names(dt), "^\\.tplyr_synth__")) {
+    dt[is.na(get(mk)), (mk) := FALSE]
+  }
+  dt
+}
+
 #' Apply total groups to data
 #'
 #' Duplicates all rows with the column variable set to the total group label,
@@ -258,7 +300,16 @@ apply_total_groups <- function(dt, total_groups) {
     col_var <- tg$col_var
     label <- tg$label
 
-    total_rows <- data.table::copy(dt)
+    # Duplicate only the rows that are original *for this column variable*. A
+    # custom group on the same variable is a pooled copy of levels already
+    # present, so copying its rows too would count those subjects twice — a
+    # 254-subject study reported N=422. Copies made for a *different* column
+    # variable must be kept, or the total column would be empty where it crosses
+    # that variable's synthetic level.
+    marker <- synth_marker(col_var)
+    src <- if (marker %in% names(dt)) dt[!get(marker)] else dt
+
+    total_rows <- data.table::copy(src)
     total_rows[, (col_var) := label]
 
     # Mark the duplicates so a statistical test (assoc_test) can exclude them —
@@ -266,8 +317,11 @@ apply_total_groups <- function(dt, total_groups) {
     # double-count every subject (#53). Originals default to FALSE.
     if (!".tplyr_synthetic" %in% names(dt)) dt[, .tplyr_synthetic := FALSE]
     total_rows[, .tplyr_synthetic := TRUE]
+    if (!marker %in% names(dt)) dt[, (marker) := FALSE]
+    total_rows[, (marker) := TRUE]
 
     dt <- data.table::rbindlist(list(dt, total_rows), use.names = TRUE, fill = TRUE)
+    dt <- fill_synth_markers(dt)
   }
 
   dt
@@ -294,10 +348,17 @@ apply_custom_groups <- function(dt, custom_groups) {
         group_rows <- data.table::copy(matching)
         group_rows[, (col_var) := group_name]
         # Mark the duplicates so assoc_test can exclude them (see
-        # apply_total_groups); originals default to FALSE.
+        # apply_total_groups); originals default to FALSE. The per-variable
+        # marker records *which* column variable the copy was made for, so a
+        # total group on the same variable can skip it while a total group on a
+        # different variable still spans it.
+        marker <- synth_marker(col_var)
         if (!".tplyr_synthetic" %in% names(dt)) dt[, .tplyr_synthetic := FALSE]
         group_rows[, .tplyr_synthetic := TRUE]
+        if (!marker %in% names(dt)) dt[, (marker) := FALSE]
+        group_rows[, (marker) := TRUE]
         dt <- data.table::rbindlist(list(dt, group_rows), use.names = TRUE, fill = TRUE)
+        dt <- fill_synth_markers(dt)
       }
     }
   }

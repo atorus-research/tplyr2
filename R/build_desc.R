@@ -7,7 +7,8 @@
 #'
 #' @return A data.table with rowlabel*, res*, and ord* columns
 #' @keywords internal
-build_desc_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL) {
+build_desc_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL,
+                             col_levels = NULL) {
   target_var <- layer$target_var
   by <- layer$by
   settings <- layer$settings
@@ -26,13 +27,13 @@ build_desc_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt 
     # Single target variable
     result <- build_desc_single(
       dt, target_var[1], cols, by_data_vars, by_labels,
-      settings, layer_index, col_n, pop_dt = pop_dt
+      settings, layer_index, col_n, pop_dt = pop_dt, col_levels = col_levels
     )
   } else {
     # Multiple target variables
     result <- build_desc_multi(
       dt, target_var, cols, by_data_vars, by_labels,
-      settings, layer_index, col_n, pop_dt = pop_dt
+      settings, layer_index, col_n, pop_dt = pop_dt, col_levels = col_levels
     )
   }
 
@@ -63,7 +64,7 @@ build_desc_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt 
 build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
                                settings, layer_index, col_n,
                                var_label = NULL, var_index = NULL,
-                               pop_dt = NULL) {
+                               pop_dt = NULL, col_levels = NULL) {
   # Group variables
   group_vars <- c(cols, by_data_vars)
 
@@ -249,7 +250,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     data.table::setnames(wide, "formatted", "res1")
   } else {
     lhs <- paste(c(all_label_cols, "stat_order", extra_lhs), collapse = " + ")
-    rhs <- prepare_cast_column(long, cols, get_col_levels(dt, cols))
+    rhs <- prepare_cast_column(long, cols, col_levels %||% get_col_levels(dt, cols))
     formula_str <- paste(lhs, "~", rhs)
     wide <- data.table::dcast(
       long,
@@ -301,7 +302,8 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 #' Build a multi-target desc layer
 #' @keywords internal
 build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
-                              settings, layer_index, col_n, pop_dt = NULL) {
+                              settings, layer_index, col_n, pop_dt = NULL,
+                              col_levels = NULL) {
   var_results <- vector("list", length(target_vars))
 
   for (vi in seq_along(target_vars)) {
@@ -309,7 +311,7 @@ build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
       dt, target_vars[vi], cols, by_data_vars, by_labels,
       settings, layer_index, col_n,
       var_label = target_vars[vi], var_index = vi,
-      pop_dt = pop_dt
+      pop_dt = pop_dt, col_levels = col_levels
     )
   }
 
@@ -378,7 +380,16 @@ transpose_stats_to_columns <- function(wide) {
   }
 
   # --- No by variable: treatment groups become rows, stats become columns ---
-  stat_names <- wide[[stat_col]]
+  # Take the statistics in layer order (ord1 encodes the format-string order);
+  # `wide` is sorted alphabetically by label, which is not the author's order.
+  if ("ord1" %in% names(wide)) {
+    stat_ord <- unique(wide[, c(stat_col, "ord1"), with = FALSE])
+    data.table::setorderv(stat_ord, "ord1")
+    stat_names <- stat_ord[[stat_col]]
+    data.table::setorderv(wide, "ord1")
+  } else {
+    stat_names <- wide[[stat_col]]
+  }
   non_stat_labels <- setdiff(label_cols, stat_col)
 
   result_rows <- vector("list", length(res_cols))

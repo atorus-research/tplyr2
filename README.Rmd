@@ -124,13 +124,37 @@ Run user-defined analysis functions with `group_analyze()` for full flexibility.
 
 ## Learning More
 
+Getting started
+
 - `vignette("tplyr2")` -- Getting started
+- `vignette("table")` -- Spec-level table properties
+
+Layers
+
 - `vignette("count")` -- Count layers in depth
 - `vignette("desc")` -- Descriptive statistics layers
 - `vignette("shift")` -- Shift layers
-- `vignette("denom")` -- Population data, header N, total and custom groups
-- `vignette("general_string_formatting")` -- Format string system
+- `vignette("analyze")` -- Custom analyze layers
+- `vignette("adverse-events")` -- A full adverse event table, end to end
+
+Formatting
+
+- `vignette("format_strings")` -- The format string system
+- `vignette("precision_alignment")` -- Data-driven precision and parenthesis hugging
+- `vignette("display_conventions")` -- `<1%`, zero-count suppression, statistics as columns
+
+Table customization
+
+- `vignette("denom")` -- Denominators, population data, header N
+- `vignette("sort")` -- Ordering rows and layers
+- `vignette("options")` -- Session options
+- `vignette("post_processing")` -- Post-processing helpers
+
+Statistics and traceability
+
+- `vignette("riskdiff")` -- Risk difference columns
+- `vignette("binding-statistics")` -- Association tests and binding external model results
 - `vignette("metadata")` -- Cell-level metadata and traceability
 - `vignette("serialization")` -- Saving and loading specs
-- `vignette("analyze")` -- Custom analyze layers
-- `vignette("post_processing")` -- Post-processing helpers
+- `vignette("ard")` -- Analysis Results Data conversion
+- `vignette("migration")` -- Moving from Tplyr v1

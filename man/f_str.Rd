@@ -11,7 +11,14 @@ f_str(format_string, ..., empty = NULL)
 
 \item{...}{Character strings naming the variables that populate the template}
 
-\item{empty}{Value(s) to display when data is NA/missing}
+\item{empty}{Value to display when data is NA/missing. Supplied as
+\code{c(.overall = "...")}, it replaces the entire cell, but only once
+\emph{every} format group in the string is NA. Supplied unnamed (e.g.
+\code{empty = "NA"}), it instead fills each NA format group in place,
+right-justified to the width that group would have occupied, so a partially
+missing cell keeps its alignment — \code{f_str("xx (xxx)", "n", "pct",
+empty = "NA")} renders \code{"NA ( NA)"}. The default (\code{NULL}) leaves
+NA groups as blanks of the field width.}
 }
 \value{
 A tplyr_f_str object

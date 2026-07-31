@@ -784,13 +784,17 @@ test_that("missing_subjects without distinct_by has no anti_join in metadata", {
       )
     )
   )
-  result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE)
+  # Without distinct_by there is no subject key, so row-level missing-subjects
+  # counting is not expressible as a filter set: the build warns and emits no
+  # metadata for that row rather than the complement of what the cell counts.
+  expect_warning(
+    result <- tplyr_build(spec, target, pop_data = pop, metadata = TRUE),
+    "no subject key to anti-join on"
+  )
   ms_row <- result[result$rowlabel1 == "Not in Pop", ]
   if (nrow(ms_row) > 0) {
     rid <- ms_row$row_id[1]
-    meta <- tplyr_meta_result(result, rid, "res1")
-    # Without distinct_by, no anti_join (row-level counting is not expressible)
-    expect_null(meta$anti_join)
+    expect_null(tplyr_meta_result(result, rid, "res1"))
   }
 })
 
@@ -893,4 +897,354 @@ test_that("print.tplyr_meta renders names, filters and statistic", {
   rid <- b$row_id[1]
   m <- tplyr_meta_result(b, rid, "res1")
   expect_output(print(m), "tplyr_meta")
+})
+
+# ---------------------------------------------------------------------------
+# Round-trip consistency: a cell's metadata must reproduce what it displays
+# ---------------------------------------------------------------------------
+
+meta_rt_data <- function() {
+  data.frame(
+    TRT  = rep(c("A", "B"), each = 10),
+    V    = c("X", "X", "Y", "UNK", NA, "Y", "X", "Z", "UNK", "X",
+             "Y", "Y", "X", NA, "UNK", "Z", "Z", "X", "Y", "X"),
+    SUBJ = sprintf("S%02d", 1:20),
+    stringsAsFactors = FALSE
+  )
+}
+
+# Recompute the leading statistic of every cell and compare to the display
+expect_meta_roundtrip <- function(b, data, stat = "n", distinct_by = NULL,
+                                  pop_data = NULL, res_cols = NULL) {
+  if (is.null(res_cols)) res_cols <- grep("^res\\d+$", names(b), value = TRUE)
+  for (i in seq_len(nrow(b))) {
+    for (cc in res_cols) {
+      cell <- b[[cc]][i]
+      if (is.na(cell) || !nzchar(trimws(cell))) next
+      shown <- str_extract_num(cell, 1)
+      expect_false(is.null(tplyr_meta_result(b, b$row_id[i], cc)),
+                   info = paste("no metadata for row", i, cc))
+      sub <- tplyr_meta_subset(b, b$row_id[i], cc, data, pop_data = pop_data)
+      got <- if (stat == "distinct_n") length(unique(sub[[distinct_by]])) else nrow(sub)
+      expect_equal(as.numeric(got), as.numeric(shown),
+                   info = paste("row", i, b$rowlabel1[i], cc))
+    }
+  }
+}
+
+test_that("count metadata round-trips with missing_values folded into Missing", {
+  d <- meta_rt_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"))))),
+    d, metadata = TRUE)
+  expect_meta_roundtrip(b, d)
+})
+
+test_that("total row metadata round-trips under both count_missings settings", {
+  d <- meta_rt_data()
+  for (tcm in c(TRUE, FALSE)) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count("V", settings = layer_settings(
+        missing_count = list(label = "Missing", missing_values = "UNK"),
+        total_row = TRUE, total_row_count_missings = tcm)))),
+      d, metadata = TRUE)
+    expect_meta_roundtrip(b, d)
+  }
+})
+
+test_that("total row n and distinct_n agree with each other", {
+  d <- meta_rt_data()
+  for (tcm in c(TRUE, FALSE)) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count("V", settings = layer_settings(
+        distinct_by = "SUBJ",
+        missing_count = list(label = "Missing", missing_values = "UNK"),
+        total_row = TRUE, total_row_count_missings = tcm,
+        format_strings = list(n_counts = f_str("xx / xx", "n", "distinct_n")))))),
+      d, metadata = TRUE)
+    tr <- b[b$rowlabel1 == "Total", ]
+    # one row per subject in this fixture, so n and distinct_n must match
+    expect_equal(str_extract_num(tr$res1, 1), str_extract_num(tr$res1, 2))
+    expect_equal(str_extract_num(tr$res2, 1), str_extract_num(tr$res2, 2))
+  }
+})
+
+test_that("total_row_count_missings = TRUE includes missing records in the total", {
+  d <- meta_rt_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      total_row = TRUE, total_row_count_missings = TRUE)))),
+    d, metadata = TRUE)
+  # arm A has 10 records in total, including 2 UNK and 1 NA
+  expect_equal(str_extract_num(b$res1[b$rowlabel1 == "Total"], 1), 10)
+})
+
+test_that("nested count metadata round-trips with missing_values", {
+  d <- data.frame(
+    TRT  = rep(c("A", "B"), each = 6),
+    SUBJ = sprintf("S%02d", 1:12),
+    SOC  = c("CARD", "CARD", "GI", "GI", "UNK", "CARD",
+             "GI", "GI", "CARD", "UNK", "GI", "CARD"),
+    PT   = c("AF", "MI", "NAUSEA", "VOM", "UNKPT", "AF",
+             "NAUSEA", "VOM", "MI", "UNKPT", "NAUSEA", "AF"),
+    stringsAsFactors = FALSE
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "SUBJ",
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      format_strings = list(
+        n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))),
+    d, metadata = TRUE)
+  expect_meta_roundtrip(b, d, stat = "distinct_n", distinct_by = "SUBJ")
+})
+
+test_that("shift layer metadata round-trips, including with CI keywords", {
+  set.seed(11); n <- 40
+  d <- data.frame(
+    SUBJ = sprintf("S%02d", seq_len(n)),
+    TRT  = rep(c("A", "B"), each = n / 2),
+    BASE = factor(sample(c("LOW", "NORM"), n, TRUE), levels = c("LOW", "NORM")),
+    POST = factor(sample(c("LOW", "NORM"), n, TRUE), levels = c("LOW", "NORM")),
+    stringsAsFactors = FALSE
+  )
+  for (fs in list(f_str("xx (xx.x%)", "n", "pct"),
+                  f_str("xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper"))) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_shift(c(row = "BASE", column = "POST"), settings = layer_settings(
+        format_strings = list(n_counts = fs))))), d, metadata = TRUE)
+    expect_meta_roundtrip(b, d)
+  }
+})
+
+test_that("stat_columns metadata round-trips on both statistic columns", {
+  d <- meta_rt_data()
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      distinct_by = "SUBJ",
+      stat_columns = list(
+        "n (%)" = f_str("xx (xx.x%)", "distinct_n", "distinct_pct"),
+        "E"     = f_str("xx", "n")))))), d, metadata = TRUE)
+  rc <- grep("^res\\d+$", names(b), value = TRUE)
+  expect_meta_roundtrip(b, d, stat = "distinct_n", distinct_by = "SUBJ",
+                        res_cols = rc[c(TRUE, FALSE)])
+  expect_meta_roundtrip(b, d, stat = "n", res_cols = rc[c(FALSE, TRUE)])
+})
+
+test_that("stats_as_columns with a by variable resolves column filters correctly", {
+  d <- data.frame(TRT = rep(c("A", "B"), each = 8), GRP = rep(c("G1", "G2"), 8),
+                  VAL = c(1.5, 2.5, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5,
+                          2, 3, 4, 5, 6, 7, 8, 9))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("VAL", by = "GRP", settings = layer_settings(
+      stats_as_columns = TRUE,
+      format_strings = list("n" = f_str("xx", "n"),
+                            "Mean" = f_str("xx.x", "mean")))))), d, metadata = TRUE)
+
+  for (i in seq_len(nrow(b))) {
+    for (cc in grep("^res\\d+$", names(b), value = TRUE)) {
+      lbl <- attr(b[[cc]], "label")
+      sub <- tplyr_meta_subset(b, b$row_id[i], cc, d)
+      # the column filter must resolve to a real treatment level, not the
+      # composite "A | n" label
+      expect_gt(nrow(sub), 0)
+      shown <- str_extract_num(b[[cc]][i], 1)
+      got <- if (grepl("\\| n$", lbl)) nrow(sub) else round(mean(sub$VAL), 1)
+      expect_equal(as.numeric(got), as.numeric(shown), info = paste(i, cc, lbl))
+    }
+  }
+})
+
+test_that("stats_as_columns without a by variable warns that metadata is unavailable", {
+  d <- data.frame(TRT = rep(c("A", "B"), each = 8), VAL = 1:16)
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("VAL", settings = layer_settings(
+      stats_as_columns = TRUE,
+      format_strings = list("n" = f_str("xx", "n"))))))
+  expect_warning(tplyr_build(spec, d, metadata = TRUE),
+                 "cell metadata is not available for a stats_as_columns layer")
+  # and no warning when metadata was not requested
+  expect_silent(tplyr_build(spec, d))
+})
+
+# ---------------------------------------------------------------------------
+# generate_row_ids() is only meaningful on an unmodified build
+# ---------------------------------------------------------------------------
+
+test_that("generate_row_ids matches the attached row_id column on a fresh build", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("DCDECOD", by = "SEX"))), tplyr_adsl, metadata = TRUE)
+  expect_equal(generate_row_ids(b), b$row_id)
+  expect_false(anyDuplicated(b$row_id) > 0)
+})
+
+test_that("row IDs stay unique on a nested layer that repeats an inner level", {
+  d <- data.frame(
+    TRT = rep("A", 6), SUBJ = sprintf("S%d", 1:6),
+    SOC = c("CARD", "CARD", "GI", "GI", "RESP", "RESP"),
+    PT  = c("PAIN", "AF", "PAIN", "NAUSEA", "PAIN", "COUGH"),
+    stringsAsFactors = FALSE
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "SUBJ",
+      format_strings = list(n_counts = f_str("xx", "distinct_n")))))), d,
+    metadata = TRUE)
+  # "PAIN" appears under three system organ classes
+  expect_equal(sum(b$rowlabel2 == "PAIN"), 3L)
+  expect_equal(anyDuplicated(b$row_id), 0L)
+})
+
+test_that("generate_row_ids warns when labels have been blanked by row masks", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("DCDECOD", by = "SEX"))), tplyr_adsl, metadata = TRUE)
+  masked <- apply_row_masks(b)
+  expect_warning(generate_row_ids(masked), "duplicate ID")
+  # the attached column is unaffected and still keys the metadata
+  expect_equal(masked$row_id, b$row_id)
+  expect_false(is.null(tplyr_meta_result(b, masked$row_id[2], "res1")))
+})
+
+# ---------------------------------------------------------------------------
+# An empty filter set means "unrestricted", not "no rows"
+# ---------------------------------------------------------------------------
+
+test_that("a total_group column with no row filter yields the whole dataset", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups = list(total_group("TRT01P", label = "Total")),
+    layers = tplyr_layers(group_desc("AGE", settings = layer_settings(
+      format_strings = list(n = f_str("xxx", "n"),
+                            Mean = f_str("xx.xx", "mean")))))), d, metadata = TRUE)
+
+  tot <- grep("^res", names(b), value = TRUE)[
+    vapply(grep("^res", names(b), value = TRUE),
+           function(cc) grepl("^Total", attr(b[[cc]], "label")), logical(1))]
+
+  m <- tplyr_meta_result(b, b$row_id[1], tot)
+  expect_length(m$filters, 0)              # the cell genuinely has no filters
+  sub <- tplyr_meta_subset(b, b$row_id[1], tot, d)
+  expect_equal(nrow(sub), nrow(d))
+
+  n_row <- which(trimws(b$rowlabel1) == "n")
+  expect_equal(str_extract_num(b[[tot]][n_row], 1), nrow(d))
+  mean_row <- which(trimws(b$rowlabel1) == "Mean")
+  expect_equal(round(mean(sub$AGE), 2),
+               str_extract_num(b[[tot]][mean_row], 1))
+})
+
+test_that("a count total row in a total_group column round-trips", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups = list(total_group("TRT01P", label = "Total")),
+    layers = tplyr_layers(group_count("SEX", settings = layer_settings(
+      total_row = TRUE)))), d, metadata = TRUE)
+  tot <- grep("^res", names(b), value = TRUE)[
+    vapply(grep("^res", names(b), value = TRUE),
+           function(cc) grepl("^Total", attr(b[[cc]], "label")), logical(1))]
+  i <- which(trimws(b$rowlabel1) == "Total")
+  sub <- tplyr_meta_subset(b, b$row_id[i], tot, d)
+  expect_equal(nrow(sub), str_extract_num(b[[tot]][i], 1))
+})
+
+test_that("total and custom group columns both round-trip together", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups  = list(total_group("TRT01P", label = "Total")),
+    custom_groups = list(custom_group("TRT01P",
+      "Treated" = c("Xanomeline High Dose", "Xanomeline Low Dose"))),
+    layers = tplyr_layers(group_count("SEX"))), d, metadata = TRUE)
+  expect_meta_roundtrip(b, d)
+})
+
+# ---------------------------------------------------------------------------
+# by-variable values that are blank, NA, or padded
+# ---------------------------------------------------------------------------
+
+test_that("a by level that is an empty string is still filtered on", {
+  lb <- as.data.frame(tplyr_adlb)
+  expect_gt(sum(lb$AVISIT == ""), 0)   # the shipped data really has these
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_desc("AVAL", by = "AVISIT", settings = layer_settings(
+      format_strings = list("n" = f_str("xxx", "n")))))), lb, metadata = TRUE)
+  expect_meta_roundtrip(b, lb)
+})
+
+test_that("a by level that is NA builds metadata and filters with is.na()", {
+  d <- as.data.frame(tplyr_adsl)
+  d$GRP <- ifelse(seq_len(nrow(d)) %% 3 == 0, NA, "G1")
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_desc("AGE", by = "GRP", settings = layer_settings(
+      format_strings = list("n" = f_str("xxx", "n")))))), d, metadata = TRUE)
+  expect_meta_roundtrip(b, d)
+  na_row <- which(is.na(b$rowlabel1) | b$rowlabel1 == "NA")
+  expect_gt(length(na_row), 0)
+  m <- tplyr_meta_result(b, b$row_id[na_row[1]], "res1")
+  expect_true(any(grepl("is.na", vapply(m$filters, deparse1, character(1)))))
+})
+
+test_that("by values with surrounding whitespace are matched untrimmed", {
+  d <- as.data.frame(tplyr_adsl)
+  d$GRP2 <- ifelse(d$SEX == "F", "F ", " M")
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_desc("AGE", by = "GRP2", settings = layer_settings(
+      format_strings = list("n" = f_str("xxx", "n")))))), d, metadata = TRUE)
+  expect_meta_roundtrip(b, d)
+})
+
+test_that("a nested layer's empty inner label still contributes no filter", {
+  ae <- as.data.frame(tplyr_adae)
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"), settings = layer_settings(
+      distinct_by = "USUBJID",
+      format_strings = list(n_counts = f_str("xx", "n")))))), ae, metadata = TRUE)
+  # an outer-level row filters on AEBODSYS only
+  outer <- which(!nzchar(trimws(b$rowlabel2)))[1]
+  m <- tplyr_meta_result(b, b$row_id[outer], "res1")
+  expect_false(any(grepl("AEDECOD", vapply(m$filters, deparse1, character(1)))))
+  expect_meta_roundtrip(b, ae)
+})
+
+test_that("missing_subjects without distinct_by yields no metadata, with a warning", {
+  pop <- data.frame(TRT = rep(c("A", "B"), each = 12),
+                    SUBJ = sprintf("P%02d", 1:24), stringsAsFactors = FALSE)
+  d <- data.frame(TRT = rep(c("A", "B"), each = 4),
+                  SUBJ = c("P01", "P01", "P02", "P03", "P13", "P14", "P14", "P15"),
+                  AE = c("H", "N", "H", "N", "H", "H", "N", "N"),
+                  stringsAsFactors = FALSE)
+  spec <- tplyr_spec(cols = "TRT", pop_data = pop_data(cols = c("TRT" = "TRT")),
+    layers = tplyr_layers(group_count("AE", settings = layer_settings(
+      missing_subjects = TRUE,
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))))))
+
+  expect_warning(b <- tplyr_build(spec, d, pop_data = pop, metadata = TRUE),
+                 "no subject key to anti-join on")
+  i <- which(b$rowlabel1 == "Missing")
+  expect_null(tplyr_meta_result(b, b$row_id[i], "res1"))
+  # ordinary rows are unaffected
+  expect_false(is.null(tplyr_meta_result(b, b$row_id[1], "res1")))
+})
+
+test_that("missing_subjects with distinct_by anti-joins to the counted subjects", {
+  pop <- data.frame(TRT = rep(c("A", "B"), each = 12),
+                    SUBJ = sprintf("P%02d", 1:24), stringsAsFactors = FALSE)
+  d <- data.frame(TRT = rep(c("A", "B"), each = 4),
+                  SUBJ = c("P01", "P01", "P02", "P03", "P13", "P14", "P14", "P15"),
+                  AE = c("H", "N", "H", "N", "H", "H", "N", "N"),
+                  stringsAsFactors = FALSE)
+  b <- tplyr_build(tplyr_spec(cols = "TRT", pop_data = pop_data(cols = c("TRT" = "TRT")),
+    layers = tplyr_layers(group_count("AE", settings = layer_settings(
+      missing_subjects = TRUE, distinct_by = "SUBJ",
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))),
+    d, pop_data = pop, metadata = TRUE)
+  i <- which(b$rowlabel1 == "Missing")
+  for (cc in c("res1", "res2")) {
+    sub <- tplyr_meta_subset(b, b$row_id[i], cc, d, pop_data = pop)
+    expect_equal(length(unique(sub$SUBJ)), str_extract_num(b[[cc]][i], 1))
+  }
 })

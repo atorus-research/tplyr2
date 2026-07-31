@@ -262,9 +262,6 @@ test_that("shift integrates with multiple layers", {
     )
   )
 
-  # Count layer uses tplyr_adsl, shift needs shift_data —
-  # but both use the same data argument. Use shift_data with
-  # a mock SEX column
   combined_data <- data.frame(
     TRT01P = c("A", "A", "B", "B"),
     SEX = c("M", "F", "M", "F"),
@@ -272,11 +269,12 @@ test_that("shift integrates with multiple layers", {
     ANRIND = c("N", "H", "L", "N")
   )
 
-  result <- tplyr_build(spec, combined_data)
-
-  # Should have rows from both layers
-  expect_true(any(result$ord_layer_index == 1))  # Count layer
-  expect_true(any(result$ord_layer_index == 2))  # Shift layer
+  # A shift layer emits one result column per arm *per shift category*, a count
+  # layer one per arm. Binding them leaves res1.. meaning different things in
+  # each row block, with only the first layer's column labels retained — the
+  # shift values ended up under the count layer's arm labels. That combination
+  # is now rejected rather than silently mislabeled.
+  expect_error(tplyr_build(spec, combined_data), "wide result-column layout")
 })
 
 # Issue #13: shift layer orders res columns by the shift column's factor levels
@@ -537,4 +535,67 @@ test_that("denom_row_format must be a single-variable f_str (#55)", {
           denom_row_format = f_str("xx (xx)", "n", "pct"))))), d),
     "exactly one"
   )
+})
+
+# ---------------------------------------------------------------------------
+# Single-proportion confidence intervals on shift layers
+# ---------------------------------------------------------------------------
+
+shift_ci_data <- function() {
+  set.seed(3)
+  n <- 60
+  data.frame(
+    USUBJID = sprintf("S%03d", seq_len(n)),
+    TRTA    = rep(c("A", "B"), each = n / 2),
+    BNRIND  = factor(sample(c("LOW", "NORMAL"), n, TRUE), levels = c("LOW", "NORMAL")),
+    ANRIND  = factor(sample(c("LOW", "NORMAL"), n, TRUE), levels = c("LOW", "NORMAL"))
+  )
+}
+
+test_that("shift layers compute ci_lower/ci_upper when a format references them", {
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"), settings = layer_settings(
+      format_strings = list(
+        n_counts = f_str("xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")
+      ))))), shift_ci_data())
+
+  # every cell carries three numbers beyond the count: pct, lower, upper
+  expect_true(all(!is.na(str_extract_num(b$res1, 3))))
+  expect_true(all(!is.na(str_extract_num(b$res1, 4))))
+  # bounds bracket the percentage
+  pct <- str_extract_num(b$res1, 2)
+  expect_true(all(str_extract_num(b$res1, 3) <= pct))
+  expect_true(all(str_extract_num(b$res1, 4) >= pct))
+})
+
+test_that("shift CI bounds are on the percentage scale and land in numeric_data", {
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"), settings = layer_settings(
+      format_strings = list(
+        n_counts = f_str("xx (xx.x%) [xx.x, xx.x]", "n", "pct", "ci_lower", "ci_upper")
+      ))))), shift_ci_data())
+
+  nd <- tplyr_numeric_data(b, layer = 1)
+  expect_true(all(c("ci_lower", "ci_upper") %in% names(nd)))
+  expect_true(all(nd$ci_lower >= 0 & nd$ci_upper <= 100))
+})
+
+test_that("shift layers compute distinct CI bounds when distinct_by is set", {
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"), settings = layer_settings(
+      distinct_by = "USUBJID",
+      format_strings = list(
+        n_counts = f_str("xx [xx.x, xx.x]", "distinct_n",
+                         "distinct_ci_lower", "distinct_ci_upper")
+      ))))), shift_ci_data())
+  expect_true(all(!is.na(str_extract_num(b$res1, 2))))
+  expect_true(all(!is.na(str_extract_num(b$res1, 3))))
+})
+
+test_that("shift layers do not compute CI bounds when no format references them", {
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"), settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))),
+    shift_ci_data())
+  expect_false("ci_lower" %in% names(tplyr_numeric_data(b, layer = 1)))
 })

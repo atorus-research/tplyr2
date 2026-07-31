@@ -120,8 +120,9 @@ articles:
 - title: Formatting
   navbar: Formatting
   contents:
-    - general_string_formatting
-    - desc_layer_formatting
+    - format_strings
+    - precision_alignment
+    - display_conventions
 
 - title: Table Customization
   navbar: Table Customization

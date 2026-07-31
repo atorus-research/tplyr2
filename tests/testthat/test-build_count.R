@@ -702,3 +702,174 @@ test_that("nested count layer supports CI keywords", {
   # All cells should carry a bracketed CI
   expect_true(all(grepl("\\[", b$res1[nzchar(trimws(b$res1))])))
 })
+
+# ---------------------------------------------------------------------------
+# missing_count$missing_values folds levels into the Missing row rather than
+# counting them both there and as their own category row.
+# ---------------------------------------------------------------------------
+
+test_that("missing_values levels are removed from the category rows", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+
+  expect_false("UNK" %in% b$rowlabel1)
+  expect_setequal(b$rowlabel1, c("X", "Y", "Missing"))
+  # Missing picks up the UNK record and the NA record
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "2 (40.0%)")
+  # and the column now sums to 100%
+  expect_equal(sum(str_extract_num(b$res1, 2)), 100)
+})
+
+test_that("multiple missing_values are all folded in", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = c("UNK", "Y")),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  expect_setequal(b$rowlabel1, c("X", "Missing"))
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "3 (60.0%)")
+})
+
+test_that("missing_count without missing_values leaves category rows alone", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  expect_true("UNK" %in% b$rowlabel1)
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "1 (20.0%)")
+})
+
+test_that("a total row excluding missings does not count folded missing_values", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      total_row = TRUE, total_row_count_missings = FALSE,
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  # X (2) + Y (1); UNK and NA are in Missing
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Total"]), "3 (60.0%)")
+})
+
+test_that("missing_values folds an outer level and its inner rows on a nested layer", {
+  d <- data.frame(
+    TRT = rep("A", 6), USUBJID = sprintf("S%d", 1:6),
+    SOC = c("CARD", "CARD", "UNK", "GI", "GI", "GI"),
+    PT  = c("AF", "MI", "UNKPT", "NAUSEA", "VOM", "VOM")
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "USUBJID",
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))), d)
+
+  expect_false("UNK" %in% b$rowlabel1)
+  expect_false("UNKPT" %in% b$rowlabel2)
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "1 (16.7%)")
+})
+
+# ---------------------------------------------------------------------------
+# #66: the total row must render a zero for a column group with no rows in the
+# analysis data, not a blank. `n` is counted from the raw rows, so an empty
+# column group never appears there and has to be carried in from the completed
+# category counts.
+# ---------------------------------------------------------------------------
+
+.empty_arm_data <- function() {
+  arms <- c("Placebo", "Xanomeline Low Dose", "Xanomeline High Dose")
+  ae <- subset(as.data.frame(tplyr_adae), TRTA != "Placebo")
+  # Placebo stays a real factor level with zero rows
+  ae$TRTA <- factor(ae$TRTA, levels = arms)
+  ae
+}
+
+test_that("the total row renders 0 for a cols level with no rows (#66)", {
+  ae <- .empty_arm_data()
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRTA",
+    pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+    layers = tplyr_layers(group_count("AEDECOD", settings = layer_settings(
+      distinct_by = "USUBJID",
+      total_row = TRUE, total_row_label = "ANY EVENT",
+      zero_count_display = "count_only",
+      format_strings = list(
+        n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))),
+    ae, pop_data = tplyr_adsl)
+
+  tot <- b[b$rowlabel1 == "ANY EVENT", ]
+  expect_equal(nrow(tot), 1L)
+  # the empty arm's cell is present and matches what the category rows show
+  expect_true(nzchar(trimws(tot$res1)))
+  expect_equal(trimws(tot$res1), "0")
+  expect_equal(trimws(b$res1[1]), "0")
+  # the populated arms are unaffected
+  expect_equal(str_extract_num(tot$res2, 1), 50)
+})
+
+test_that("an empty cols level gets a full zero cell under an ordinary format", {
+  ae <- .empty_arm_data()
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRTA",
+    pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+    layers = tplyr_layers(group_count("AEDECOD", settings = layer_settings(
+      distinct_by = "USUBJID", total_row = TRUE, total_row_label = "ANY EVENT",
+      format_strings = list(
+        n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))),
+    ae, pop_data = tplyr_adsl)
+
+  tot <- b[b$rowlabel1 == "ANY EVENT", ]
+  expect_equal(str_extract_num(tot$res1, 1), 0)
+  expect_equal(str_extract_num(tot$res1, 2), 0)
+  # and the percent denominator still came through
+  expect_true(nzchar(trimws(tot$res1)))
+})
+
+test_that("a nested total row also renders 0 for an empty cols level (#66)", {
+  ae <- .empty_arm_data()
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRTA",
+    pop_data = pop_data(cols = c("TRTA" = "TRT01A")),
+    layers = tplyr_layers(group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        total_row = TRUE, total_row_label = "ANY BODY SYSTEM",
+        zero_count_display = "count_only",
+        format_strings = list(
+          n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))),
+    ae, pop_data = tplyr_adsl)
+
+  tot <- b[b$rowlabel1 == "ANY BODY SYSTEM", ]
+  expect_equal(nrow(tot), 1L)
+  expect_equal(trimws(tot$res1), "0")
+})
+
+test_that("a total row with no cols and no by still totals every record", {
+  d <- data.frame(V = c("X", "X", "Y", NA), stringsAsFactors = FALSE)
+  b <- tplyr_build(tplyr_spec(cols = character(0), layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      total_row = TRUE,
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  expect_equal(str_extract_num(b$res1[b$rowlabel1 == "Total"], 1), 4)
+})
+
+test_that("an empty cols level does not disturb total_row_count_missings", {
+  arms <- c("A", "B")
+  d <- data.frame(TRT = factor(rep("A", 5), levels = arms),
+                  V = c("X", "Y", "UNK", NA, "X"), stringsAsFactors = FALSE)
+  for (tcm in c(TRUE, FALSE)) {
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count("V", settings = layer_settings(
+        missing_count = list(label = "Missing", missing_values = "UNK"),
+        total_row = TRUE, total_row_count_missings = tcm,
+        format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+    tot <- b[b$rowlabel1 == "Total", ]
+    # arm A: 5 records total, 3 once UNK and NA are excluded
+    expect_equal(str_extract_num(tot$res1, 1), if (tcm) 5 else 3)
+    # arm B has no rows at all -- its total cell exists and is zero
+    expect_true(nzchar(trimws(tot$res2)))
+    expect_equal(str_extract_num(tot$res2, 1), 0)
+  }
+})

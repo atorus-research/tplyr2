@@ -2,7 +2,14 @@
 #'
 #' @param format_string Character string defining the display template
 #' @param ... Character strings naming the variables that populate the template
-#' @param empty Value(s) to display when data is NA/missing
+#' @param empty Value to display when data is NA/missing. Supplied as
+#'   \code{c(.overall = "...")}, it replaces the entire cell, but only once
+#'   \emph{every} format group in the string is NA. Supplied unnamed (e.g.
+#'   \code{empty = "NA"}), it instead fills each NA format group in place,
+#'   right-justified to the width that group would have occupied, so a partially
+#'   missing cell keeps its alignment -- \code{f_str("xx (xxx)", "n", "pct",
+#'   empty = "NA")} renders \code{"NA ( NA)"}. The default (\code{NULL}) leaves
+#'   NA groups as blanks of the field width.
 #'
 #' @return A tplyr_f_str object
 #' @export
@@ -12,6 +19,23 @@ f_str <- function(format_string, ..., empty = NULL) {
 
   if (length(parsed$groups) != length(vars)) {
     stop(str_glue("Format string has {length(parsed$groups)} format group(s) but {length(vars)} variable(s) were provided"))
+  }
+
+  # Parenthesis hugging relocates a number's leading spaces to just inside the
+  # trailing literal. A hugged group with no literal in front of it has nothing
+  # to hug, and simply left-justifies with trailing whitespace instead.
+  hug_no_delim <- map_lgl(seq_along(parsed$groups), function(i) {
+    grp <- parsed$groups[[i]]
+    (grp$int$hug || grp$dec$hug) && !nzchar(parsed$literals[i])
+  })
+  if (any(hug_no_delim)) {
+    warning(str_glue(
+      "Format string \"{format_string}\": format group ",
+      "{str_c(which(hug_no_delim), collapse = ', ')} uses parenthesis hugging ",
+      "(X/A) but has no literal text before it, so there is nothing to hug -- ",
+      "the number will be left-justified with trailing spaces. Use lowercase ",
+      "x/a for a leading group."
+    ), call. = FALSE)
   }
 
   structure(
@@ -73,6 +97,21 @@ apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
 
   n <- length(args[[1]])
 
+  # Two `empty` modes. A value keyed by `.overall` replaces the whole cell once
+  # every format group is NA (applied after assembly, below). Any other form is
+  # a per-group fill: each NA group is replaced in place, right-justified to the
+  # width that group would have occupied, so the column stays aligned.
+  empty_overall <- if (!is.null(fmt$empty) && ".overall" %in% names(fmt$empty)) {
+    fmt$empty[[".overall"]]
+  } else {
+    NULL
+  }
+  empty_fill <- if (!is.null(fmt$empty) && is.null(empty_overall)) {
+    as.character(fmt$empty)[1]
+  } else {
+    NULL
+  }
+
   # Format each variable column
   formatted_parts <- vector("list", length(groups))
   for (i in seq_along(groups)) {
@@ -81,6 +120,16 @@ apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
     gt_i <- if (!is.null(lt_gt_group) && i == lt_gt_group) gt else NULL
     formatted_parts[[i]] <- format_number_vec(args[[i]], groups[[i]],
                                               precision = prec_i, lt = lt_i, gt = gt_i)
+
+    if (!is.null(empty_fill)) {
+      na_i <- is.na(args[[i]])
+      if (any(na_i)) {
+        # format_number_vec() fills an NA with spaces of the field width, so the
+        # blank cell itself carries the width to justify against.
+        fill_width <- str_length(formatted_parts[[i]][na_i][1])
+        formatted_parts[[i]][na_i] <- formatC(empty_fill, width = fill_width)
+      }
+    }
   }
 
   # Paste together with literals, applying parenthesis hugging where needed
@@ -97,12 +146,10 @@ apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
     }
   }
 
-  # Handle empty values: if all format group values are NA, replace with empty
-  if (!is.null(fmt$empty)) {
+  # Handle empty values: if all format group values are NA, replace the cell
+  if (!is.null(empty_overall)) {
     all_na <- Reduce(`&`, map(args, is.na))
-    if (".overall" %in% names(fmt$empty)) {
-      result[all_na] <- fmt$empty[[".overall"]]
-    }
+    result[all_na] <- empty_overall
   }
 
   # Optional fixed total-width padding of the whole token
@@ -337,10 +384,11 @@ parse_format_part <- function(part) {
 
 #' @export
 print.tplyr_f_str <- function(x, ...) {
-  cat(str_glue("tplyr format string: \"{x$format_string}\"\n"))
-  cat(str_glue("  Variables: {str_c(x$vars, collapse = ', ')}\n"))
+  # str_glue() strips the trailing newline, so emit it separately
+  cat(str_glue("tplyr format string: \"{x$format_string}\""), "\n", sep = "")
+  cat(str_glue("  Variables: {str_c(x$vars, collapse = ', ')}"), "\n", sep = "")
   if (!is.null(x$empty)) {
-    cat(str_glue("  Empty: {deparse(x$empty)}\n"))
+    cat(str_glue("  Empty: {str_c(deparse(x$empty), collapse = '')}"), "\n", sep = "")
   }
   invisible(x)
 }

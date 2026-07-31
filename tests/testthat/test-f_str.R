@@ -188,3 +188,57 @@ test_that("group_desc mean of a tiny negative value shows 0.0 not -0.0", {
       format_strings = list(Mean = f_str("xx.x", "mean")))))), d)
   expect_equal(trimws(b$res1[b$rowlabel1 == "Mean"]), "0.0")
 })
+
+# ---------------------------------------------------------------------------
+# f_str(empty=): the two modes
+# ---------------------------------------------------------------------------
+
+test_that("empty= keyed by .overall replaces the whole cell, only when all groups are NA", {
+  fmt <- f_str("xx (xxx)", "n", "pct", empty = c(.overall = "NA"))
+  expect_equal(apply_formats(fmt, NA, NA), "NA")
+  # one group present -> not "overall" empty, the other blank-fills
+  expect_equal(apply_formats(fmt, NA, 12), "   ( 12)")
+  expect_equal(apply_formats(fmt, 5, 12), " 5 ( 12)")
+})
+
+test_that("unnamed empty= fills each NA format group at its own field width", {
+  fmt <- f_str("xx (xxx)", "n", "pct", empty = "NA")
+  expect_equal(apply_formats(fmt, NA, NA), "NA ( NA)")
+  expect_equal(apply_formats(fmt, NA, 12), "NA ( 12)")
+  expect_equal(apply_formats(fmt, 5, NA), " 5 ( NA)")
+  expect_equal(apply_formats(fmt, 5, 12), " 5 ( 12)")
+})
+
+test_that("unnamed empty= preserves cell width and is vectorized", {
+  fmt <- f_str("xx.x (xx.xx)", "mean", "sd", empty = "NE")
+  out <- apply_formats(fmt, c(1.5, NA, 3.5), c(0.2, NA, NA))
+  expect_equal(out, c(" 1.5 ( 0.20)", "  NE (   NE)", " 3.5 (   NE)"))
+  expect_equal(unique(nchar(out)), 12L)
+})
+
+test_that("empty= replacement longer than the field is not truncated", {
+  fmt <- f_str("xx", "n", empty = "MISSING")
+  expect_equal(apply_formats(fmt, NA), "MISSING")
+})
+
+test_that("empty = NULL keeps the blank-width fill", {
+  fmt <- f_str("xx (xxx)", "n", "pct")
+  expect_equal(apply_formats(fmt, NA, NA), "   (   )")
+})
+
+# ---------------------------------------------------------------------------
+# Parenthesis hugging with nothing to hug
+# ---------------------------------------------------------------------------
+
+test_that("a hugged leading group with no preceding literal warns", {
+  expect_warning(f_str("XXX", "n"), "no literal text before it")
+  expect_warning(f_str("AAA.A", "mean"), "no literal text before it")
+  # the warning names the offending group
+  expect_warning(f_str("XX (xx)", "n", "pct"), "format group 1")
+})
+
+test_that("a hugged group that follows a literal does not warn", {
+  expect_silent(f_str("xxx (XXX.x%)", "n", "pct"))
+  expect_silent(f_str("xx [XX.x]", "n", "pct"))
+  expect_silent(f_str("xxx", "n"))
+})

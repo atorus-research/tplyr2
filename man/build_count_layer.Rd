@@ -4,7 +4,15 @@
 \alias{build_count_layer}
 \title{Process a count layer}
 \usage{
-build_count_layer(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL)
+build_count_layer(
+  dt,
+  layer,
+  cols,
+  layer_index,
+  col_n = NULL,
+  pop_dt = NULL,
+  col_levels = NULL
+)
 }
 \arguments{
 \item{dt}{data.table with the (filtered) input data}

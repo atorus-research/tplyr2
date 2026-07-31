@@ -284,3 +284,62 @@ test_that("validate_layer accepts a valid CI count layer", {
     ci_method = "wilson", ci_level = 0.90))
   expect_true(tplyr2:::validate_layer(layer, 1))
 })
+
+# ---------------------------------------------------------------------------
+# Wide result-column layouts cannot be mixed with standard layers
+# ---------------------------------------------------------------------------
+
+.shape_data <- function() {
+  set.seed(5)
+  d <- as.data.frame(tplyr_adsl)
+  d$BN <- factor(sample(c("LOW", "NORM"), nrow(d), TRUE))
+  d$AN <- factor(sample(c("LOW", "NORM"), nrow(d), TRUE))
+  d
+}
+
+test_that("a shift layer alone and several shift layers together are allowed", {
+  d <- .shape_data()
+  expect_s3_class(tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_shift(c(row = "BN", column = "AN")))), d), "data.frame")
+  expect_s3_class(tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_shift(c(row = "BN", column = "AN")),
+    group_shift(c(row = "AN", column = "BN")))), d), "data.frame")
+})
+
+test_that("a shift layer mixed with a standard layer is rejected", {
+  d <- .shape_data()
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+      group_count("SEX"), group_shift(c(row = "BN", column = "AN")))), d),
+    "wide result-column layout"
+  )
+})
+
+test_that("a stats_as_columns layer mixed with a standard layer is rejected", {
+  d <- .shape_data()
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+      group_count("SEX"),
+      group_desc("AGE", by = "AGEGR1", settings = layer_settings(
+        stats_as_columns = TRUE)))), d),
+    "wide result-column layout"
+  )
+})
+
+test_that("two different wide layouts cannot be combined either", {
+  d <- .shape_data()
+  expect_error(
+    tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+      group_shift(c(row = "BN", column = "AN")),
+      group_desc("AGE", by = "AGEGR1", settings = layer_settings(
+        stats_as_columns = TRUE)))), d),
+    "wide result-column layout"
+  )
+})
+
+test_that("standard layers of different types still combine freely", {
+  d <- .shape_data()
+  expect_s3_class(tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("SEX"), group_desc("AGE"),
+    group_count(c("RACE", "SEX")))), d), "data.frame")
+})

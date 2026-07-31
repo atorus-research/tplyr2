@@ -7,7 +7,8 @@
 #'
 #' @return A data.table with rowlabel*, res*, and ord* columns
 #' @keywords internal
-build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL) {
+build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL,
+                              col_levels = NULL) {
   target_var <- layer$target_var
   by <- layer$by
   settings <- layer$settings
@@ -26,10 +27,12 @@ build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   if (length(target_var) == 1) {
     build_count_layer_single(dt, target_var[1], cols, by_data_vars, by_labels,
-                              settings, layer_index, col_n = col_n, pop_dt = pop_dt)
+                              settings, layer_index, col_n = col_n, pop_dt = pop_dt,
+                              col_levels = col_levels)
   } else {
     build_count_layer_nested(dt, target_var, cols, by_data_vars, by_labels,
-                              settings, layer_index, col_n = col_n, pop_dt = pop_dt)
+                              settings, layer_index, col_n = col_n, pop_dt = pop_dt,
+                              col_levels = col_levels)
   }
 }
 
@@ -40,7 +43,8 @@ build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 #' Process a single-variable count layer
 #' @keywords internal
 build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
-                                      settings, layer_index, col_n = NULL, pop_dt = NULL) {
+                                      settings, layer_index, col_n = NULL, pop_dt = NULL,
+                                      col_levels = NULL) {
   # Extract settings
   distinct_by   <- settings$distinct_by
   denoms_by     <- settings$denoms_by
@@ -99,7 +103,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   }
 
   # --- Data completion ---
-  counts <- complete_counts(counts, dt, cols, by_data_vars, tv, limit_data_by, denom_group)
+  counts <- complete_counts(counts, dt, cols, by_data_vars, tv, limit_data_by,
+                            denom_group, col_levels = col_levels)
 
   # --- Apply keep_levels filter ---
   if (!is.null(keep_levels)) {
@@ -112,7 +117,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
       dt, counts, cols, by_data_vars, tv, group_vars, denom_group,
       denom_dt, distinct_by, missing_count
     )
-    counts <- missing_result$counts
+    counts <- drop_missing_value_levels(missing_result$counts, tv, missing_count)
     missing_row <- missing_result$missing_row
   } else {
     missing_row <- NULL
@@ -239,7 +244,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   wide <- cast_to_wide(counts,
                        c(by_order_cols, special_col, tv_order_col, row_labels),
                        cols, layer_index, col_n = col_n, stat_labels = names(fmts),
-                       col_levels = get_col_levels(dt, cols))
+                       col_levels = merge_col_levels(col_levels, get_col_levels(dt, cols)))
   for (oc in drop_cols) {
     if (oc %in% names(wide)) wide[, (oc) := NULL]
   }
@@ -282,7 +287,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 #' Process a nested (multi-variable) count layer
 #' @keywords internal
 build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_labels,
-                                      settings, layer_index, col_n = NULL, pop_dt = NULL) {
+                                      settings, layer_index, col_n = NULL, pop_dt = NULL,
+                                      col_levels = NULL) {
   n_levels <- length(target_vars)
   distinct_by <- settings$distinct_by
   denom_where <- settings$denom_where
@@ -355,7 +361,8 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
     # Data completion
     counts <- complete_nested_level(counts, dt, cols, by_data_vars, level_tvs,
-                                     limit_data_by, denom_group)
+                                     limit_data_by, denom_group,
+                                     col_levels = col_levels)
 
     # Single-proportion confidence interval (lazy)
     if (uses_ci) add_count_ci(counts, settings)
@@ -444,6 +451,11 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     )
     missing_row <- missing_result$missing_row
 
+    # Fold the named missing_values out of the displayed rows so they are not
+    # counted both here and in the Missing row. At the outer level this also
+    # removes that group's inner rows.
+    combined <- drop_missing_value_levels(combined, outer_tv, missing_count)
+
     if (uses_ci) add_count_ci(missing_row, settings)
     apply_count_formats(missing_row, fmts, pct_lt, pct_gt, zero_count_display)
 
@@ -516,7 +528,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   wide <- cast_to_wide(combined, c(".nest_row_order", row_label_cols), cols,
                        layer_index, col_n = col_n,
                        stat_labels = names(fmts),
-                       col_levels = get_col_levels(dt, cols))
+                       col_levels = merge_col_levels(col_levels, get_col_levels(dt, cols)))
   if (".nest_row_order" %in% names(wide)) {
     wide[, .nest_row_order := NULL]
   }
@@ -723,19 +735,23 @@ sort_nested <- function(combined, target_vars, by_data_vars, dt = NULL,
 #' Complete counts for a nested level
 #' @keywords internal
 complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
-                                   limit_data_by = NULL, denom_group = NULL) {
+                                   limit_data_by = NULL, denom_group = NULL,
+                                   col_levels = NULL) {
   # For inner levels (>1 target var), use actual parent-child relationships
   # For outer level (1 target var), use full cross-join (same as complete_counts)
   if (length(level_tvs) == 1) {
     return(complete_counts(counts, dt, cols, by_data_vars, level_tvs[1],
-                            limit_data_by, denom_group))
+                            limit_data_by, denom_group, col_levels = col_levels))
   }
 
   # Inner level: build grid from actual target var combinations in data
   non_tv_vars <- list()
   for (col in cols) {
-    vals <- sort(unique(dt[[col]]))
-    if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    vals <- col_levels[[col]]
+    if (is.null(vals)) {
+      vals <- sort(unique(dt[[col]]))
+      if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    }
     non_tv_vars[[col]] <- vals
   }
   for (bv in by_data_vars) {
@@ -794,6 +810,24 @@ complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
 # =============================================================================
 # Shared helpers (used by both single and nested paths)
 # =============================================================================
+
+#' Drop target-variable levels that were folded into the Missing row
+#'
+#' Values named in \code{missing_count$missing_values} are counted in the Missing
+#' row. Without removing them here they would *also* keep their own category row,
+#' counting the same records twice and pushing the column past 100%.
+#'
+#' @param counts data.table of category counts
+#' @param tv Character string, target variable name
+#' @param missing_count The layer's \code{missing_count} setting
+#' @return \code{counts} with the folded-in levels removed
+#' @keywords internal
+drop_missing_value_levels <- function(counts, tv, missing_count) {
+  if (is.null(counts) || is.null(missing_count)) return(counts)
+  mv <- missing_count$missing_values %||% character(0)
+  if (length(mv) == 0) return(counts)
+  counts[is.na(get(tv)) | !as.character(get(tv)) %in% as.character(mv)]
+}
 
 #' Compute missing count row
 #' @keywords internal
@@ -994,11 +1028,31 @@ compute_total_row <- function(counts, dt, cols, by_data_vars, tv, total_label,
     src <- src[!is.na(get(tv))]
   }
 
+  # `n` is counted from the raw rows rather than summed across the category
+  # rows, for the same reason `distinct_n` is below: the category rows exclude
+  # NA target values (data completion drops them) and any level folded into the
+  # Missing row, so summing them silently ignored total_row_count_missings.
+  # Counting raw rows makes n, distinct_n and the cell's metadata agree.
+  raw_n <- dt
+  if (!total_missings && !is.null(missing_count)) {
+    missing_values <- missing_count$missing_values %||% character(0)
+    raw_n <- raw_n[!is.na(get(tv)) & !get(tv) %in% missing_values]
+  }
+
   if (length(summary_group) > 0) {
-    total_dt <- src[, list(n = sum(n, na.rm = TRUE), total = total[1]), by = summary_group]
+    denoms <- unique(src[, c(summary_group, "total"), with = FALSE],
+                     by = summary_group)
+    total_dt <- raw_n[, list(n = .N), by = summary_group]
+    # `all = TRUE`, not `all.x`: a column group with no rows in the analysis data
+    # never appears in raw_n, and keeping only raw_n's groups would leave the
+    # total row with no cell there at all -- it rendered blank while the category
+    # rows above it correctly showed 0 (#66). `denoms` comes from the completed
+    # counts, so it carries every group the layer displays.
+    total_dt <- merge(total_dt, denoms, by = summary_group, all = TRUE)
+    total_dt[is.na(n), n := 0L]
   } else {
     total_dt <- data.table::data.table(
-      n = sum(src$n, na.rm = TRUE),
+      n = nrow(raw_n),
       total = src$total[1]
     )
   }
@@ -1088,13 +1142,19 @@ build_row_labels_special <- function(dt, by_labels, by_data_vars, tv, existing_l
 #' Complete count data to ensure all combinations exist
 #' @keywords internal
 complete_counts <- function(counts, dt, cols, by_data_vars, tv, limit_data_by = NULL,
-                            denom_group = NULL) {
+                            denom_group = NULL, col_levels = NULL) {
   # Build complete grid of all combinations
   grid_vars <- list()
 
   for (col in cols) {
-    vals <- sort(unique(dt[[col]]))
-    if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    # Prefer the pinned, table-wide level set so a layer whose `where` empties a
+    # column group still completes that group (with zeros) instead of dropping
+    # the column and shifting its neighbours.
+    vals <- col_levels[[col]]
+    if (is.null(vals)) {
+      vals <- sort(unique(dt[[col]]))
+      if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    }
     grid_vars[[col]] <- vals
   }
 
@@ -1323,11 +1383,37 @@ build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
 #' @param source_dt data.table with the original (factor-typed) input data
 #' @param cols Character vector of column variable names
 #' @keywords internal
-get_col_levels <- function(source_dt, cols) {
-  factor_cols <- keep(cols, function(col) {
-    col %in% names(source_dt) && is.factor(source_dt[[col]])
-  })
-  setNames(map(factor_cols, function(col) levels(source_dt[[col]])), factor_cols)
+get_col_levels <- function(source_dt, cols, complete = FALSE) {
+  present <- keep(cols, function(col) col %in% names(source_dt))
+  wanted <- if (complete) {
+    # Every column variable, so the level set can be pinned for all layers even
+    # when a variable is a plain character vector.
+    present
+  } else {
+    keep(present, function(col) is.factor(source_dt[[col]]))
+  }
+  setNames(map(wanted, function(col) {
+    v <- source_dt[[col]]
+    if (is.factor(v)) levels(v) else sort(unique(as.character(v)))
+  }), wanted)
+}
+
+#' Combine pinned column levels with a layer's own
+#'
+#' The spec-level level set (every column-variable value in the table's data)
+#' takes precedence so a layer whose `where` empties a column group still emits
+#' that column. Any additional variable the layer knows about (a shift layer's
+#' own column variable) is carried through.
+#'
+#' @param pinned Named list of levels captured before layer filtering (or NULL)
+#' @param layer_levels Named list from `get_col_levels()` on the layer data
+#' @return Named list of levels
+#' @keywords internal
+merge_col_levels <- function(pinned, layer_levels) {
+  if (is.null(pinned) || length(pinned) == 0) return(layer_levels)
+  out <- layer_levels
+  for (nm in names(pinned)) out[[nm]] <- pinned[[nm]]
+  out
 }
 
 #' Prepare the dcast column variable, respecting factor-level order

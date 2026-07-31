@@ -13,7 +13,8 @@ build_count_layer_nested(
   settings,
   layer_index,
   col_n = NULL,
-  pop_dt = NULL
+  pop_dt = NULL,
+  col_levels = NULL
 )
 }
 \description{

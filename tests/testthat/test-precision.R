@@ -230,3 +230,52 @@ test_that("auto-precision with fixed and auto groups mixed", {
   # Should have parentheses in the output
   expect_true(grepl("\\(", result[[res_cols[1]]]))
 })
+
+# ---------------------------------------------------------------------------
+# precision_data coverage
+# ---------------------------------------------------------------------------
+
+prec_labs <- function() {
+  data.frame(
+    TRTA  = rep("A", 6),
+    PARAM = rep(c("Sodium", "ALT", "Creat"), each = 2),
+    AVAL  = c(140, 141, 28.4, 30.1, 0.88, 0.91)
+  )
+}
+
+prec_spec <- function(pd) {
+  tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_desc("AVAL", by = "PARAM", settings = layer_settings(
+      precision_by = "PARAM", precision_on = "AVAL", precision_data = pd,
+      format_strings = list(Mean = f_str("a.a+1", "mean"))))))
+}
+
+test_that("full precision_data coverage builds without warning", {
+  pd <- data.frame(PARAM = c("Sodium", "ALT", "Creat"),
+                   max_int = c(3L, 2L, 1L), max_dec = c(0L, 1L, 2L))
+  expect_silent(tplyr_build(prec_spec(pd), prec_labs()))
+})
+
+test_that("a precision_by group missing from precision_data warns and renders blank", {
+  pd <- data.frame(PARAM = c("Sodium", "ALT"),
+                   max_int = c(3L, 2L), max_dec = c(0L, 1L))
+  expect_warning(
+    b <- tplyr_build(prec_spec(pd), prec_labs()),
+    "does not cover 1 precision_by group\\(s\\): Creat"
+  )
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Creat"]), "")
+})
+
+test_that("precision_data without the precision_by columns warns", {
+  pd <- data.frame(max_int = 3L, max_dec = 1L)
+  expect_warning(
+    tplyr_build(prec_spec(pd), prec_labs()),
+    "missing the precision_by column\\(s\\) PARAM"
+  )
+})
+
+test_that("precision_data still errors without max_int/max_dec", {
+  pd <- data.frame(PARAM = "Sodium", max_int = 3L)
+  expect_error(tplyr_build(prec_spec(pd), prec_labs()),
+               "must contain 'max_int' and 'max_dec'")
+})

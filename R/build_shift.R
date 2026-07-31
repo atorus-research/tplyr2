@@ -11,7 +11,8 @@
 #'
 #' @return A data.table with rowlabel*, res*, and ord* columns
 #' @keywords internal
-build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL) {
+build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt = NULL,
+                              col_levels = NULL) {
   target_var <- layer$target_var
   by <- layer$by
   settings <- layer$settings
@@ -111,7 +112,16 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   }
 
   # --- Data completion ---
-  counts <- complete_shift_counts(counts, dt, all_cols, by_data_vars, row_var, denom_group)
+  counts <- complete_shift_counts(counts, dt, all_cols, by_data_vars, row_var,
+                                  denom_group,
+                                  col_levels = merge_col_levels(col_levels, get_col_levels(dt, all_cols)))
+
+  # --- Single-proportion confidence interval (computed lazily) ---
+  # Same contract as group_count: only when a format references a CI keyword,
+  # on the percentage scale to match pct/distinct_pct.
+  if (layer_uses_ci(settings)) {
+    add_count_ci(counts, settings)
+  }
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
@@ -183,7 +193,8 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   order_cols <- str_subset(names(counts), "^\\.row_order$|^\\.by_order_")
   row_label_cols_with_order <- c(order_cols, row_label_cols)
   wide <- cast_to_wide(counts, row_label_cols_with_order, all_cols, layer_index,
-                       col_n = header_col_n, col_levels = get_col_levels(dt, all_cols))
+                       col_n = header_col_n,
+                       col_levels = merge_col_levels(col_levels, get_col_levels(dt, all_cols)))
 
   # Remove order columns
   for (col in order_cols) {
@@ -212,12 +223,15 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 #'
 #' @keywords internal
 complete_shift_counts <- function(counts, dt, all_cols, by_data_vars, row_var,
-                                   denom_group = NULL) {
+                                   denom_group = NULL, col_levels = NULL) {
   grid_vars <- list()
 
   for (col in all_cols) {
-    vals <- sort(unique(dt[[col]]))
-    if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    vals <- col_levels[[col]]
+    if (is.null(vals)) {
+      vals <- sort(unique(dt[[col]]))
+      if (is.factor(dt[[col]])) vals <- levels(dt[[col]])
+    }
     grid_vars[[col]] <- vals
   }
 
