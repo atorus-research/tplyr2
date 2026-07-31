@@ -527,12 +527,16 @@ replace_leading_whitespace <- function(x, replace_with = "\u00a0") {
 
 #' Extract a display-ready frame from a build result
 #'
-#' Returns just the display content of a \code{\link{tplyr_build}} result — the
-#' \code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns — and
-#' drops the internal ordering helpers (\code{ord_layer_index},
-#' \code{ord_layer_*}) and the \code{row_id} metadata column, giving a frame
+#' Returns just the display content of a \code{\link{tplyr_build}} result,
+#' dropping the internal ordering helpers (\code{ord_layer_index},
+#' \code{ord_layer_*}) and the \code{row_id} metadata column, and giving a frame
 #' ready to hand to a table-rendering package (clinify, flextable, gt, ...). The
 #' build output is already ordered, so no re-sorting is performed.
+#'
+#' Everything that is not an internal helper is kept. That is normally the
+#' \code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns, but a
+#' \code{stats_as_columns} desc layer with no \code{by} variable names its result
+#' columns after the statistics themselves, and those are retained too.
 #'
 #' @param x A data.frame produced by \code{\link{tplyr_build}}.
 #' @param labels Logical. When \code{TRUE}, the \code{res*} / \code{rdiff*} /
@@ -552,8 +556,14 @@ as_display <- function(x, labels = FALSE) {
     stop("`x` must be a data.frame produced by tplyr_build()", call. = FALSE)
   }
 
-  keep <- str_detect(names(x), "^rowlabel\\d+$|^res\\d+$|^rdiff\\d+$|^pval\\d+$")
-  out <- x[, names(x)[keep], drop = FALSE]
+  # Drop the internal helpers rather than whitelisting the display columns, so
+  # layouts that name their result columns after the statistics (a
+  # `stats_as_columns` desc layer with no `by`) are not silently emptied.
+  drop <- str_detect(
+    names(x),
+    "^ord_layer_index$|^ord_layer_\\d+$|^ordindx$|^ord\\d+$|^row_id$"
+  )
+  out <- x[, names(x)[!drop], drop = FALSE]
 
   if (isTRUE(labels)) {
     res_cols <- str_subset(names(out), "^res\\d+$|^rdiff\\d+$|^pval\\d+$")

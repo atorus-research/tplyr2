@@ -174,9 +174,11 @@ original dose-level columns are preserved.
 
 ### Combining Total and Custom Groups
 
-You can use both together. Custom groups are applied first, and then total groups
-duplicate all rows (including the custom group rows). This means the "Total"
-column will include subjects from the custom group as well.
+You can use both together. Each synthetic column is built by duplicating the rows
+it needs: a custom group copies the rows of the levels it pools, and a total group
+copies the original rows. The total group deliberately ignores the custom group's
+copies, so every subject is counted exactly once in the "Total" column -- its N
+matches the study population, not the population plus the pooled arms.
 
 ```{r}
 spec <- tplyr_spec(

@@ -29,6 +29,7 @@ validate_spec <- function(spec) {
   })
 
   validate_stat_columns_alignment(spec$layers)
+  validate_column_shape_alignment(spec$layers)
 
   invisible(TRUE)
 }
@@ -58,6 +59,53 @@ validate_stat_columns_alignment <- function(layers) {
          "count layers using stat_columns with the same statistic names, so ",
          "that result columns align across layers. Apply stat_columns ",
          "consistently or build separate specs.", call. = FALSE)
+  }
+
+  invisible(TRUE)
+}
+
+#' Validate that every layer produces the same result-column shape
+#'
+#' Result columns are aligned positionally by name across layers. A shift layer
+#' emits one column per \code{cols} level *crossed with* its shift-column
+#' variable, and a \code{stats_as_columns} desc layer emits one per level crossed
+#' with each statistic. Either alongside a layer with the plain one-column-per-
+#' level shape leaves the combined table's \code{res} columns meaning different
+#' things in different row blocks, with only the first layer's column labels
+#' retained — so the values appear under the wrong treatment arm.
+#'
+#' @param layers List of tplyr_layer objects
+#' @return Invisible TRUE if valid
+#' @keywords internal
+validate_column_shape_alignment <- function(layers) {
+  if (length(layers) < 2) return(invisible(TRUE))
+
+  shape <- map_chr(layers, function(l) {
+    if (inherits(l, "tplyr_shift_layer")) {
+      "shift"
+    } else if (inherits(l, "tplyr_desc_layer") &&
+               isTRUE(l$settings$stats_as_columns)) {
+      "stats_as_columns"
+    } else {
+      "standard"
+    }
+  })
+
+  wide <- shape != "standard"
+  if (!any(wide)) return(invisible(TRUE))
+
+  # A single wide shape is only safe when every layer shares it (all shift
+  # layers over the same shift-column variable already align).
+  if (!all(wide) || length(unique(shape)) > 1) {
+    offenders <- unique(shape[wide])
+    stop(str_glue(
+      "Layer(s) {str_c(which(wide), collapse = ', ')} use a wide result-column ",
+      "layout ({str_c(offenders, collapse = ', ')}), which produces one result ",
+      "column per column-variable level *per statistic or shift category*. ",
+      "Result columns are aligned positionally across layers, so combining that ",
+      "with a standard layer would put values under the wrong column labels. ",
+      "Build these layers in separate specs."
+    ), call. = FALSE)
   }
 
   invisible(TRUE)

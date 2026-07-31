@@ -211,3 +211,93 @@ test_that("tplyr_spec stores custom_groups", {
   expect_equal(length(spec$custom_groups), 1)
   expect_s3_class(spec$custom_groups[[1]], "tplyr_custom_group")
 })
+
+# ---------------------------------------------------------------------------
+# total_group() must not double-count custom_group() members
+# ---------------------------------------------------------------------------
+
+test_that("a total group spans each subject once when a custom group is present", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups  = list(total_group("TRT01P", label = "Total")),
+    custom_groups = list(custom_group("TRT01P",
+      "Treated" = c("Xanomeline High Dose", "Xanomeline Low Dose"))),
+    layers = tplyr_layers(group_count("SEX"))), d)
+
+  tot <- grep("^res", names(b), value = TRUE)[
+    vapply(grep("^res", names(b), value = TRUE),
+           function(cc) grepl("^Total", attr(b[[cc]], "label")), logical(1))]
+  expect_equal(attr(b[[tot]], "label"), sprintf("Total (N=%d)", nrow(d)))
+  expect_equal(str_extract_num(b[[tot]][b$rowlabel1 == "F"], 1), sum(d$SEX == "F"))
+  expect_equal(str_extract_num(b[[tot]][b$rowlabel1 == "M"], 1), sum(d$SEX == "M"))
+})
+
+test_that("a total group alone is unchanged, and the custom group column is intact", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups  = list(total_group("TRT01P", label = "Total")),
+    custom_groups = list(custom_group("TRT01P",
+      "Treated" = c("Xanomeline High Dose", "Xanomeline Low Dose"))),
+    layers = tplyr_layers(group_count("SEX"))), d)
+  trt <- grep("^res", names(b), value = TRUE)[
+    vapply(grep("^res", names(b), value = TRUE),
+           function(cc) grepl("^Treated", attr(b[[cc]], "label")), logical(1))]
+  n_treated <- sum(d$TRT01P %in% c("Xanomeline High Dose", "Xanomeline Low Dose"))
+  expect_equal(attr(b[[trt]], "label"), sprintf("Treated (N=%d)", n_treated))
+  expect_equal(str_extract_num(b[[trt]][b$rowlabel1 == "F"], 1),
+               sum(d$SEX == "F" & d$TRT01P %in%
+                     c("Xanomeline High Dose", "Xanomeline Low Dose")))
+})
+
+test_that("two total groups each span the originals once", {
+  d <- data.frame(TRT = rep(c("A", "B"), each = 5), V = rep("X", 10),
+                  stringsAsFactors = FALSE)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT",
+    total_groups = list(total_group("TRT", label = "Total"),
+                        total_group("TRT", label = "All")),
+    layers = tplyr_layers(group_count("V"))), d)
+  labs <- vapply(grep("^res", names(b), value = TRUE),
+                 function(cc) attr(b[[cc]], "label"), character(1))
+  expect_true(any(labs == "Total (N=10)"))
+  expect_true(any(labs == "All (N=10)"))
+})
+
+test_that("a total group still spans a custom group defined on a DIFFERENT variable", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = c("TRT01P", "SEX"),
+    total_groups  = list(total_group("TRT01P", label = "Total")),
+    custom_groups = list(custom_group("SEX", "Both" = c("F", "M"))),
+    layers = tplyr_layers(group_count("RACE"))), d)
+
+  res <- grep("^res\\d+$", names(b), value = TRUE)
+  labs <- vapply(res, function(cc) attr(b[[cc]], "label"), character(1))
+  tb <- res[labs == sprintf("Total | Both (N=%d)", nrow(d))]
+  expect_length(tb, 1L)
+  # the Total x Both cell counts every subject of that race, once
+  for (i in seq_len(nrow(b))) {
+    expect_equal(str_extract_num(b[[tb]][i], 1),
+                 sum(d$RACE == b$rowlabel1[i]))
+  }
+})
+
+test_that("total and custom groups on the same variable round-trip through metadata", {
+  d <- as.data.frame(tplyr_adsl)
+  b <- tplyr_build(tplyr_spec(
+    cols = "TRT01P",
+    total_groups  = list(total_group("TRT01P", label = "Total")),
+    custom_groups = list(custom_group("TRT01P",
+      "Treated" = c("Xanomeline High Dose", "Xanomeline Low Dose"))),
+    layers = tplyr_layers(group_count("SEX"))), d, metadata = TRUE)
+  for (i in seq_len(nrow(b))) {
+    for (cc in grep("^res\\d+$", names(b), value = TRUE)) {
+      sub <- tplyr_meta_subset(b, b$row_id[i], cc, d)
+      expect_equal(as.numeric(nrow(sub)),
+                   as.numeric(str_extract_num(b[[cc]][i], 1)),
+                   info = paste(b$rowlabel1[i], cc))
+    }
+  }
+})

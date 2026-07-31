@@ -18,6 +18,36 @@ collect_precision <- function(dt, precision_on, precision_by = character(0),
     if (!all(c("max_int", "max_dec") %in% names(prec_dt))) {
       stop("precision_data must contain 'max_int' and 'max_dec' columns")
     }
+    # A precision_by group with no row in precision_data has no widths to
+    # resolve and would render as a blank cell, so say so rather than emitting
+    # an empty column silently.
+    if (length(precision_by) > 0) {
+      have <- intersect(precision_by, names(prec_dt))
+      missing_cols <- setdiff(precision_by, have)
+      if (length(missing_cols) > 0) {
+        warning(str_glue(
+          "precision_data is missing the precision_by column(s) ",
+          "{str_c(missing_cols, collapse = ', ')}; its widths will be applied to ",
+          "every group"
+        ), call. = FALSE)
+      } else {
+        in_data <- unique(dt[, have, with = FALSE])
+        supplied <- unique(prec_dt[, have, with = FALSE])
+        for (v in have) {
+          in_data[, (v) := as.character(get(v))]
+          supplied[, (v) := as.character(get(v))]
+        }
+        uncovered <- in_data[!supplied, on = have]
+        if (nrow(uncovered) > 0) {
+          labs <- apply(uncovered, 1, function(r) str_c(r, collapse = " / "))
+          warning(str_glue(
+            "precision_data does not cover {nrow(uncovered)} precision_by ",
+            "group(s): {str_c(head(labs, 5), collapse = '; ')}",
+            "{if (length(labs) > 5) ', ...' else ''}. Those cells will render blank."
+          ), call. = FALSE)
+        }
+      }
+    }
     return(apply_precision_cap(prec_dt, precision_cap))
   }
 

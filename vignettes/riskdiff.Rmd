@@ -301,3 +301,34 @@ Risk difference in tplyr2 is configured entirely through the `risk_diff` paramet
 - **Confidence level** defaults to 0.95 and is adjustable via the `ci` parameter.
 - Risk differences are computed **before** special rows (total, missing), so those rows have empty risk difference values.
 - Raw count data is accessible through `tplyr_numeric_data()`, and formatted values can be parsed with `str_extract_num()`.
+
+## Single-Level Layers Only
+
+`risk_diff` works on single-level count layers. Attaching it to a **nested** count
+layer -- the `group_count(c("AEBODSYS", "AEDECOD"))` shape most adverse event tables
+use -- is a hard error rather than a silent partial result:
+
+```{r nested-error, error = TRUE}
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count(c("AEBODSYS", "AEDECOD"),
+      settings = layer_settings(
+        distinct_by = "USUBJID",
+        risk_diff = list(
+          comparisons = list(c("Xanomeline High Dose", "Placebo"))
+        )
+      )
+    )
+  )
+)
+
+tplyr_build(spec, tplyr_adae)
+```
+
+For a per-level comparison column on a nested layer, use a pairwise `assoc_test()`
+instead. It emits one `pval` column per comparison with a value on every preferred-term
+row *and* every body-system subtotal row, and it accepts any 2x2 test you supply. See
+`vignette("binding-statistics")`, which also covers association tests on single-level
+and descriptive layers and the pattern for binding externally fitted model results onto
+a built table.

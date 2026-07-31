@@ -11,7 +11,8 @@ complete_counts(
   by_data_vars,
   tv,
   limit_data_by = NULL,
-  denom_group = NULL
+  denom_group = NULL,
+  col_levels = NULL
 )
 }
 \description{

@@ -120,3 +120,45 @@ test_that("tplyr_build errors on a layer with an unknown type", {
   d <- data.frame(TRT = c("A", "B"), VAL = c("X", "Y"))
   expect_error(tplyr_build(spec, d), "Unknown layer type")
 })
+
+# ---------------------------------------------------------------------------
+# A layer `where` that empties a column group must not shift the columns
+# ---------------------------------------------------------------------------
+
+test_that("a layer whose where empties a column group keeps its values in the right column", {
+  ae <- as.data.frame(tplyr_adae)
+  # only Xanomeline Low Dose has SEVERE records
+  expect_equal(sort(unique(ae$TRTA[ae$AESEV == "SEVERE"])), "Xanomeline Low Dose")
+
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_count("AEDECOD"),
+    group_count("AEDECOD", where = AESEV == "SEVERE"))), ae)
+
+  res <- grep("^res\\d+$", names(b), value = TRUE)
+  expect_length(res, 3L)
+  labs <- vapply(res, function(cc) attr(b[[cc]], "label"), character(1))
+  expect_true(any(grepl("^Xanomeline Low Dose", labs)))
+  low <- res[grepl("^Xanomeline Low Dose", labs)]
+  other <- setdiff(res, low)
+
+  sev <- b[b$ord_layer_index == 2 & b$rowlabel1 == "AGITATION", ]
+  expect_equal(str_extract_num(sev[[low]], 1), 1)
+  for (cc in other) expect_equal(str_extract_num(sev[[cc]], 1), 0)
+})
+
+test_that("the where-emptied column group round-trips through metadata", {
+  ae <- as.data.frame(tplyr_adae)
+  b <- tplyr_build(tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_count("AEDECOD"),
+    group_count("AEDECOD", where = AESEV == "SEVERE"))), ae, metadata = TRUE)
+
+  for (i in which(b$ord_layer_index == 2)) {
+    for (cc in grep("^res\\d+$", names(b), value = TRUE)) {
+      v <- trimws(b[[cc]][i])
+      if (!nzchar(v)) next
+      sub <- tplyr_meta_subset(b, b$row_id[i], cc, ae)
+      expect_equal(as.numeric(nrow(sub)), as.numeric(str_extract_num(v, 1)),
+                   info = paste(b$rowlabel1[i], cc))
+    }
+  }
+})

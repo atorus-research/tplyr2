@@ -702,3 +702,71 @@ test_that("nested count layer supports CI keywords", {
   # All cells should carry a bracketed CI
   expect_true(all(grepl("\\[", b$res1[nzchar(trimws(b$res1))])))
 })
+
+# ---------------------------------------------------------------------------
+# missing_count$missing_values folds levels into the Missing row rather than
+# counting them both there and as their own category row.
+# ---------------------------------------------------------------------------
+
+test_that("missing_values levels are removed from the category rows", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+
+  expect_false("UNK" %in% b$rowlabel1)
+  expect_setequal(b$rowlabel1, c("X", "Y", "Missing"))
+  # Missing picks up the UNK record and the NA record
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "2 (40.0%)")
+  # and the column now sums to 100%
+  expect_equal(sum(str_extract_num(b$res1, 2)), 100)
+})
+
+test_that("multiple missing_values are all folded in", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = c("UNK", "Y")),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  expect_setequal(b$rowlabel1, c("X", "Missing"))
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "3 (60.0%)")
+})
+
+test_that("missing_count without missing_values leaves category rows alone", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  expect_true("UNK" %in% b$rowlabel1)
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "1 (20.0%)")
+})
+
+test_that("a total row excluding missings does not count folded missing_values", {
+  d <- data.frame(TRT = rep("A", 5), V = c("X", "Y", "UNK", NA, "X"))
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("V", settings = layer_settings(
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      total_row = TRUE, total_row_count_missings = FALSE,
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")))))), d)
+  # X (2) + Y (1); UNK and NA are in Missing
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Total"]), "3 (60.0%)")
+})
+
+test_that("missing_values folds an outer level and its inner rows on a nested layer", {
+  d <- data.frame(
+    TRT = rep("A", 6), USUBJID = sprintf("S%d", 1:6),
+    SOC = c("CARD", "CARD", "UNK", "GI", "GI", "GI"),
+    PT  = c("AF", "MI", "UNKPT", "NAUSEA", "VOM", "VOM")
+  )
+  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count(c("SOC", "PT"), settings = layer_settings(
+      distinct_by = "USUBJID",
+      missing_count = list(label = "Missing", missing_values = "UNK"),
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))), d)
+
+  expect_false("UNK" %in% b$rowlabel1)
+  expect_false("UNKPT" %in% b$rowlabel2)
+  expect_equal(trimws(b$res1[b$rowlabel1 == "Missing"]), "1 (16.7%)")
+})

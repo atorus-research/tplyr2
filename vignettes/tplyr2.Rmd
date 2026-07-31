@@ -171,21 +171,22 @@ The number of `x` characters in the integer part sets the total width (including
 leading spaces for alignment). Characters after the decimal point set decimal
 precision. Everything between format groups is literal text.
 
-For **descriptive statistics layers**, format strings are a named list. Each
-name becomes a row label. Built-in statistics available are: `n`, `mean`, `sd`,
-`median`, `var`, `min`, `max`, `iqr`, `q1`, `q3`, `missing`, `pct`, and
-`total`.
-
-For **count layers**, the format string uses `n`, `pct`, `distinct_n`, and
-`distinct_pct`:
+For **descriptive statistics layers**, format strings are a named list and each name
+becomes a row label. For **count and shift layers**, a single format string goes under
+the reserved key `n_counts`:
 
 ```{r eval=FALSE}
-# n (pct%) -- the default
-f_str("xx (xx.x%)", "n", "pct")
+# count layer: n (pct%) -- the default
+list(n_counts = f_str("xx (xx.x%)", "n", "pct"))
 
-# Distinct count and percentage
-f_str("xx (xx.x%)", "distinct_n", "distinct_pct")
+# count layer: distinct subjects rather than records
+list(n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct"))
 ```
+
+Each layer type computes its own set of statistics, and `vignette("format_strings")`
+carries the complete reference. Two more characters extend the template: `a` lets the
+*data* determine the decimal width, and uppercase `X` closes the gap between a number
+and its delimiter -- both covered in `vignette("precision_alignment")`.
 
 Because the format and source variables are declared together, the package knows
 exactly which numbers produced each cell -- this is the foundation of the
@@ -441,8 +442,13 @@ vignettes:
   differences and association-test p-value columns.
 - `vignette("sort")` -- Row ordering by frequency, factor levels, or a VARN
   companion.
-- `vignette("general_string_formatting")` and
-  `vignette("desc_layer_formatting")` -- The `f_str()` format-string system.
+- `vignette("format_strings")` -- The `f_str()` format-string system: the grammar,
+  the complete statistic keyword reference per layer type, rounding, and
+  missing-value handling.
+- `vignette("precision_alignment")` -- Data-driven decimal precision (`a`/`A`) and
+  parenthesis hugging (`X`/`A`).
+- `vignette("display_conventions")` -- `<1%` and `>99%` percents, zero-count
+  suppression, statistics as columns, missing rows.
 - `vignette("post_processing")` -- Row masks, row label collapsing,
   conditional formatting, `as_display()`, and text wrapping.
 - `vignette("metadata")` -- Cell-level metadata and traceability.

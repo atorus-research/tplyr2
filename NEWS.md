@@ -125,6 +125,99 @@
 
 ## Bug fixes
 
+- A layer whose `where` clause left a column group with no rows emitted fewer
+  result columns than its sibling layers, and those columns were then aligned
+  positionally — putting that layer's values **under the wrong treatment arm**.
+  In `tplyr_adae`, for example, a `where = AESEV == "SEVERE"` layer alongside an
+  unfiltered one reported Xanomeline Low Dose's severe events under the Placebo
+  label. The column-variable level set is now captured from the table's full data
+  and pinned for every layer, so an empty column group completes with zeros in
+  its own position.
+- A `total_group()` combined with a `custom_group()` on the same column variable
+  double-counted the pooled subjects: the total duplicated the custom group's
+  copies as well as the originals, so a 254-subject study reported `Total (N=422)`
+  and a sex count of 233 where 143 was correct. Duplicated rows now record which
+  column variable they were created for, so a total group skips copies made on
+  its own variable while still spanning copies made for a different one.
+- A shift layer or a `stats_as_columns` desc layer combined with a standard layer
+  produced a table whose `res` columns meant different things in different row
+  blocks, keeping only the first layer's column labels. Those combinations are now
+  rejected by `validate_spec()` with a message pointing at separate specs. (This
+  replaces a silently mislabeled table, so a spec that "worked" before may now
+  error — it was not producing a correct table.)
+- `tplyr_meta_subset()` treated an empty filter set as "nothing matches" and
+  returned zero rows. A cell can legitimately have no filters — a `total_group()`
+  column crossed with a total row, or with a desc statistic in a layer that has no
+  `by` variable — and those cells describe the whole dataset. It now returns all
+  rows.
+- Cell metadata dropped the `by` filter when a `by` level was an empty string, and
+  aborted the entire metadata build with "missing value where TRUE/FALSE needed"
+  when a `by` level was `NA`. Both are real levels: an empty string now filters on
+  `""` and `NA` filters with `is.na()`. A nested layer's structurally absent inner
+  label still contributes no filter, as before.
+- Cell metadata compared `by` values against the *trimmed* row label, so a `by`
+  variable whose values carry leading or trailing whitespace (common in
+  SAS-derived character data) produced filters matching zero rows. Filters now use
+  the untrimmed value.
+- `generate_row_ids()` silently produced duplicate IDs when row labels had been
+  blanked by `apply_row_masks()` or when a target level collided with a
+  `total_row_label`, so metadata lookups resolved to the wrong cell. It now warns.
+- A missing-subjects row built without `distinct_by` carried filters resolving to
+  the subjects that *do* appear — the exact complement of what the cell counts.
+  Row-level missing-subjects counting is a population-minus-target difference that
+  no filter set can express, so no metadata is emitted for it and the build warns.
+- Cell metadata for a `stats_as_columns` desc layer resolved to nothing. That
+  layout labels its result columns `"<arm> (N=n) | <statistic>"`, the same grammar
+  count-layer `stat_columns` uses, but the trailing statistic segment was stripped
+  only for count layers — so every filter read `TRT == "A | n"` and matched zero
+  rows. `tplyr_meta_subset()` now returns the correct source rows.
+- A count layer's total row counted `n` by summing the category rows while
+  `distinct_n` counted from the raw data, so the two disagreed in the same cell
+  and `total_row_count_missings` had no effect on `n`. Category rows exclude NA
+  target values (data completion drops them) and any level folded into the Missing
+  row, so the sum silently omitted them. `n` is now counted from the raw rows with
+  the same missing handling as `distinct_n`, making `n`, `distinct_n`, and the
+  cell's metadata agree. **A total row over data with missing target values will
+  change**: with the default `total_row_count_missings = TRUE` it now includes
+  them, as documented.
+- `tplyr_build(metadata = TRUE)` now warns when a `stats_as_columns` desc layer
+  has no `by` variable. That layout names its result columns after the statistics
+  rather than `res1`, `res2`, ..., and cell metadata is keyed on `res` columns, so
+  none was produced — previously without any indication.
+- `missing_count`'s `missing_values` no longer double-counts. Values named there
+  are folded into the Missing row, but they also kept their own category row, so
+  the same records were counted twice and the column summed past 100%. They are
+  now removed from the category rows, matching Tplyr v1's `set_missing_count()`
+  and the exclusion `tplyr_meta()` already assumed. On a nested count layer,
+  naming an outer-level value removes its inner rows along with it. **This changes
+  the numbers in any table that used `missing_values`** — previously those tables
+  were wrong.
+- `f_str(empty = )` now honors its unnamed form. Only `c(.overall = "...")` was
+  implemented; an unnamed `empty = "NA"` was silently ignored. It now fills each
+  NA format group in place, right-justified to that group's field width, so
+  `f_str("xx (xxx)", "n", "pct", empty = "NA")` renders `"NA ( NA)"` and a
+  partially missing cell keeps its alignment. This restores v1 parity; `.overall`
+  is unchanged and still replaces the whole cell only when every group is NA.
+- Shift layers now compute the single-proportion confidence-interval keywords
+  (`ci_lower`, `ci_upper`, `distinct_ci_lower`, `distinct_ci_upper`). They were
+  accepted by validation but never computed, so a shift format referencing one
+  rendered an empty field with no warning. Bounds follow whichever denominator
+  `shift_denom` selects.
+- `as_display()` no longer discards the result columns of a `stats_as_columns`
+  desc layer built without a `by` variable. That layout names its columns after
+  the statistics rather than `res1`, `res2`, ..., and the whitelist dropped them,
+  returning row labels alone. It now removes the internal `ord_layer_*`/`row_id`
+  helpers and keeps everything else.
+- `stats_as_columns` with no `by` variable now orders its columns by
+  format-string order rather than alphabetically by statistic label.
+- `collect_precision()` now warns when `precision_data` does not cover every
+  `precision_by` group present in the data (those cells render blank), and when
+  `precision_data` omits the `precision_by` columns entirely (its widths are
+  applied to every group). Both were silent.
+- `f_str()` now warns when a format group requests parenthesis hugging (`X`/`A`)
+  but has no literal text in front of it — there is nothing to hug, and the
+  number is left-justified with trailing spaces instead.
+
 - Count-layer row ordering now honors the sort settings it advertised (#57).
   `order_count_method = "bycount"` actually sorts by descending count (it
   previously fell back to the default order); `ordering_cols` selects which
@@ -224,6 +317,69 @@
 
 ## Documentation
 
+- **The formatting vignettes have been reorganized.** The two previous articles,
+  *"General String Formatting"* and *"Advanced Descriptive Statistics
+  Formatting"*, are replaced by three organized around what the user is trying to
+  do rather than by layer type:
+  - `vignette("format_strings")` — the format string grammar, where format
+    strings attach per layer type, the complete statistic keyword reference for
+    count/shift/desc layers, rounding, missing-value handling, and standalone
+    `apply_formats()`.
+  - `vignette("precision_alignment")` — auto-precision (`a`/`A`, `+N`,
+    `precision_on`, `precision_by`, `precision_cap`, `precision_data`) and
+    parenthesis hugging (`X`/`A`).
+  - `vignette("display_conventions")` — the display rules imposed by shells and
+    SAPs: `pct_lt`/`pct_gt`, `zero_count_display`, `stat_columns` and
+    `stats_as_columns`, `keep_levels`, `missing_count`, shift denominators, and
+    indenting/wrapping nested terms.
+
+  The old vignettes duplicated auto-precision, hugging, and `empty` at similar
+  depth while disagreeing about what hugging does, and their four statistic
+  keyword lists contradicted each other and the source. The following were
+  previously documented in no vignette at all and are now covered: `pct_lt`,
+  `pct_gt`, `zero_count_display`, `keep_levels`, `missing_count`,
+  `total_row_count_missings`, `stats_as_columns`, `shift_denom`, `denom_row`,
+  `denom_row_label`, `denom_row_format`, the desc-layer `total`/`pct` keywords,
+  and `apply_formats()`'s `na`/`width`/`pad`/`lt`/`gt` arguments.
+- Corrected the description of parenthesis hugging. tplyr2 moves a hugged group's
+  leading spaces to just inside the trailing literal's last character
+  (`12 (34.5% )`); Tplyr v1 moved them to the left of the opening delimiter
+  (`12  (34.5%)`). Two vignettes described v1's behavior. The difference is now
+  stated explicitly for anyone reconciling output against v1.
+- Corrected the description of `shift_denom = "column"`: it denominates by the
+  result column group (arm × post-baseline category), so each result *column*
+  sums to 100%. `vignette("shift")` now shows all three shift denominators,
+  including how to get row-wise percentages with `denoms_by`.
+- Documented that auto-precision (`a`/`A`) resolves against the data only in
+  `group_desc()` layers; elsewhere it degrades to a fixed width equal to the
+  number of characters written.
+- Documented several other scope limits that were previously unstated: the four
+  confidence-interval keywords are count-layer only (a shift layer accepts them
+  and renders them empty); the desc-layer `total` keyword is a **record** count,
+  so `pct` is a share of the arm only on one-row-per-subject data; `keep_levels`
+  filters after the denominators are computed, so the kept percentages do not
+  re-base; `precision_data` validates only `max_int`/`max_dec`, rendering a blank
+  cell for any group it fails to cover; `pct_lt`/`pct_gt` and
+  `zero_count_display` target the first matching format group; and `str_indent_wrap()`
+  charges an existing indent against `width` twice.
+- Documented that literal text in a format string cannot contain `x`, `X`, `a`,
+  or `A` — those characters are always parsed as format groups, so a template
+  like `"xx days"` silently gains a second group.
+- `vignette("sort")` now covers `order_count_method = "bycount"` on nested count
+  layers, including that it sorts the inner level only and that
+  `outer_sort_position` reverses the outer order rather than ranking it by count.
+- `vignette("post_processing")` now covers `as_display()`,
+  `collapse_row_labels(nest = TRUE)`, and the `apply_formats()` `na`/`width`
+  arguments, and points at the declarative `pct_lt`/`zero_count_display`
+  settings before `apply_conditional_format()`.
+- `vignette("riskdiff")` now states that `risk_diff` errors on nested count
+  layers and points to pairwise `assoc_test()`.
+- Fixed the IBM-rounding example in `vignette("options")`, which showed two
+  identical tables under captions promising a difference.
+- Fixed a broken `vignette("serialize")` cross-reference in `vignette("ard")`,
+  and expanded the vignette indexes in the README and
+  `vignette("tplyr2")`, which listed 10 and 8 of the 19 articles respectively.
+- `print()` on an `f_str` object no longer runs its fields together on one line.
 - New vignette *"Comparative Statistics and Binding External Results"*
   (`vignette("binding-statistics")`) — how to attach cross-arm comparisons
   (`assoc_test()`, `risk_diff`, single-proportion CIs) and how to bind

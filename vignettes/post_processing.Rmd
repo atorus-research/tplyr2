@@ -120,6 +120,8 @@ apply_conditional_format(string, 2, x < 1, "(<1%)")
 
 The `format_group` parameter selects which numeric value in the string to evaluate (1st number, 2nd number, etc.). The `condition` is an expression using the variable name `x` that tests the selected number. When `full_string = FALSE` (the default), the replacement is padded to preserve column alignment within the format group's character space.
 
+> **Reach for the layer settings first.** The two conventions this function is most often used for -- rendering small percentages as `<1%` and suppressing the percent on zero counts -- have declarative equivalents in `layer_settings()`: `pct_lt`/`pct_gt` and `zero_count_display`. Those run at build time, so the underlying numeric data stays intact and the convention survives serialization, metadata, and ARD conversion. See `vignette("display_conventions")`. Use `apply_conditional_format()` for the rules that have no setting -- flagging a threshold, blanking a cell on a condition the layer does not know about, reformatting a bound external statistic.
+
 ## Replacing Leading Whitespace
 
 tplyr2 uses leading spaces to align numbers within format fields. This works in fixed-width contexts (PDFs, monospaced fonts), but HTML collapses consecutive spaces. `replace_leading_whitespace()` swaps each leading space for a non-breaking space (`\u00a0`), preserving alignment in web-based output.
@@ -143,6 +145,16 @@ The `apply_formats()` function is the engine behind all of tplyr2's string forma
 fmt <- f_str("xxx.x (xxx.xx)", "mean", "sd")
 apply_formats(fmt, c(75.3, 68.1, 80.5), c(8.21, 7.55, 9.03))
 ```
+
+Three arguments exist for exactly that case. `na` substitutes a string for cells whose inputs are all `NA`, including a genuinely empty one (the default is a blank of the field's width). `width` and `pad` pad the whole token to a fixed total width.
+
+```{r apply_formats_args}
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7))               # blank of field width
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7), na = "NE")    # a sentinel
+apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7), width = 8)    # padded to 8
+```
+
+When `na` applies to a cell, it wins and that cell is *not* padded. See `vignette("format_strings")` for the full argument list and `vignette("binding-statistics")` for a worked example of binding external results onto a built table.
 
 This is useful when you need to format numbers from external data sources using the same format strings that drive your tplyr2 tables. The precision system is also available through the `precision` parameter for auto-precision formatting.
 
@@ -219,14 +231,16 @@ In nest mode a single label column is allowed (the default mode requires at leas
 
 ## The Final Step: `as_display()`
 
-Once a table is post-processed, `as_display()` trims it to just the columns a renderer needs -- the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns -- dropping the internal `ord_*` (and `row_id`) columns and preserving row order. Pass `labels = TRUE` to rename the result columns to their column-group header labels (e.g. `"Xanomeline High Dose (N=84)"`), ready to hand to `gt`, `flextable`, or a `clinify`-style renderer.
+Once a table is post-processed, `as_display()` trims it to just the columns a renderer needs, dropping the internal `ord_*` (and `row_id`) columns and preserving row order. That is normally the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns -- but it removes the internal helpers rather than whitelisting the display ones, so a `stats_as_columns` desc layer that names its columns after the statistics keeps them too. Pass `labels = TRUE` to rename the result columns to their column-group header labels (e.g. `"Xanomeline High Dose (N=84)"`), ready to hand to `gt`, `flextable`, or a `clinify`-style renderer.
 
 ```{r as_display}
 final <- as_display(display, labels = TRUE)
 kable(head(final, 12))
 ```
 
-`as_display()` is layout-only; it does not change any cell values. It is the natural last call in a build-then-polish pipeline.
+`as_display()` is layout-only; it does not change any cell values. It is the natural last call in a build-then-polish pipeline -- and it has to be last, because `apply_row_masks()` reads `ord_layer_index` to avoid blanking labels across a layer boundary, and `as_display()` removes it.
+
+The header labels follow a small grammar renderers can rely on: column-variable values joined by `" | "`, with an `(N=n)` suffix when a population count is available. A `stat_columns` or `stats_as_columns` layer extends it to `"<group> (N=n) | <statistic>"`, so splitting on `" | "` gives you the levels of a spanning header.
 
 ## Summary
 

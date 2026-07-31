@@ -93,7 +93,23 @@ generate_row_ids <- function(result) {
   }
 
   parts <- map(rowlabel_cols, function(col) as.character(result[[col]]))
-  do.call(paste, c(list(layer_part), parts, list(sep = "_")))
+  ids <- do.call(paste, c(list(layer_part), parts, list(sep = "_")))
+
+  # IDs are derived from the row label values, so they are only meaningful on an
+  # unmodified build. apply_row_masks() blanks repeated labels, which collapses
+  # distinct rows onto the same ID and silently breaks metadata lookups.
+  if (anyDuplicated(ids)) {
+    warning(str_glue(
+      "generate_row_ids() produced {sum(duplicated(ids))} duplicate ID(s), so ",
+      "metadata lookups will resolve to the wrong cell. This happens when row ",
+      "labels have been blanked (apply_row_masks()) or collapsed ",
+      "(collapse_row_labels()). Generate IDs from the unmodified ",
+      "tplyr_build() output, or use the `row_id` column that ",
+      "tplyr_build(metadata = TRUE) attaches -- it survives post-processing."
+    ), call. = FALSE)
+  }
+
+  ids
 }
 
 #' Get metadata for a specific output cell
@@ -137,8 +153,16 @@ tplyr_meta_subset <- function(result, row_id, column, data, pop_data = NULL) {
   meta_obj <- tplyr_meta_result(result, row_id, column)
   if (is.null(meta_obj)) return(NULL)
 
+  # An empty filter set means "unrestricted", not "nothing matches". A cell can
+  # legitimately have no filters -- a total_group() column (which spans every
+  # level of the column variable, so contributes no filter) crossed with a row
+  # that carries none either, such as a total row or a desc statistic in a layer
+  # with no `by` variable. Returning zero rows there made the round trip
+  # disagree with a cell that is, correctly, the whole dataset.
   if (length(meta_obj$filters) == 0 && is.null(meta_obj$anti_join)) {
-    return(data[0, , drop = FALSE])
+    out <- data
+    rownames(out) <- NULL
+    return(out)
   }
 
   # Apply filters to data
@@ -195,6 +219,12 @@ make_in_filter <- function(var_name, values) {
 #' @keywords internal
 make_not_in_filter <- function(var_name, values) {
   call("!", call("%in%", as.name(var_name), values))
+}
+
+#' Build an is.na() filter expression
+#' @keywords internal
+make_is_na_filter <- function(var_name) {
+  call("is.na", as.name(var_name))
 }
 
 #' Build a !is.na() filter expression
@@ -323,6 +353,24 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   n_rows <- nrow(output)
   n_res <- length(res_cols)
 
+  # A `stats_as_columns` desc layer with no `by` variable transposes the block:
+  # treatment groups become rows and the result columns are named after the
+  # statistics rather than res1, res2, .... Cell metadata is keyed on res
+  # columns, so that layout carries none. Say so instead of returning silently.
+  no_meta <- map_lgl(spec$layers, function(layer) {
+    inherits(layer, "tplyr_desc_layer") &&
+      isTRUE(layer$settings$stats_as_columns) &&
+      length(classify_by(layer$by, col_names)$data_vars) == 0
+  })
+  if (any(no_meta)) {
+    warning(str_glue(
+      "Layer(s) {str_c(which(no_meta), collapse = ', ')}: cell metadata is not ",
+      "available for a stats_as_columns layer without a `by` variable, because ",
+      "that layout names its result columns after the statistics rather than ",
+      "res1, res2, .... Add a `by` variable to get metadata for those cells."
+    ), call. = FALSE)
+  }
+
   if (n_res == 0) return(list())
 
   # Parse column variable levels from res column labels. The "(N=n)" suffix
@@ -346,8 +394,15 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   rl_col_names <- str_subset(output_names, "^rowlabel\\d+$")
   trimmed <- vector("list", length(rl_col_names))
   names(trimmed) <- rl_col_names
+  # `trimmed` decides whether a label is present; `untrimmed` supplies the value
+  # a filter compares against, since a by variable's own values may legitimately
+  # carry leading or trailing whitespace (common in SAS-derived character data)
+  # and a trimmed literal would match nothing.
+  untrimmed <- vector("list", length(rl_col_names))
+  names(untrimmed) <- rl_col_names
   for (rl_col in rl_col_names) {
     raw <- as.character(output[[rl_col]])
+    untrimmed[[rl_col]] <- raw
     trimmed[[rl_col]] <- trimws(raw)
   }
 
@@ -363,6 +418,9 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
 
   # OPT 2: Position-indexed row type vector (O(1) lookup, filled per-layer below)
   all_row_types <- rep("normal", n_rows)
+
+  # Set when a missing-subjects row had to be skipped for want of a subject key
+  unkeyed_missing_subjects <- FALSE
 
   for (li in seq_along(spec$layers)) {
     layer <- spec$layers[[li]]
@@ -387,8 +445,15 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     col_cache <- vector("list", n_res)
     names(col_cache) <- res_cols
     is_shift <- inherits(layer, "tplyr_shift_layer")
-    has_stat_cols <- inherits(layer, "tplyr_count_layer") &&
-      !is.null(layer$settings$stat_columns)
+    # Both count-layer `stat_columns` and desc-layer `stats_as_columns` label
+    # their result columns "<column group> (N=n) | <statistic>", so the trailing
+    # statistic segment has to be stripped before the label is resolved back to
+    # column-variable values. Missing the desc case made every filter read
+    # `TRT == "A | n"` and match nothing.
+    has_stat_cols <- (inherits(layer, "tplyr_count_layer") &&
+                        !is.null(layer$settings$stat_columns)) ||
+      (inherits(layer, "tplyr_desc_layer") &&
+         isTRUE(layer$settings$stats_as_columns))
     for (ri in seq_along(res_cols)) {
       rc <- res_cols[ri]
       cf <- list()
@@ -603,12 +668,18 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
       by_n <- character(n_by)
       by_count <- 0L
       for (bi in seq_len(n_by)) {
-        bv_val <- trimmed[[lc$valid_by_rl_cols[bi]]][row_idx]
-        if (nchar(bv_val) > 0) {
-          by_count <- by_count + 1L
-          by_f[[by_count]] <- make_eq_filter(lc$valid_by_vars[bi], bv_val)
-          by_n[by_count] <- lc$valid_by_vars[bi]
+        rl_col <- lc$valid_by_rl_cols[bi]
+        bv_val <- untrimmed[[rl_col]][row_idx]
+        # A by variable has a value on every row, so an NA label means the data
+        # itself is NA (filter on that) and an empty string is a real level
+        # (filter on it) -- neither is an absent label to be skipped.
+        by_count <- by_count + 1L
+        by_f[[by_count]] <- if (is.na(bv_val)) {
+          make_is_na_filter(lc$valid_by_vars[bi])
+        } else {
+          make_eq_filter(lc$valid_by_vars[bi], bv_val)
         }
+        by_n[by_count] <- lc$valid_by_vars[bi]
       }
       if (by_count < n_by) {
         by_f <- by_f[seq_len(by_count)]
@@ -630,12 +701,26 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
         rn <- character(n_vrl)
         rf_count <- 0L
         for (vi in seq_len(n_vrl)) {
-          rl_val <- trimmed[[lc$valid_vrl_cols[vi]]][row_idx]
-          if (nchar(rl_val) > 0) {
-            rf_count <- rf_count + 1L
-            rf[[rf_count]] <- make_eq_filter(lc$valid_vrl_names[vi], rl_val)
-            rn[rf_count] <- lc$valid_vrl_names[vi]
+          vname <- lc$valid_vrl_names[vi]
+          rl_col <- lc$valid_vrl_cols[vi]
+          present <- trimmed[[rl_col]][row_idx]
+          raw_val <- untrimmed[[rl_col]][row_idx]
+
+          # A `by` data variable has a value on every row, so a blank or NA
+          # label is a real level of that variable and must still be filtered
+          # on. A target variable is different: a nested layer leaves the inner
+          # label empty on an outer-level row, and that absence means "no
+          # filter".
+          is_by_var <- vname %in% lc$valid_by_vars
+          if (!is_by_var && (is.na(present) || !nzchar(present))) next
+
+          rf_count <- rf_count + 1L
+          rf[[rf_count]] <- if (is.na(raw_val)) {
+            make_is_na_filter(vname)
+          } else {
+            make_eq_filter(vname, raw_val)
           }
+          rn[rf_count] <- vname
         }
         row_filters <- rf[seq_len(rf_count)]
         row_names <- rn[seq_len(rf_count)]
@@ -678,6 +763,16 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     needs_anti_join <- row_type == "missing_subjects" &&
       !is.null(settings$distinct_by) && length(settings$distinct_by) > 0
 
+    # Without `distinct_by` there is no subject key to anti-join on, so a
+    # missing-subjects row is a pure arithmetic difference (population rows minus
+    # target rows) that no filter set describes. The filters built above would
+    # resolve to the subjects that *do* appear -- the exact complement of what the
+    # cell counts -- so emit no metadata for it rather than the wrong metadata.
+    if (row_type == "missing_subjects" && !needs_anti_join) {
+      unkeyed_missing_subjects <- TRUE
+      next
+    }
+
     for (ri in seq_along(res_cols)) {
       cc <- lc$col_cache[[ri]]
 
@@ -711,6 +806,15 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
         statistic = cc$statistic
       )
     }
+  }
+
+  if (unkeyed_missing_subjects) {
+    warning(str_glue(
+      "Cell metadata was not produced for the missing-subjects row(s): without ",
+      "`distinct_by` there is no subject key to anti-join on, so the row is a ",
+      "population-minus-target difference that no filter set can describe. Set ",
+      "`distinct_by` to get traceable missing-subjects cells."
+    ), call. = FALSE)
   }
 
   # Trim to actual size and set names once (O(n) instead of O(n^2))

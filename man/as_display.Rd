@@ -18,12 +18,17 @@ columns keep their names. Defaults to \code{FALSE}.}
 A data.frame of display columns.
 }
 \description{
-Returns just the display content of a \code{\link{tplyr_build}} result — the
-\code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns — and
-drops the internal ordering helpers (\code{ord_layer_index},
-\code{ord_layer_*}) and the \code{row_id} metadata column, giving a frame
+Returns just the display content of a \code{\link{tplyr_build}} result,
+dropping the internal ordering helpers (\code{ord_layer_index},
+\code{ord_layer_*}) and the \code{row_id} metadata column, and giving a frame
 ready to hand to a table-rendering package (clinify, flextable, gt, ...). The
 build output is already ordered, so no re-sorting is performed.
+}
+\details{
+Everything that is not an internal helper is kept. That is normally the
+\code{rowlabel*}, \code{res*}, \code{rdiff*}, and \code{pval*} columns, but a
+\code{stats_as_columns} desc layer with no \code{by} variable names its result
+columns after the statistics themselves, and those are retained too.
 }
 \examples{
 spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("SEX")))

@@ -401,3 +401,50 @@ test_that("as_display retains the pval column from assoc_test", {
   labelled <- as_display(b, labels = TRUE)
   expect_true("p-value" %in% names(labelled))
 })
+
+# ---------------------------------------------------------------------------
+# as_display() keeps every non-internal column
+# ---------------------------------------------------------------------------
+
+test_that("as_display drops only the internal helper columns", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("SEX"))), tplyr_adsl)
+  out <- as_display(b)
+  expect_equal(names(out), c("rowlabel1", "res1", "res2", "res3"))
+  expect_false(any(grepl("^ord", names(out))))
+})
+
+test_that("as_display drops row_id from a metadata build", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("SEX"))), tplyr_adsl, metadata = TRUE)
+  expect_true("row_id" %in% names(b))
+  expect_false("row_id" %in% names(as_display(b)))
+})
+
+test_that("as_display retains statistic-named columns from stats_as_columns", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      stats_as_columns = TRUE,
+      format_strings = list(
+        "n"         = f_str("xx", "n"),
+        "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd"),
+        "Min, Max"  = f_str("xx, xx", "min", "max")))))), tplyr_adsl)
+
+  out <- as_display(b)
+  # statistics survive, in the order the format strings declared them
+  expect_equal(names(out), c("rowlabel1", "n", "Mean (SD)", "Min, Max"))
+  expect_equal(nrow(out), 3L)
+  expect_false(any(grepl("^ord", names(out))))
+})
+
+test_that("stats_as_columns with no by orders columns by format-string order", {
+  b <- tplyr_build(tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      stats_as_columns = TRUE,
+      format_strings = list(
+        "Median"    = f_str("xx.x", "median"),
+        "n"         = f_str("xx", "n"),
+        "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd")))))), tplyr_adsl)
+  expect_equal(setdiff(names(as_display(b)), "rowlabel1"),
+               c("Median", "n", "Mean (SD)"))
+})
