@@ -90,7 +90,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   } else {
     counts[, total := nrow(denom_dt)]
   }
-  counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+  check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+  counts[, pct := safe_pct(n, total)]
 
   # --- Distinct denominators ---
   if (!is.null(distinct_by)) {
@@ -100,7 +101,9 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     } else {
       counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                group_vars, layer_index)
+    counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   # --- Data completion ---
@@ -356,7 +359,8 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     } else {
       counts[, total := nrow(denom_dt)]
     }
-    counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+    check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+    counts[, pct := safe_pct(n, total)]
 
     # Distinct denominators
     if (!is.null(distinct_by)) {
@@ -366,7 +370,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       } else {
         counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
       }
-      counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+      check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                  group_vars, layer_index)
+      counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
     }
 
     # Data completion
@@ -791,8 +797,11 @@ complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
 
   result <- merge(grid, counts, by = names(grid), all.x = TRUE)
 
-  zero_fill_stats(result)
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
   result <- refill_denom_totals(result, counts, denom_group, cols)
+  zero_fill_stats(result)
 
   result
 }
@@ -802,13 +811,35 @@ complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
 # =============================================================================
 
 #' Zero-fill count statistics left NA by grid completion or merges
+#'
+#' Counts left NA by grid completion are genuine zeros. Percentages are not:
+#' a percentage is only zero when a usable denominator says so, and filling one
+#' whose denominator is missing or zero would print a number that was never
+#' computed (#76). Those stay NA and render blank.
+#'
+#' @param dt data.table to modify by reference
+#' @return \code{dt}, invisibly
 #' @keywords internal
 zero_fill_stats <- function(dt) {
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
+  for (v in c("n", "distinct_n")) {
     if (v %in% names(dt)) {
       data.table::set(dt, which(is.na(dt[[v]])), v, 0)
     }
   }
+
+  for (pair in list(c("pct", "total"), c("distinct_pct", "distinct_total"))) {
+    pct_col <- pair[1]
+    total_col <- pair[2]
+    if (!pct_col %in% names(dt)) next
+
+    fillable <- if (total_col %in% names(dt)) {
+      which(is.na(dt[[pct_col]]) & !is.na(dt[[total_col]]) & dt[[total_col]] > 0)
+    } else {
+      which(is.na(dt[[pct_col]]))
+    }
+    data.table::set(dt, fillable, pct_col, 0)
+  }
+
   invisible(dt)
 }
 
@@ -859,6 +890,21 @@ drop_missing_value_levels <- function(counts, tv, missing_count) {
 # otherwise vanish without changing the table.
 missing_count_keys <- c("missing_values", "sort_value", "label", "format",
                         "denom_exclude")
+
+#' Percentage of a count against its denominator
+#'
+#' The one 0-vs-NA convention for the whole package. Without a usable
+#' denominator the percentage is undefined, so it is NA and renders blank —
+#' count and shift layers used to render \code{0}, which for \code{n > 0} is an
+#' affirmatively wrong number, while desc layers already used NA.
+#'
+#' @param n Numeric vector of counts
+#' @param total Numeric vector of denominators
+#' @return Numeric vector of percentages, NA where the denominator is NA or 0
+#' @keywords internal
+safe_pct <- function(n, total) {
+  ifelse(!is.na(total) & total > 0, n / total * 100, NA_real_)
+}
 
 #' Which values a missing_count setting treats as missing
 #'
@@ -942,7 +988,7 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
   } else {
     missing_n[, total := nrow(denom_dt)]
   }
-  missing_n[, pct := ifelse(total > 0, n / total * 100, 0)]
+  missing_n[, pct := safe_pct(n, total)]
 
   # Distinct counting for missing
   if (!is.null(distinct_by)) {
@@ -960,7 +1006,7 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
     } else {
       missing_n[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    missing_n[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    missing_n[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   zero_fill_stats(missing_n)
@@ -1049,7 +1095,7 @@ compute_missing_subjects <- function(dt, pop_dt, cols, by_data_vars, tv,
   } else {
     missing_n[, total := nrow(denom_dt)]
   }
-  missing_n[, pct := ifelse(!is.na(total) & total > 0, n / total * 100, 0)]
+  missing_n[, pct := safe_pct(n, total)]
 
   # Distinct denominators if applicable
   if (!is.null(subj_var)) {
@@ -1061,8 +1107,7 @@ compute_missing_subjects <- function(dt, pop_dt, cols, by_data_vars, tv,
     } else {
       missing_n[, distinct_total := uniqueN(denom_dt[[subj_var]])]
     }
-    missing_n[, distinct_pct := ifelse(!is.na(distinct_total) & distinct_total > 0,
-                                        distinct_n / distinct_total * 100, 0)]
+    missing_n[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   zero_fill_stats(missing_n)
@@ -1140,11 +1185,11 @@ compute_total_row <- function(counts, dt, cols, by_data_vars, tv, total_label,
       total_dt[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
     total_dt[is.na(distinct_n), distinct_n := 0]
-    total_dt[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    total_dt[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   total_dt[, (tv) := total_label]
-  total_dt[, pct := ifelse(total > 0, n / total * 100, 0)]
+  total_dt[, pct := safe_pct(n, total)]
 
   total_dt[, .total_sort := Inf]
 
@@ -1244,8 +1289,11 @@ complete_counts <- function(counts, dt, cols, by_data_vars, tv, limit_data_by = 
 
   result <- merge(grid, counts, by = names(grid_vars), all.x = TRUE)
 
-  zero_fill_stats(result)
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
   result <- refill_denom_totals(result, counts, denom_group, cols)
+  zero_fill_stats(result)
 
   result
 }

@@ -267,6 +267,93 @@ validate_layer <- function(layer, index, cols = NULL) {
   invisible(TRUE)
 }
 
+#' Warn when a nonzero count has a missing or zero denominator
+#'
+#' Denominators are attached with a left join, so a group present in the
+#' analysis data but absent from the denominator source comes back with
+#' \code{total = NA} and renders a blank-width percent (\code{" 5 (     )"}) —
+#' and \code{total == 0} with \code{n > 0} used to display an affirmatively
+#' wrong \code{0.0\%}. Both mean the denominator setup is wrong, so say so.
+#'
+#' @param counts data.table holding the counts and their denominators
+#' @param n_col Name of the count column (\code{"n"} or \code{"distinct_n"})
+#' @param total_col Name of the denominator column
+#' @param group_cols Columns identifying a row, used to name offending groups
+#' @param layer_index Integer layer index
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+check_denominator_integrity <- function(counts, n_col, total_col, group_cols,
+                                        layer_index) {
+  if (is.null(counts) || nrow(counts) == 0) return(invisible(TRUE))
+  if (!all(c(n_col, total_col) %in% names(counts))) return(invisible(TRUE))
+
+  bad <- counts[get(n_col) > 0 & (is.na(get(total_col)) | get(total_col) == 0)]
+  if (nrow(bad) == 0) return(invisible(TRUE))
+
+  keys <- intersect(group_cols, names(bad))
+  labels <- if (length(keys) > 0) {
+    unique(map_chr(seq_len(nrow(bad)), function(r) {
+      format_group_label(as.list(bad[r, keys, with = FALSE]))
+    }))
+  } else {
+    character(0)
+  }
+  shown <- utils::head(labels, 5)
+  more <- if (length(labels) > length(shown)) {
+    str_c(" (and ", length(labels) - length(shown), " more)")
+  } else {
+    ""
+  }
+
+  warning("Layer ", layer_index, ": ", nrow(bad), " row",
+          if (nrow(bad) > 1) "s" else "", " have ", n_col,
+          " > 0 with a missing or zero ", total_col,
+          "; those percentages are blank.",
+          if (length(shown) > 0) {
+            str_c("\nAffected: ", str_c(shown, collapse = "; "), more)
+          } else {
+            ""
+          },
+          "\nCheck that pop_data and denoms_by cover the analysis data.",
+          call. = FALSE)
+
+  invisible(TRUE)
+}
+
+#' Warn when pop_data does not cover the analysis data's column levels
+#'
+#' A column level present in the analysis data but absent from the population
+#' (an arm recoded \code{"Xanomeline High Dose"} vs \code{"High Dose"}) yields
+#' an NA denominator for every one of its cells.
+#'
+#' @param dt Analysis data.table
+#' @param pop_dt Population data.table, or NULL
+#' @param cols Character vector of column variables
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+validate_pop_data_coverage <- function(dt, pop_dt, cols) {
+  if (is.null(pop_dt) || length(cols) == 0) return(invisible(TRUE))
+
+  walk(cols, function(cv) {
+    if (!cv %in% names(dt) || !cv %in% names(pop_dt)) return()
+    observed <- unique(as.character(stats::na.omit(dt[[cv]])))
+    covered <- unique(as.character(stats::na.omit(pop_dt[[cv]])))
+    missing_levels <- setdiff(observed, covered)
+    if (length(missing_levels) > 0) {
+      warning("pop_data has no rows for '", cv, "' level",
+              if (length(missing_levels) > 1) "s" else "", ": ",
+              str_c(missing_levels, collapse = ", "),
+              "\nCells in those columns will have no denominator. ",
+              "pop_data levels: ", str_c(sort(covered), collapse = ", "),
+              call. = FALSE)
+    }
+  })
+
+  invisible(TRUE)
+}
+
 #' Validate the keys of a missing_count configuration
 #'
 #' \code{missing_count} is a free-form list, so an unrecognized key used to be

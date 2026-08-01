@@ -99,6 +99,7 @@ tplyr_build_impl <- function(spec, data, pop_data = NULL, metadata = FALSE, ...)
         new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
         data.table::setnames(pop_dt, unname(pop_cols), new_names)
       }
+      validate_pop_data_coverage(dt, pop_dt, cols)
       col_n <- pop_dt[, list(.n = .N), by = cols]
       header_n <- data.table::copy(col_n)
     } else {

@@ -69,32 +69,51 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
         ))
       }
 
-      rd_result <- tryCatch({
+      # x > n is only reachable through an upstream denominator bug. prop.test
+      # errors on it, and the surrounding tryCatch would turn that into a
+      # silently blank rdiff row.
+      if (n_trt > total_trt || n_ref > total_ref) {
+        warning("Risk difference skipped for ", trt_level, " vs ", ref_level,
+                ": count exceeds denominator (",
+                str_c(str_c(c(trt_level, ref_level), ": ",
+                            c(n_trt, n_ref), "/", c(total_trt, total_ref)),
+                      collapse = ", "),
+                "). Check denoms_by and pop_data.", call. = FALSE)
+        return(data.table::data.table(
+          .comp_idx = ci_idx,
+          rdiff = NA_real_, lower = NA_real_,
+          upper = NA_real_, p_value = NA_real_
+        ))
+      }
+
+      # The plain difference needs no test, so it is computed outside the
+      # tryCatch — a CI failure blanks the interval, not the difference itself.
+      rdiff <- (n_trt / total_trt - n_ref / total_ref) * 100
+
+      ci_result <- tryCatch({
         pt <- suppressWarnings(stats::prop.test(
           x = c(n_trt, n_ref),
           n = c(total_trt, total_ref),
           conf.level = ci_level,
           correct = FALSE
         ))
-        p1 <- n_trt / total_trt
-        p2 <- n_ref / total_ref
         list(
-          rdiff = (p1 - p2) * 100,
           lower = pt$conf.int[1] * 100,
           upper = pt$conf.int[2] * 100,
           p_value = pt$p.value
         )
       }, error = function(e) {
-        list(rdiff = NA_real_, lower = NA_real_,
-             upper = NA_real_, p_value = NA_real_)
+        record_user_fn_error("risk_diff confidence interval", e,
+                             str_c(trt_level, " vs ", ref_level))
+        list(lower = NA_real_, upper = NA_real_, p_value = NA_real_)
       })
 
       data.table::data.table(
         .comp_idx = ci_idx,
-        rdiff = rd_result$rdiff,
-        lower = rd_result$lower,
-        upper = rd_result$upper,
-        p_value = rd_result$p_value
+        rdiff = rdiff,
+        lower = ci_result$lower,
+        upper = ci_result$upper,
+        p_value = ci_result$p_value
       )
     })
 

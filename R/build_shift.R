@@ -100,7 +100,8 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   } else {
     counts[, total := nrow(denom_dt)]
   }
-  counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+  check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+  counts[, pct := safe_pct(n, total)]
 
   # --- Distinct denominators ---
   if (!is.null(distinct_by)) {
@@ -110,7 +111,9 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
     } else {
       counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                group_vars, layer_index)
+    counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   # --- Data completion ---
@@ -253,8 +256,11 @@ complete_shift_counts <- function(counts, dt, all_cols, by_data_vars, row_var,
   grid <- do.call(data.table::CJ, grid_vars)
   result <- merge(grid, counts, by = names(grid_vars), all.x = TRUE)
 
-  zero_fill_stats(result)
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
   result <- refill_denom_totals(result, counts, denom_group, character(0))
+  zero_fill_stats(result)
 
   result
 }

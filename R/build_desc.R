@@ -142,7 +142,8 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     denom_base <- pop_dt %||% dt
     stats[, total := nrow(denom_base)]
   }
-  stats[, pct := ifelse(!is.na(total) & total > 0, n / total * 100, NA_real_)]
+  check_denominator_integrity(stats, "n", "total", group_vars, layer_index)
+  stats[, pct := safe_pct(n, total)]
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(stats)
