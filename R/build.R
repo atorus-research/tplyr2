@@ -14,6 +14,17 @@
 #' @return A data.frame with rowlabel, res, and ord columns
 #' @export
 tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
+  # Custom summaries and assoc_test functions render failures as blank cells;
+  # collect_user_fn_errors() reports the reasons as one deduplicated warning
+  # when the build finishes.
+  collect_user_fn_errors(
+    tplyr_build_impl(spec, data, pop_data = pop_data, metadata = metadata, ...)
+  )
+}
+
+#' @keywords internal
+#' @noRd
+tplyr_build_impl <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   # If spec is a file path, read it
   if (is.character(spec) && length(spec) == 1 && file.exists(spec)) {
     spec <- tplyr_read_spec(spec)

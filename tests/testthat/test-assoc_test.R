@@ -57,9 +57,12 @@ test_that("assoc_test renders NA / errors as blank", {
   d <- data.frame(TRT = factor(rep(c("A", "B"), each = 4)),
                   RESP = factor(rep(c("N", "H"), 4)))
   at <- assoc_test(fn = function(.d) stop("boom"))   # always errors -> NA -> blank
-  b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
-    group_count("RESP", settings = layer_settings(
-      format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d)
+  # Cells stay blank (the documented contract), but the reason is reported (#75)
+  expect_warning(
+    b <- tplyr_build(tplyr_spec(cols = "TRT", layers = tplyr_layers(
+      group_count("RESP", settings = layer_settings(
+        format_strings = list(n_counts = f_str("xx", "n")), assoc_test = at)))), d),
+    "assoc_test fn.*boom")
   expect_true(all(trimws(b$pval1) == ""))
 })
 

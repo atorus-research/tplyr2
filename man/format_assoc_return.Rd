@@ -4,7 +4,7 @@
 \alias{format_assoc_return}
 \title{Render an \code{assoc_test} \code{fn} return value for display}
 \usage{
-format_assoc_return(raw, format)
+format_assoc_return(raw, format, label = "assoc_test fn", group = NULL)
 }
 \arguments{
 \item{raw}{The raw value returned by \code{fn} (already wrapped so errors
@@ -12,6 +12,10 @@ arrive as \code{NA}).}
 
 \item{format}{An \code{\link{f_str}} object; its variable count determines how
 many values a numeric return must supply.}
+
+\item{label}{What produced \code{raw}, used when reporting a shape mismatch.}
+
+\item{group}{Optional group identifier used when reporting a shape mismatch.}
 }
 \value{
 A length-1 character display string.

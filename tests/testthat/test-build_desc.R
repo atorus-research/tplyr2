@@ -212,7 +212,9 @@ test_that("custom summary error returns NA", {
       )
     )
   )
-  result <- tplyr_build(spec, test_data)
+  # The cell stays blank, but the discarded message is now surfaced (#75)
+  expect_warning(result <- tplyr_build(spec, test_data),
+                 "custom summary 'bad_stat'.*intentional error")
 
   # Should produce output (NA formatted as spaces)
   expect_equal(nrow(result), 1)

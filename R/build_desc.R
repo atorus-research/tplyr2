@@ -100,8 +100,13 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (length(all_custom) > 0) {
     custom_stats <- dt[, {
       .var <- get(tv)
-      result <- map(all_custom, function(expr) {
-        tryCatch(eval(expr), error = function(e) NA_real_)
+      grp <- format_group_label(.BY)
+      result <- imap(all_custom, function(expr, nm) {
+        tryCatch(eval(expr), error = function(e) {
+          # Still NA (blank cell), but the reason is reported once per build.
+          record_user_fn_error(str_c("custom summary '", nm, "'"), e, grp)
+          NA_real_
+        })
       })
       result
     }, by = group_vars]
