@@ -26,3 +26,20 @@ A data.frame subset of the original data, or NULL if no metadata
 Evaluates the stored filter expressions against the original data to return
 the rows that contributed to the specified output cell.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+built <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+built[, c("row_id", "rowlabel1", "res1")]
+
+# Trace the first cell back to the subjects it counted
+src <- tplyr_meta_subset(built, built$row_id[1], "res1", tplyr_adsl)
+nrow(src)
+head(src[, c("USUBJID", "TRT01P", "AGEGR1")])
+
+# The row count matches the number displayed in the cell
+built$res1[1]
+
+}

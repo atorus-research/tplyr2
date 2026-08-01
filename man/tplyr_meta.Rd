@@ -35,3 +35,19 @@ Contains filter expressions that, when evaluated against the original data,
 reproduce the subset of rows that contributed to a specific cell in the
 output table.
 }
+\examples{
+# Usually obtained from a build rather than constructed by hand
+m <- tplyr_meta(
+  names = c("TRT01P", "AGEGR1"),
+  filters = list(quote(TRT01P == "Placebo"), quote(AGEGR1 == "65-80")),
+  layer_index = 1L
+)
+m
+
+# The filters are ordinary language objects, so they can be applied directly
+subset(tplyr_adsl, TRT01P == "Placebo" & AGEGR1 == "65-80")[1:3, c("USUBJID", "AGEGR1")]
+
+}
+\seealso{
+\code{\link[=tplyr_meta_result]{tplyr_meta_result()}} to retrieve one from a build.
+}

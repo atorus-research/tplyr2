@@ -15,3 +15,9 @@ Logical
 \description{
 Check if an object is a tplyr_spec
 }
+\examples{
+spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("SEX")))
+is_tplyr_spec(spec)
+is_tplyr_spec(mtcars)
+
+}

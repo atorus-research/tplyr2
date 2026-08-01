@@ -12,6 +12,30 @@
 #' @param settings Additional spec-level settings (optional)
 #'
 #' @return A tplyr_spec object
+#'
+#' @examples
+#' # A spec is inert configuration -- nothing is computed until tplyr_build()
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1"),
+#'     group_desc("AGE")
+#'   )
+#' )
+#' spec
+#'
+#' tplyr_build(spec, tplyr_adsl)
+#'
+#' # A global `where` filter applies to every layer
+#' safety <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   where = SAFFL == "Y",
+#'   layers = tplyr_layers(group_count("SEX"))
+#' )
+#' tplyr_build(safety, tplyr_adsl)
+#'
+#' @seealso [tplyr_build()] to execute a spec, [tplyr_layers()] to assemble
+#'   layers, and [layer_settings()] for per-layer configuration.
 #' @export
 tplyr_spec <- function(
     cols,
@@ -42,6 +66,12 @@ tplyr_spec <- function(
 #'
 #' @param x An object to check
 #' @return Logical
+#'
+#' @examples
+#' spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("SEX")))
+#' is_tplyr_spec(spec)
+#' is_tplyr_spec(mtcars)
+#'
 #' @export
 is_tplyr_spec <- function(x) {
   inherits(x, "tplyr_spec")

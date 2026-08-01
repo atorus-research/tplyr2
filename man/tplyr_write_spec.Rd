@@ -23,3 +23,31 @@ Expressions (e.g., \code{where} clauses) are deparsed to strings and
 reconstructed on read. Format string objects (\code{f_str}) are stored as
 their component parts and regenerated on read.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  where = SAFFL == "Y",
+  layers = tplyr_layers(
+    group_count("AGEGR1", by = "SEX", settings = layer_settings(
+      denoms_by = c("TRT01P", "SEX"),
+      format_strings = list(n_counts = f_str("xx (xx.x\%)", "n", "pct"))))
+  )
+)
+
+path <- file.path(tempdir(), "spec.json")
+tplyr_write_spec(spec, path)
+cat(readLines(path), sep = "\n")
+
+# YAML is chosen by the file extension
+if (requireNamespace("yaml", quietly = TRUE)) {
+  ypath <- file.path(tempdir(), "spec.yaml")
+  tplyr_write_spec(spec, ypath)
+  cat(readLines(ypath), sep = "\n")
+  unlink(ypath)
+}
+unlink(path)
+
+}
+\seealso{
+\code{\link[=tplyr_read_spec]{tplyr_read_spec()}} to read one back.
+}

@@ -15,3 +15,9 @@ Logical
 \description{
 Check if an object is a tplyr_layer
 }
+\examples{
+is_tplyr_layer(group_count("SEX"))
+is_tplyr_layer(group_desc("AGE"))
+is_tplyr_layer("SEX")
+
+}

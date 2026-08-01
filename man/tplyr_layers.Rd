@@ -16,3 +16,16 @@ A list of tplyr_layer objects
 \description{
 Wraps one or more layer objects into a validated list for use in tplyr_spec().
 }
+\examples{
+# Layers stack in the order given, and may mix types freely
+layers <- tplyr_layers(
+  group_desc("AGE"),
+  group_count("SEX"),
+  group_count("AGEGR1")
+)
+length(layers)
+
+spec <- tplyr_spec(cols = "TRT01P", layers = layers)
+tplyr_build(spec, tplyr_adsl)
+
+}

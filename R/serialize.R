@@ -11,6 +11,32 @@
 #' @param path File path. Extension determines format.
 #'
 #' @return Invisible file path
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   where = SAFFL == "Y",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1", by = "SEX", settings = layer_settings(
+#'       denoms_by = c("TRT01P", "SEX"),
+#'       format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))))
+#'   )
+#' )
+#'
+#' path <- file.path(tempdir(), "spec.json")
+#' tplyr_write_spec(spec, path)
+#' cat(readLines(path), sep = "\n")
+#'
+#' # YAML is chosen by the file extension
+#' if (requireNamespace("yaml", quietly = TRUE)) {
+#'   ypath <- file.path(tempdir(), "spec.yaml")
+#'   tplyr_write_spec(spec, ypath)
+#'   cat(readLines(ypath), sep = "\n")
+#'   unlink(ypath)
+#' }
+#' unlink(path)
+#'
+#' @seealso [tplyr_read_spec()] to read one back.
 #' @export
 tplyr_write_spec <- function(spec, path) {
   if (!inherits(spec, "tplyr_spec")) {
@@ -47,6 +73,28 @@ tplyr_write_spec <- function(spec, path) {
 #' @param path File path to a JSON or YAML spec file
 #'
 #' @return A tplyr_spec object
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   where = SAFFL == "Y",
+#'   layers = tplyr_layers(group_count("AGEGR1", by = "SEX"))
+#' )
+#'
+#' path <- file.path(tempdir(), "spec.json")
+#' tplyr_write_spec(spec, path)
+#'
+#' # The round trip reproduces the spec, and the same table
+#' spec2 <- tplyr_read_spec(path)
+#' spec2
+#' identical(tplyr_build(spec, tplyr_adsl), tplyr_build(spec2, tplyr_adsl))
+#'
+#' # tplyr_build() also accepts a spec file path directly
+#' head(tplyr_build(path, tplyr_adsl))
+#'
+#' unlink(path)
+#'
+#' @seealso [tplyr_write_spec()] to write one.
 #' @export
 tplyr_read_spec <- function(path) {
   if (!file.exists(path)) {

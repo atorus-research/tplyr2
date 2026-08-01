@@ -9,6 +9,28 @@
 #' @return If \code{layer} is specified, a data.frame of raw statistics for that
 #'   layer. If \code{layer} is NULL, a named list of data.frames keyed by layer
 #'   index. Returns NULL if numeric data was not retained.
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1"),
+#'     group_desc("AGE")
+#'   )
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl)
+#'
+#' # One data.frame per layer, keyed by layer index
+#' names(tplyr_numeric_data(built))
+#'
+#' # The counts behind the formatted cells, before rounding and padding
+#' head(tplyr_numeric_data(built, 1))
+#'
+#' # Every statistic the desc layer computed, including unused ones
+#' names(tplyr_numeric_data(built, 2))
+#'
+#' @seealso [tplyr_stats_data()] for a single statistic with its grouping
+#'   columns.
 #' @export
 tplyr_numeric_data <- function(result, layer = NULL) {
   nd <- attr(result, "numeric_data")

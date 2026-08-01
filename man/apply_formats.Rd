@@ -17,7 +17,8 @@ apply_formats(
 )
 }
 \arguments{
-\item{fmt}{An f_str object or character format string}
+\item{fmt}{An \code{\link[=f_str]{f_str()}} object. A bare character format string is rejected,
+since the variable names are what bind \code{...} to the format groups.}
 
 \item{...}{Numeric vectors, one per variable in the f_str (positional matching)}
 
@@ -52,4 +53,26 @@ Character vector of formatted values
 \description{
 Vectorized formatting function. Takes an f_str object and numeric vectors,
 returns a character vector of formatted strings.
+}
+\examples{
+# Vectorized: one formatted string per element
+apply_formats(f_str("xx (xx.x\%)", "n", "pct"),
+              n = c(5, 12, 103), pct = c(4.5, 33.333, 99.9))
+
+# `na` replaces the default blank-width fill
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA))
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "NE")
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "")
+
+# lt/gt thresholds, targeting the percent group (index 2)
+apply_formats(f_str("xx (xx.x\%)", "n", "pct"), n = c(1, 199), pct = c(0.4, 99.7),
+              lt = 1, gt = 99, lt_gt_group = 2)
+
+# Pad to a fixed width for row-binding against other output
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10)
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10, pad = "left")
+
+}
+\seealso{
+\code{\link[=f_str]{f_str()}} for the format-string grammar.
 }

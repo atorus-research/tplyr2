@@ -151,6 +151,57 @@
 #' @param name Character string, layer name for identification
 #'
 #' @return A tplyr_layer_settings object
+#'
+#' @examples
+#' # Formats and special rows on a count layer
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1", settings = layer_settings(
+#'       format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")),
+#'       total_row = TRUE,
+#'       total_row_label = "Total subjects"
+#'     ))
+#'   )
+#' )
+#' tplyr_build(spec, tplyr_adsl)
+#'
+#' # Denominators: percentages within each arm-by-sex cell rather than the arm
+#' denom <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1", by = "SEX",
+#'                 settings = layer_settings(denoms_by = c("TRT01P", "SEX")))
+#'   )
+#' )
+#' tplyr_build(denom, tplyr_adsl)
+#'
+#' # Auto-precision on a desc layer: 'a' takes decimals from the data, and
+#' # precision_cap bounds them.
+#' prec <- tplyr_spec(
+#'   cols = "TRTA",
+#'   layers = tplyr_layers(
+#'     group_desc("AVAL", by = "PARAMCD", settings = layer_settings(
+#'       format_strings = list("Mean (SD)" = f_str("a.a+1 (a.a+2)", "mean", "sd")),
+#'       precision_by = "PARAMCD",
+#'       precision_cap = c(int = 3, dec = 2)
+#'     ))
+#'   )
+#' )
+#' head(tplyr_build(prec, tplyr_adlb))
+#'
+#' # A custom summary adds a statistic the built-ins do not provide
+#' cv <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_desc("AGE", settings = layer_settings(
+#'       custom_summaries = list(cv = quote(sd(.var) / mean(.var) * 100)),
+#'       format_strings = list("CV%" = f_str("xx.x", "cv"))
+#'     ))
+#'   )
+#' )
+#' tplyr_build(cv, tplyr_adsl)
+#'
 #' @export
 layer_settings <- function(
     format_strings = NULL,

@@ -20,3 +20,27 @@ index. Returns NULL if numeric data was not retained.
 Returns the unformatted numeric data that was computed during the build
 process, before formatting and pivoting to wide format.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1"),
+    group_desc("AGE")
+  )
+)
+built <- tplyr_build(spec, tplyr_adsl)
+
+# One data.frame per layer, keyed by layer index
+names(tplyr_numeric_data(built))
+
+# The counts behind the formatted cells, before rounding and padding
+head(tplyr_numeric_data(built, 1))
+
+# Every statistic the desc layer computed, including unused ones
+names(tplyr_numeric_data(built, 2))
+
+}
+\seealso{
+\code{\link[=tplyr_stats_data]{tplyr_stats_data()}} for a single statistic with its grouping
+columns.
+}

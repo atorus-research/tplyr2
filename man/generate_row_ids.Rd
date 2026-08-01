@@ -17,3 +17,18 @@ Creates a character ID for each row by combining the layer index and
 row label values. These IDs can be used with \code{tplyr_meta_result()}
 and \code{tplyr_meta_subset()} to look up cell metadata.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+built <- tplyr_build(spec, tplyr_adsl)
+generate_row_ids(built)
+
+# IDs are derived from the row labels, so generate them from an unmodified
+# build. tplyr_build(metadata = TRUE) attaches a row_id column that survives
+# post-processing, which is the safer route.
+with_meta <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+with_meta$row_id
+
+}

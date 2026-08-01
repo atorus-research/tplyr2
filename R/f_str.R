@@ -12,6 +12,43 @@
 #'   NA groups as blanks of the field width.
 #'
 #' @return A tplyr_f_str object
+#'
+#' @details
+#' Each run of `x` characters is one format group, and each group is filled by
+#' the correspondingly-positioned variable in `...`. The count of `x`s sets the
+#' field width, so `"xx.x"` renders two integer digits and one decimal. Literal
+#' text between groups is preserved verbatim. `a` (and `A`) request
+#' auto-precision, where the decimal count comes from the data.
+#'
+#' @examples
+#' # Two format groups filled by n and pct
+#' fmt <- f_str("xx (xx.x%)", "n", "pct")
+#' fmt
+#' apply_formats(fmt, n = c(5, 12), pct = c(4.5, 33.33))
+#'
+#' # Width is set by the number of x's
+#' apply_formats(f_str("xxx", "n"), n = 7)
+#' apply_formats(f_str("x", "n"), n = 7)
+#'
+#' # `empty` fills each NA group in place, preserving alignment
+#' apply_formats(f_str("xx (xxx)", "n", "pct", empty = "NA"),
+#'               n = NA, pct = NA)
+#'
+#' # `.overall` replaces the whole cell, but only when every group is NA
+#' both_na <- f_str("xx (xxx)", "n", "pct", empty = c(.overall = "Not est."))
+#' apply_formats(both_na, n = NA, pct = NA)
+#'
+#' # Used in a layer
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1", settings = layer_settings(
+#'       format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct"))))
+#'   )
+#' )
+#' tplyr_build(spec, tplyr_adsl)
+#'
+#' @seealso [apply_formats()] to render values outside a build.
 #' @export
 f_str <- function(format_string, ..., empty = NULL) {
   vars <- c(...)
@@ -54,7 +91,8 @@ f_str <- function(format_string, ..., empty = NULL) {
 #' Vectorized formatting function. Takes an f_str object and numeric vectors,
 #' returns a character vector of formatted strings.
 #'
-#' @param fmt An f_str object or character format string
+#' @param fmt An [f_str()] object. A bare character format string is rejected,
+#'   since the variable names are what bind `...` to the format groups.
 #' @param ... Numeric vectors, one per variable in the f_str (positional matching)
 #' @param precision Optional list of resolved precision per group (for auto-precision)
 #' @param lt Optional numeric less-than threshold applied to the group named by
@@ -76,6 +114,26 @@ f_str <- function(format_string, ..., empty = NULL) {
 #'   spaces) or `"left"` (leading spaces).
 #'
 #' @return Character vector of formatted values
+#'
+#' @examples
+#' # Vectorized: one formatted string per element
+#' apply_formats(f_str("xx (xx.x%)", "n", "pct"),
+#'               n = c(5, 12, 103), pct = c(4.5, 33.333, 99.9))
+#'
+#' # `na` replaces the default blank-width fill
+#' apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA))
+#' apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "NE")
+#' apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "")
+#'
+#' # lt/gt thresholds, targeting the percent group (index 2)
+#' apply_formats(f_str("xx (xx.x%)", "n", "pct"), n = c(1, 199), pct = c(0.4, 99.7),
+#'               lt = 1, gt = 99, lt_gt_group = 2)
+#'
+#' # Pad to a fixed width for row-binding against other output
+#' apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10)
+#' apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10, pad = "left")
+#'
+#' @seealso [f_str()] for the format-string grammar.
 #' @export
 apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
                           lt_gt_group = NULL, na = NULL, width = NULL,

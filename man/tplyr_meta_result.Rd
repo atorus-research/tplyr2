@@ -22,3 +22,18 @@ A \code{tplyr_meta} object, or NULL if no metadata for that cell
 Returns a \code{tplyr_meta} object containing the filter expressions
 that describe the source data for the specified cell.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+built <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+built[, c("row_id", "rowlabel1", "res1")]
+
+# The filters behind the Placebo / 65-80 cell
+tplyr_meta_result(built, built$row_id[1], "res1")
+
+}
+\seealso{
+\code{\link[=tplyr_meta_subset]{tplyr_meta_subset()}} to fetch the source rows themselves.
+}

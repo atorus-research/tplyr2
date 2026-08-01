@@ -8,6 +8,15 @@
 \description{
 Implements a grammar of summary data for clinical reports. Clinical summary tables are decomposed into modular layers, each representing an independent summary block. Supports count, descriptive statistics, and shift layer types with a declarative spec-based API built on data.table for performance.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/atorus-research/tplyr2}
+  \item \url{https://atorus-research.github.io/tplyr2/}
+  \item Report bugs at \url{https://github.com/atorus-research/tplyr2/issues}
+}
+
+}
 \author{
 \strong{Maintainer}: Mike Stackhouse \email{mike.stackhouse@atorusresearch.com}
 

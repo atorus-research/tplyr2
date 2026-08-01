@@ -36,3 +36,29 @@ A tplyr_spec object
 The spec is a pure configuration object describing what to compute.
 No data processing occurs until \code{tplyr_build()} is called.
 }
+\examples{
+# A spec is inert configuration -- nothing is computed until tplyr_build()
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1"),
+    group_desc("AGE")
+  )
+)
+spec
+
+tplyr_build(spec, tplyr_adsl)
+
+# A global `where` filter applies to every layer
+safety <- tplyr_spec(
+  cols = "TRT01P",
+  where = SAFFL == "Y",
+  layers = tplyr_layers(group_count("SEX"))
+)
+tplyr_build(safety, tplyr_adsl)
+
+}
+\seealso{
+\code{\link[=tplyr_build]{tplyr_build()}} to execute a spec, \code{\link[=tplyr_layers]{tplyr_layers()}} to assemble
+layers, and \code{\link[=layer_settings]{layer_settings()}} for per-layer configuration.
+}

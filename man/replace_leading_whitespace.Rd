@@ -17,3 +17,13 @@ Character vector with leading spaces replaced
 \description{
 Useful for HTML rendering where leading spaces are collapsed.
 }
+\examples{
+# Indentation survives an HTML renderer that would collapse plain spaces
+terms <- c("CARDIAC DISORDERS", "   ATRIAL FIBRILLATION")
+out <- replace_leading_whitespace(terms)
+out
+
+# One replacement per leading space; interior spacing is untouched
+replace_leading_whitespace("  A B", replace_with = "-")
+
+}

@@ -17,3 +17,21 @@ Numeric vector
 \description{
 Extracts the Nth numeric value from a formatted tplyr2 string.
 }
+\examples{
+cells <- c(" 22 (25.6\%)", "  9 (10.5\%)", " 55 (64.0\%)")
+
+# Default pulls the count; index = 2 pulls the percent
+str_extract_num(cells)
+str_extract_num(cells, index = 2)
+
+# Asking past the available numbers gives NA, as does an NA input
+str_extract_num(c(" 5", NA), index = 2)
+
+# Recover a sort key from an already-formatted table
+built <- tplyr_build(
+  tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("AGEGR1"))),
+  tplyr_adsl
+)
+built[order(-str_extract_num(built$res1)), c("rowlabel1", "res1")]
+
+}

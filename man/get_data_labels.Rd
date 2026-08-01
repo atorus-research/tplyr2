@@ -18,3 +18,12 @@ Returns a named character vector of variable labels. Labels are extracted
 from the \code{"label"} attribute of each column (standard for Haven-imported
 CDISC data).
 }
+\examples{
+# CDISC data imported via haven carries a "label" attribute per column
+labs <- get_data_labels(tplyr_adsl)
+head(labs)
+
+# Columns with no label attribute come back NA
+get_data_labels(data.frame(a = 1, b = 2))
+
+}

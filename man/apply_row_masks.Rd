@@ -19,3 +19,25 @@ Walks each \code{rowlabel*} column top-to-bottom and blanks values that
 are identical to the previous row, respecting layer boundaries
 (\code{ord_layer_index}).
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1", by = "SEX"))
+)
+built <- tplyr_build(spec, tplyr_adsl)
+
+# SEX repeats on every age-group row
+built[, c("rowlabel1", "rowlabel2")]
+
+# Masked: each value prints once, at the top of its block
+apply_row_masks(built)[, c("rowlabel1", "rowlabel2")]
+
+# row_breaks inserts a blank row between layers
+two <- tplyr_build(
+  tplyr_spec(cols = "TRT01P",
+             layers = tplyr_layers(group_count("SEX"), group_count("AGEGR1"))),
+  tplyr_adsl
+)
+apply_row_masks(two, row_breaks = TRUE)[, c("rowlabel1", "res1")]
+
+}

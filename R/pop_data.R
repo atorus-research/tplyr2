@@ -11,6 +11,28 @@
 #' @param where Expression for filtering the population data (optional)
 #'
 #' @return A tplyr_pop_data object
+#'
+#' @examples
+#' # The AE data's TRTA maps to the subject-level TRT01P. Denominators and the
+#' # header N then come from the population, not from the AE records.
+#' spec <- tplyr_spec(
+#'   cols = "TRTA",
+#'   pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+#'   layers = tplyr_layers(
+#'     group_count("AEBODSYS",
+#'                 settings = layer_settings(distinct_by = "USUBJID"))
+#'   )
+#' )
+#' built <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+#' head(built)
+#'
+#' # Header N reflects the 254 enrolled subjects, not the 200 AE records
+#' tplyr_header_n(built)
+#'
+#' # Restrict the population to the safety set
+#' saf <- pop_data(cols = c("TRTA" = "TRT01P"), where = SAFFL == "Y")
+#' saf
+#'
 #' @export
 pop_data <- function(cols, where = NULL) {
   where_expr <- rlang::enexpr(where)
@@ -28,6 +50,11 @@ pop_data <- function(cols, where = NULL) {
 #'
 #' @param x An object to check
 #' @return Logical
+#'
+#' @examples
+#' is_pop_data(pop_data(cols = "TRT01P"))
+#' is_pop_data("TRT01P")
+#'
 #' @export
 is_pop_data <- function(x) {
   inherits(x, "tplyr_pop_data")
@@ -52,6 +79,24 @@ print.tplyr_pop_data <- function(x, ...) {
 #' @param label Character string for the total group label (default: "Total")
 #'
 #' @return A tplyr_total_group object
+#'
+#' @examples
+#' # Adds a "Total" column spanning every arm, alongside the individual arms
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   total_groups = list(total_group("TRT01P")),
+#'   layers = tplyr_layers(group_count("AGEGR1"))
+#' )
+#' tplyr_build(spec, tplyr_adsl)
+#'
+#' # Rename the total column
+#' all_pts <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   total_groups = list(total_group("TRT01P", label = "All Patients")),
+#'   layers = tplyr_layers(group_count("SEX"))
+#' )
+#' tplyr_build(all_pts, tplyr_adsl)
+#'
 #' @export
 total_group <- function(col_var, label = "Total") {
   structure(
@@ -80,6 +125,27 @@ print.tplyr_total_group <- function(x, ...) {
 #'   Example: `"High Dose" = c("Dose 1", "Dose 2")`
 #'
 #' @return A tplyr_custom_group object
+#'
+#' @examples
+#' # Pool the two dose arms into one "Xanomeline (All)" column, kept alongside
+#' # the arms it is built from
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   custom_groups = list(custom_group(
+#'     "TRT01P",
+#'     "Xanomeline (All)" = c("Xanomeline High Dose", "Xanomeline Low Dose")
+#'   )),
+#'   layers = tplyr_layers(group_count("AGEGR1"))
+#' )
+#' tplyr_build(spec, tplyr_adsl)
+#'
+#' # Several groups at once
+#' custom_group(
+#'   "TRT01P",
+#'   "Active"  = c("Xanomeline High Dose", "Xanomeline Low Dose"),
+#'   "Control" = "Placebo"
+#' )
+#'
 #' @export
 custom_group <- function(col_var, ...) {
   groups <- list(...)
@@ -110,6 +176,23 @@ print.tplyr_custom_group <- function(x, ...) {
 #'
 #' @return A data.frame with column variable levels and their N values,
 #'   or NULL if no population data was used.
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRTA",
+#'   pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+#'   layers = tplyr_layers(group_count("AEBODSYS"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+#' tplyr_header_n(built)
+#'
+#' # NULL when the build had no population data to draw an N from
+#' no_pop <- tplyr_build(
+#'   tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("SEX"))),
+#'   tplyr_adsl
+#' )
+#' tplyr_header_n(no_pop)
+#'
 #' @export
 tplyr_header_n <- function(result) {
   attr(result, "header_n")
