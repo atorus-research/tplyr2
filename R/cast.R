@@ -342,6 +342,38 @@ sort_by_numeric_suffix <- function(x) {
   x[order(as.integer(str_extract(x, "\\d+")))]
 }
 
+#' Locate the rowlabel columns to join summary statistics back on
+#'
+#' The inverse of \code{build_row_labels_long()}'s layout: one rowlabel column
+#' per constant `by` label first, then one per `by` data variable, then the
+#' target variable last. Callers that merge per-group statistics (risk
+#' difference, pairwise p-values) onto the assembled table need the data
+#' variable columns; assuming they start at `rowlabel1` keys the join against a
+#' constant-label column whenever `by` leads with a string label, matching
+#' nothing and leaving every cell blank.
+#'
+#' @param wide Assembled wide table
+#' @param by_labels Character vector of constant `by` labels
+#' @param by_data_vars Character vector of `by` data variable names
+#'
+#' @return List with `tv_col` (the target variable's rowlabel column) and
+#'   `by_cols` (the by data variables' rowlabel columns, in `by_data_vars`
+#'   order), or NULL when `wide` has no rowlabel columns
+#' @keywords internal
+resolve_rowlabel_join_cols <- function(wide, by_labels, by_data_vars) {
+  all_label_cols <- sort_by_numeric_suffix(
+    str_subset(names(wide), "^rowlabel\\d+$")
+  )
+  if (length(all_label_cols) == 0) return(NULL)
+
+  by_cols <- all_label_cols[length(by_labels) + seq_along(by_data_vars)]
+
+  list(
+    tv_col = all_label_cols[length(all_label_cols)],
+    by_cols = by_cols[!is.na(by_cols)]
+  )
+}
+
 #' Harmonize column sets across layers and row-bind
 #' @keywords internal
 harmonize_and_bind <- function(layer_results) {

@@ -496,9 +496,9 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
 
   # The target variable sits in the last rowlabel column; by data vars occupy
   # the rowlabel columns after any by string-labels.
-  all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
-  if (length(all_label_cols) == 0) return(invisible(wide))
-  tv_label_col <- all_label_cols[length(all_label_cols)]
+  join_cols <- resolve_rowlabel_join_cols(wide, by_labels, by_data_vars)
+  if (is.null(join_cols)) return(invisible(wide))
+  tv_label_col <- join_cols$tv_col
 
   iwalk(comparisons, function(cmp, ci_idx) {
     pcol <- str_c("pval", ci_idx)
@@ -511,9 +511,9 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
       wide_join_cols <- tv_label_col
       sub_join_cols <- tv
       if (length(by_data_vars) > 0) {
-        bv_wide_cols <- utils::head(all_label_cols, length(by_data_vars))
         bv_sub_cols <- intersect(by_data_vars, names(sub))
-        wide_join_cols <- c(bv_wide_cols[seq_along(bv_sub_cols)], wide_join_cols)
+        bv_wide_cols <- join_cols$by_cols[match(bv_sub_cols, by_data_vars)]
+        wide_join_cols <- c(bv_wide_cols, wide_join_cols)
         sub_join_cols <- c(bv_sub_cols, sub_join_cols)
       }
 

@@ -401,3 +401,60 @@ test_that("nested bycount honors result_order_var and composes with outer_sort_p
   expect_equal(ord, c("SOC2/", "SOC2/q2", "SOC2/q1",
                       "SOC1/", "SOC1/p1", "SOC1/p2"))
 })
+
+# --- Ordering settings fail loudly instead of degrading (#78) ---
+
+mk_bycount <- function(...) {
+  tplyr_spec(cols = "TRTA", layers = tplyr_layers(
+    group_count("AEDECOD",
+                settings = layer_settings(order_count_method = "bycount", ...))))
+}
+
+test_that("result_order_var naming an uncomputed statistic errors (#78)", {
+  # Used to silently fall back to "n", producing a record-count sort where the
+  # spec asked for a distinct-subject sort.
+  expect_error(
+    tplyr_build(mk_bycount(result_order_var = "distinct_n"), tplyr_adae),
+    "result_order_var.*distinct_n.*not a statistic")
+  expect_error(
+    tplyr_build(mk_bycount(result_order_var = "distinct_n"), tplyr_adae),
+    "requires the distinct_by setting")
+  # The available statistics are listed
+  expect_error(
+    tplyr_build(mk_bycount(result_order_var = "nope"), tplyr_adae),
+    "Available:.*\\bn\\b")
+})
+
+test_that("result_order_var works once the statistic exists (#78)", {
+  out <- tplyr_build(
+    mk_bycount(result_order_var = "distinct_n", distinct_by = "USUBJID"),
+    tplyr_adae)
+  expect_gt(nrow(out), 0)
+})
+
+test_that("ordering_cols matching no observed level errors (#78)", {
+  # An empty aggregation source zeroes every sort key, leaving the table in
+  # arbitrary order.
+  expect_error(
+    tplyr_build(mk_bycount(ordering_cols = "Xanomeline High"), tplyr_adae),
+    "ordering_cols matched no observed level")
+  expect_error(
+    tplyr_build(mk_bycount(ordering_cols = "Xanomeline High"), tplyr_adae),
+    "Observed:.*Xanomeline High Dose")
+})
+
+test_that("ordering_cols with a partially unmatched level warns (#78)", {
+  expect_warning(
+    out <- tplyr_build(
+      mk_bycount(ordering_cols = c("Placebo", "Xanomeline High")), tplyr_adae),
+    "not observed.*Xanomeline High")
+  # The matched level still drives the sort
+  expect_equal(
+    as.vector(out$res1),
+    as.vector(suppressWarnings(
+      tplyr_build(mk_bycount(ordering_cols = "Placebo"), tplyr_adae)$res1)))
+})
+
+test_that("a valid ordering_cols level sorts without complaint (#78)", {
+  expect_silent(tplyr_build(mk_bycount(ordering_cols = "Placebo"), tplyr_adae))
+})

@@ -969,3 +969,25 @@ test_that("omnibus assoc_test renders multiple statistics in one cell (#60)", {
   val <- b$pval1[trimws(b$pval1) != ""][1]
   expect_true(grepl("p=", val))
 })
+
+# --- by leading with a string label (#72) ---
+
+test_that("pairwise p-values populate when `by` leads with a label (#72)", {
+  mk <- function(by) tplyr_spec(
+    cols = "TRT01P",
+    layers = tplyr_layers(
+      group_count("AGEGR1", by = by, settings = layer_settings(
+        assoc_test = assoc_test(
+          fn = function(d) suppressWarnings(stats::chisq.test(d)$p.value),
+          format = f_str("x.xxx", "pval"),
+          reference = "Placebo",
+          comparisons = c("Xanomeline High Dose"))))
+    )
+  )
+  plain   <- tplyr_build(mk("SEX"), tplyr_adsl)
+  labeled <- tplyr_build(mk(c("Age Group", "SEX")), tplyr_adsl)
+
+  # Same head(all_label_cols, ...) offset bug as merge_risk_diff_columns().
+  expect_true(all(labeled$pval1 != ""))
+  expect_equal(as.vector(labeled$pval1), as.vector(plain$pval1))
+})

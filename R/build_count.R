@@ -251,7 +251,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (!is.null(rd_data)) {
     wide <- merge_risk_diff_columns(
       wide, rd_data, settings$risk_diff,
-      row_labels, tv, by_data_vars
+      row_labels, tv, by_data_vars, by_labels
     )
   }
 

@@ -184,6 +184,23 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
 apply_overrides <- function(spec, overrides) {
   if (length(overrides) == 0) return(spec)
 
+  # `...` disables R's own argument matching, so a typo'd override used to
+  # build a plausible-looking table off the wrong settings — e.g.
+  # tplyr_build(spec, adsl, wher = "SAFFL == 'Y'") silently ran unfiltered.
+  valid <- union(names(spec), c("where", "pop_data"))
+  supplied <- names(overrides) %||% rep("", length(overrides))
+  if (any(supplied == "")) {
+    stop("All arguments passed to tplyr_build() via ... must be named.",
+         call. = FALSE)
+  }
+  unknown <- setdiff(supplied, valid)
+  if (length(unknown) > 0) {
+    stop("Unknown override", if (length(unknown) > 1) "s" else "", " passed to ",
+         "tplyr_build(): ", str_c(unknown, collapse = ", "),
+         "\nValid overrides: ", str_c(sort(valid), collapse = ", "),
+         call. = FALSE)
+  }
+
   for (name in names(overrides)) {
     value <- overrides[[name]]
 

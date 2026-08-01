@@ -136,11 +136,15 @@ format_risk_diff <- function(rd_data, fmt) {
 #' @param row_label_cols Character vector of row label column names
 #' @param tv Character string naming the target variable
 #' @param by_data_vars Character vector of by-variable names
+#' @param by_labels Character vector of constant `by` labels. Needed to find
+#'   where the by data variables sit among the rowlabel columns — they follow
+#'   the label columns, not `rowlabel1`.
 #'
 #' @return Modified wide data.table with rdiff columns appended
 #' @keywords internal
 merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
-                                     row_label_cols, tv, by_data_vars) {
+                                     row_label_cols, tv, by_data_vars,
+                                     by_labels = character(0)) {
   if (is.null(rd_data) || nrow(rd_data) == 0) return(wide)
 
   comparisons <- risk_diff_config$comparisons
@@ -150,10 +154,9 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
     fmt <- f_str("xx.x (xx.x, xx.x)", "rdiff", "lower", "upper")
   }
 
-  # The target variable occupies the last rowlabel position
-  all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
-  if (length(all_label_cols) == 0) return(wide)
-  tv_label_col <- all_label_cols[length(all_label_cols)]
+  join_cols <- resolve_rowlabel_join_cols(wide, by_labels, by_data_vars)
+  if (is.null(join_cols)) return(wide)
+  tv_label_col <- join_cols$tv_col
 
   for (ci_idx in seq_along(comparisons)) {
     comp <- comparisons[[ci_idx]]
@@ -172,9 +175,9 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
       wide_join_cols <- tv_label_col
       rd_join_cols <- tv
       if (length(by_data_vars) > 0) {
-        bv_wide_cols <- head(all_label_cols, length(by_data_vars))
         bv_rd_cols <- intersect(by_data_vars, names(rd_subset))
-        wide_join_cols <- c(bv_wide_cols[seq_along(bv_rd_cols)], wide_join_cols)
+        bv_wide_cols <- join_cols$by_cols[match(bv_rd_cols, by_data_vars)]
+        wide_join_cols <- c(bv_wide_cols, wide_join_cols)
         rd_join_cols <- c(bv_rd_cols, rd_join_cols)
       }
 

@@ -321,3 +321,36 @@ test_that("risk_diff on a nested count layer errors loudly (#58)", {
   expect_silent(b <- tplyr_build(spec1, d))
   expect_true("rdiff1" %in% names(b))
 })
+
+# --- by leading with a string label (#72) ---
+
+test_that("risk_diff populates when `by` leads with a string label (#72)", {
+  mk <- function(by) tplyr_spec(
+    cols = "TRT01P",
+    layers = tplyr_layers(
+      group_count("AGEGR1", by = by, settings = layer_settings(
+        risk_diff = list(comparisons = list(c("Xanomeline High Dose", "Placebo")))))
+    )
+  )
+  plain   <- tplyr_build(mk("SEX"), tplyr_adsl)
+  labeled <- tplyr_build(mk(c("Age Group", "SEX")), tplyr_adsl)
+
+  # The join used to key rowlabel1 (the constant "Age Group" label) against SEX
+  # values, so every cell came back blank with no warning.
+  expect_true(all(labeled$rdiff1 != ""))
+  expect_equal(as.vector(labeled$rdiff1), as.vector(plain$rdiff1))
+  expect_equal(labeled$rowlabel1, rep("Age Group", nrow(labeled)))
+})
+
+test_that("risk_diff still populates with two by data variables (#72)", {
+  spec <- tplyr_spec(
+    cols = "TRT01P",
+    layers = tplyr_layers(
+      group_count("AGEGR1", by = c("My Label", "SEX", "RACE"),
+                  settings = layer_settings(risk_diff = list(
+                    comparisons = list(c("Xanomeline High Dose", "Placebo")))))
+    )
+  )
+  out <- tplyr_build(spec, tplyr_adsl)
+  expect_true(any(out$rdiff1 != ""))
+})

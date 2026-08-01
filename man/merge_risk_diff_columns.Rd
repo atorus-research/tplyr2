@@ -10,7 +10,8 @@ merge_risk_diff_columns(
   risk_diff_config,
   row_label_cols,
   tv,
-  by_data_vars
+  by_data_vars,
+  by_labels = character(0)
 )
 }
 \arguments{
@@ -25,6 +26,10 @@ merge_risk_diff_columns(
 \item{tv}{Character string naming the target variable}
 
 \item{by_data_vars}{Character vector of by-variable names}
+
+\item{by_labels}{Character vector of constant \code{by} labels. Needed to find
+where the by data variables sit among the rowlabel columns — they follow
+the label columns, not \code{rowlabel1}.}
 }
 \value{
 Modified wide data.table with rdiff columns appended

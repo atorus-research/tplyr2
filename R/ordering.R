@@ -103,6 +103,23 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
     # statistic per (by-group, target) rather than using the per-column count.
     # `result_order_var` picks the statistic (default "n"); `ordering_cols`
     # restricts the tally to a specific column level (issue #57).
+    # Falling back to "n" here used to turn "order by distinct subject count"
+    # into "order by record count" with no signal.
+    if (!is.null(settings$result_order_var) &&
+        !settings$result_order_var %in% names(counts)) {
+      available <- setdiff(names(counts)[map_lgl(counts, is.numeric)],
+                           str_subset(names(counts), "^\\."))
+      hint <- if (str_detect(settings$result_order_var, "^distinct") &&
+                  is.null(settings$distinct_by)) {
+        "\nA 'distinct_*' statistic requires the distinct_by setting."
+      } else {
+        ""
+      }
+      stop("result_order_var = '", settings$result_order_var,
+           "' is not a statistic this layer computes.",
+           "\nAvailable: ", str_c(sort(available), collapse = ", "), hint,
+           call. = FALSE)
+    }
     order_var <- if (result_order_var %in% names(counts)) result_order_var else "n"
     agg_src <- if (".is_special" %in% names(counts)) {
       counts[.is_special == 0]
@@ -111,8 +128,25 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
     }
     if (!is.null(ordering_cols_setting) && length(cols) >= 1 &&
         cols[1] %in% names(counts)) {
-      agg_src <- agg_src[as.character(get(cols[1])) %in%
-                           as.character(ordering_cols_setting)]
+      # A typo'd level empties the aggregation source, zeroing every sort key
+      # and shuffling the table into arbitrary order.
+      observed <- unique(as.character(agg_src[[cols[1]]]))
+      requested <- as.character(ordering_cols_setting)
+      unmatched <- setdiff(requested, observed)
+      if (length(unmatched) == length(requested)) {
+        stop("ordering_cols matched no observed level of '", cols[1], "'.",
+             "\nRequested: ", str_c(requested, collapse = ", "),
+             "\nObserved: ", str_c(sort(observed), collapse = ", "),
+             call. = FALSE)
+      }
+      if (length(unmatched) > 0) {
+        warning("ordering_cols level", if (length(unmatched) > 1) "s" else "",
+                " not observed in '", cols[1], "', ignored: ",
+                str_c(unmatched, collapse = ", "),
+                "\nObserved: ", str_c(sort(observed), collapse = ", "),
+                call. = FALSE)
+      }
+      agg_src <- agg_src[as.character(get(cols[1])) %in% requested]
     }
     key_vars <- c(by_data_vars, tv)
     agg <- agg_src[, list(.agg_cnt = sum(get(order_var), na.rm = TRUE)),
