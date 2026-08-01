@@ -10,3 +10,4 @@
 ^scratch$
 ^pkgdown$
 ^benchmark_comparison\.R$
+^cran-comments\.md$

@@ -26,3 +26,42 @@ A tplyr_f_str object
 \description{
 Create a format string object
 }
+\details{
+Each run of \code{x} characters is one format group, and each group is filled by
+the correspondingly-positioned variable in \code{...}. The count of \code{x}s sets the
+field width, so \code{"xx.x"} renders two integer digits and one decimal. Literal
+text between groups is preserved verbatim. \code{a} (and \code{A}) request
+auto-precision, where the decimal count comes from the data.
+}
+\examples{
+# Two format groups filled by n and pct
+fmt <- f_str("xx (xx.x\%)", "n", "pct")
+fmt
+apply_formats(fmt, n = c(5, 12), pct = c(4.5, 33.33))
+
+# Width is set by the number of x's
+apply_formats(f_str("xxx", "n"), n = 7)
+apply_formats(f_str("x", "n"), n = 7)
+
+# `empty` fills each NA group in place, preserving alignment
+apply_formats(f_str("xx (xxx)", "n", "pct", empty = "NA"),
+              n = NA, pct = NA)
+
+# `.overall` replaces the whole cell, but only when every group is NA
+both_na <- f_str("xx (xxx)", "n", "pct", empty = c(.overall = "Not est."))
+apply_formats(both_na, n = NA, pct = NA)
+
+# Used in a layer
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xx.x\%)", "n", "pct"))))
+  )
+)
+tplyr_build(spec, tplyr_adsl)
+
+}
+\seealso{
+\code{\link[=apply_formats]{apply_formats()}} to render values outside a build.
+}

@@ -23,3 +23,24 @@ Transforms the numeric data attached to a \code{tplyr_build()} result into
 a long-format data frame with one row per statistic per group combination.
 This is compatible with the CDISC Analysis Results Data standard.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1"),
+    group_desc("AGE")
+  )
+)
+built <- tplyr_build(spec, tplyr_adsl)
+
+ard <- tplyr_to_ard(built)
+head(ard)
+
+# One row per statistic per group; analysis_id identifies the layer
+table(ard$analysis_id)
+unique(ard$stat_name[ard$analysis_id == 2])
+
+}
+\seealso{
+\code{\link[=tplyr_from_ard]{tplyr_from_ard()}} to rebuild a formatted table from an ARD.
+}

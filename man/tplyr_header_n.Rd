@@ -17,3 +17,20 @@ or NULL if no population data was used.
 Returns the population-based header N values that were computed during
 \code{tplyr_build()}. Only available when population data was provided.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+  layers = tplyr_layers(group_count("AEBODSYS"))
+)
+built <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+tplyr_header_n(built)
+
+# NULL when the build had no population data to draw an N from
+no_pop <- tplyr_build(
+  tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("SEX"))),
+  tplyr_adsl
+)
+tplyr_header_n(no_pop)
+
+}

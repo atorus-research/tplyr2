@@ -13,6 +13,25 @@
 #'     \item{stat_value}{Numeric value of the statistic}
 #'     \item{...}{Grouping columns from the original data}
 #'   }
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_count("AGEGR1"),
+#'     group_desc("AGE")
+#'   )
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl)
+#'
+#' ard <- tplyr_to_ard(built)
+#' head(ard)
+#'
+#' # One row per statistic per group; analysis_id identifies the layer
+#' table(ard$analysis_id)
+#' unique(ard$stat_name[ard$analysis_id == 2])
+#'
+#' @seealso [tplyr_from_ard()] to rebuild a formatted table from an ARD.
 #' @export
 tplyr_to_ard <- function(result) {
   nd <- attr(result, "numeric_data")
@@ -100,6 +119,32 @@ tplyr_to_ard <- function(result) {
 #' @param spec A \code{tplyr_spec} object defining the table structure
 #'
 #' @return A data.frame with the same structure as \code{tplyr_build()} output
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(group_desc("AGE"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl)
+#'
+#' # Round-tripping through the ARD reproduces the formatted cells, so a table
+#' # can be rebuilt from stored results without the subject-level data
+#' ard <- tplyr_to_ard(built)
+#' recon <- tplyr_from_ard(ard, spec)
+#' recon[, c("rowlabel1", "res1")]
+#' identical(as.vector(recon$res1), as.vector(built$res1))
+#'
+#' # Changing only the spec's formats re-renders the same numbers differently
+#' respec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(
+#'     group_desc("AGE", settings = layer_settings(
+#'       format_strings = list("Mean (SD)" = f_str("xx.xx (xx.xxx)", "mean", "sd"))))
+#'   )
+#' )
+#' tplyr_from_ard(ard, respec)[, c("rowlabel1", "res1")]
+#'
+#' @seealso [tplyr_to_ard()] to produce the ARD.
 #' @export
 tplyr_from_ard <- function(ard, spec) {
   if (!inherits(spec, "tplyr_spec")) {

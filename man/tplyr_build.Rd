@@ -17,7 +17,11 @@ tplyr_build(spec, data, pop_data = NULL, metadata = FALSE, ...)
 back to source data rows via \code{tplyr_meta_result()} and
 \code{tplyr_meta_subset()}.}
 
-\item{...}{Additional named arguments to override spec-level parameters}
+\item{...}{Additional named arguments overriding spec-level parameters. Names
+must match a field of \code{spec} (or \code{where}/\code{pop_data}); an unrecognized name
+is an error rather than a silent no-op. Because \code{...} is evaluated eagerly,
+a \code{where} override must be a character string or a quoted expression, not
+the bare expression \code{\link[=tplyr_spec]{tplyr_spec()}} accepts.}
 }
 \value{
 A data.frame with rowlabel, res, and ord columns
@@ -25,4 +29,33 @@ A data.frame with rowlabel, res, and ord columns
 \description{
 Executes the table specification against the provided data, producing
 a formatted output data frame.
+}
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+tplyr_build(spec, tplyr_adsl)
+
+# Override spec fields at build time without editing the spec. Overrides go
+# through `...`, which evaluates eagerly, so a `where` must be a string or
+# quoted -- not the bare expression tplyr_spec() accepts.
+tplyr_build(spec, tplyr_adsl, where = "SEX == 'F'")
+tplyr_build(spec, tplyr_adsl, where = quote(SEX == "F"))
+
+# Population data supplies the denominators and the header N
+pop_spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+  layers = tplyr_layers(
+    group_count("AEBODSYS",
+                settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+head(tplyr_build(pop_spec, tplyr_adae, pop_data = tplyr_adsl))
+
+}
+\seealso{
+\code{\link[=tplyr_spec]{tplyr_spec()}} to build the specification, and
+\code{\link[=tplyr_numeric_data]{tplyr_numeric_data()}} for the unformatted values behind the cells.
 }

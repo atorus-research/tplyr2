@@ -8,6 +8,28 @@
 #' @param row_breaks Logical. If TRUE, insert a blank row between layers.
 #'
 #' @return A data.frame with repeated labels blanked
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(group_count("AGEGR1", by = "SEX"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl)
+#'
+#' # SEX repeats on every age-group row
+#' built[, c("rowlabel1", "rowlabel2")]
+#'
+#' # Masked: each value prints once, at the top of its block
+#' apply_row_masks(built)[, c("rowlabel1", "rowlabel2")]
+#'
+#' # row_breaks inserts a blank row between layers
+#' two <- tplyr_build(
+#'   tplyr_spec(cols = "TRT01P",
+#'              layers = tplyr_layers(group_count("SEX"), group_count("AGEGR1"))),
+#'   tplyr_adsl
+#' )
+#' apply_row_masks(two, row_breaks = TRUE)[, c("rowlabel1", "res1")]
+#'
 #' @export
 apply_row_masks <- function(result, row_breaks = FALSE) {
   if (!is.data.frame(result) || nrow(result) == 0) return(result)
@@ -493,6 +515,24 @@ validate_conditional_format_params <- function(string, format_group, condition, 
 #' @param index Integer, which numeric value to extract (1-based)
 #'
 #' @return Numeric vector
+#'
+#' @examples
+#' cells <- c(" 22 (25.6%)", "  9 (10.5%)", " 55 (64.0%)")
+#'
+#' # Default pulls the count; index = 2 pulls the percent
+#' str_extract_num(cells)
+#' str_extract_num(cells, index = 2)
+#'
+#' # Asking past the available numbers gives NA, as does an NA input
+#' str_extract_num(c(" 5", NA), index = 2)
+#'
+#' # Recover a sort key from an already-formatted table
+#' built <- tplyr_build(
+#'   tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("AGEGR1"))),
+#'   tplyr_adsl
+#' )
+#' built[order(-str_extract_num(built$res1)), c("rowlabel1", "res1")]
+#'
 #' @export
 str_extract_num <- function(x, index = 1L) {
   map_dbl(x, function(s) {
@@ -511,6 +551,16 @@ str_extract_num <- function(x, index = 1L) {
 #' @param replace_with Replacement string for each leading space
 #'
 #' @return Character vector with leading spaces replaced
+#'
+#' @examples
+#' # Indentation survives an HTML renderer that would collapse plain spaces
+#' terms <- c("CARDIAC DISORDERS", "   ATRIAL FIBRILLATION")
+#' out <- replace_leading_whitespace(terms)
+#' out
+#'
+#' # One replacement per leading space; interior spacing is untouched
+#' replace_leading_whitespace("  A B", replace_with = "-")
+#'
 #' @export
 replace_leading_whitespace <- function(x, replace_with = "\u00a0") {
   map_chr(x, function(s) {

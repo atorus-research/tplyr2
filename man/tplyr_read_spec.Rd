@@ -16,3 +16,27 @@ A tplyr_spec object
 Deserializes a spec from a file. Expressions are reconstructed from their
 string representations.
 }
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  where = SAFFL == "Y",
+  layers = tplyr_layers(group_count("AGEGR1", by = "SEX"))
+)
+
+path <- file.path(tempdir(), "spec.json")
+tplyr_write_spec(spec, path)
+
+# The round trip reproduces the spec, and the same table
+spec2 <- tplyr_read_spec(path)
+spec2
+identical(tplyr_build(spec, tplyr_adsl), tplyr_build(spec2, tplyr_adsl))
+
+# tplyr_build() also accepts a spec file path directly
+head(tplyr_build(path, tplyr_adsl))
+
+unlink(path)
+
+}
+\seealso{
+\code{\link[=tplyr_write_spec]{tplyr_write_spec()}} to write one.
+}

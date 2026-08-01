@@ -1,6 +1,24 @@
 # tplyr2 0.2.0
 
-## Breaking changes
+**First CRAN release.**
+
+tplyr2 builds clinical summary tables from a declarative specification. A
+`tplyr_spec()` describes what to compute — count, descriptive, shift, and
+custom analysis layers, with population-based denominators, formatting, sorting,
+and traceability — and `tplyr_build()` executes it against data. The spec is
+pure configuration, so it can be written, serialized to JSON or YAML, reviewed,
+and re-run independently of any dataset.
+
+tplyr2 is a ground-up successor to the
+[Tplyr](https://cran.r-project.org/package=Tplyr) package rather than a new
+version of it. The two have different APIs and are intended to coexist while
+users migrate; `vignette("migration")` maps one onto the other.
+
+Versions before 0.2.0 were development releases available only from GitHub. The
+sections below record what changed since 0.1.0, and are relevant to anyone who
+installed the package that way.
+
+## Breaking changes since 0.1.0
 
 Several settings that were previously accepted and silently ignored now error.
 Each of these produced a plausible-looking but wrong table, which is the wrong

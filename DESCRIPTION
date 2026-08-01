@@ -8,6 +8,9 @@ Description: Implements a grammar of summary data for clinical reports. Clinical
     independent summary block. Supports count, descriptive statistics, and shift
     layer types with a declarative spec-based API built on data.table for performance.
 License: MIT + file LICENSE
+URL: https://github.com/atorus-research/tplyr2,
+    https://atorus-research.github.io/tplyr2/
+BugReports: https://github.com/atorus-research/tplyr2/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Depends:

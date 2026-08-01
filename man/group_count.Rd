@@ -24,3 +24,33 @@ A tplyr_count_layer object
 \description{
 Create a count layer
 }
+\examples{
+# Counts of a categorical variable within each column group
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+tplyr_build(spec, tplyr_adsl)
+
+# Distinct subject counts with a total row, filtered to serious events
+ae <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_count("AEBODSYS",
+      where = AESER == "Y",
+      settings = layer_settings(distinct_by = "USUBJID", total_row = TRUE))
+  )
+)
+head(tplyr_build(ae, tplyr_adae))
+
+# Two target variables nest: preferred term within body system
+nested <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(group_count(c("AEBODSYS", "AEDECOD")))
+)
+head(tplyr_build(nested, tplyr_adae))
+
+}
+\seealso{
+\code{\link[=layer_settings]{layer_settings()}} for denominators, sorting, and special rows.
+}

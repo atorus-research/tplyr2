@@ -15,6 +15,20 @@
 #'   sub-columns of a column group share the same source-data filters)
 #'
 #' @return A tplyr_meta object
+#'
+#' @examples
+#' # Usually obtained from a build rather than constructed by hand
+#' m <- tplyr_meta(
+#'   names = c("TRT01P", "AGEGR1"),
+#'   filters = list(quote(TRT01P == "Placebo"), quote(AGEGR1 == "65-80")),
+#'   layer_index = 1L
+#' )
+#' m
+#'
+#' # The filters are ordinary language objects, so they can be applied directly
+#' subset(tplyr_adsl, TRT01P == "Placebo" & AGEGR1 == "65-80")[1:3, c("USUBJID", "AGEGR1")]
+#'
+#' @seealso [tplyr_meta_result()] to retrieve one from a build.
 #' @export
 tplyr_meta <- function(names = character(0), filters = list(),
                        layer_index = integer(0), anti_join = NULL,
@@ -83,6 +97,21 @@ print.tplyr_meta <- function(x, ...) {
 #' @param result A data.frame produced by \code{tplyr_build()}
 #'
 #' @return Character vector of row IDs (same length as \code{nrow(result)})
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(group_count("AGEGR1"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl)
+#' generate_row_ids(built)
+#'
+#' # IDs are derived from the row labels, so generate them from an unmodified
+#' # build. tplyr_build(metadata = TRUE) attaches a row_id column that survives
+#' # post-processing, which is the safer route.
+#' with_meta <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+#' with_meta$row_id
+#'
 #' @export
 generate_row_ids <- function(result) {
   rowlabel_cols <- sort(str_subset(names(result), "^rowlabel\\d+$"))
@@ -124,6 +153,19 @@ generate_row_ids <- function(result) {
 #' @param column Character column name (e.g., \code{"res1"})
 #'
 #' @return A \code{tplyr_meta} object, or NULL if no metadata for that cell
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(group_count("AGEGR1"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+#' built[, c("row_id", "rowlabel1", "res1")]
+#'
+#' # The filters behind the Placebo / 65-80 cell
+#' tplyr_meta_result(built, built$row_id[1], "res1")
+#'
+#' @seealso [tplyr_meta_subset()] to fetch the source rows themselves.
 #' @export
 tplyr_meta_result <- function(result, row_id, column) {
   meta <- attr(result, "tplyr_meta")
@@ -148,6 +190,23 @@ tplyr_meta_result <- function(result, row_id, column) {
 #'   represents a missing subjects row (anti-join)
 #'
 #' @return A data.frame subset of the original data, or NULL if no metadata
+#'
+#' @examples
+#' spec <- tplyr_spec(
+#'   cols = "TRT01P",
+#'   layers = tplyr_layers(group_count("AGEGR1"))
+#' )
+#' built <- tplyr_build(spec, tplyr_adsl, metadata = TRUE)
+#' built[, c("row_id", "rowlabel1", "res1")]
+#'
+#' # Trace the first cell back to the subjects it counted
+#' src <- tplyr_meta_subset(built, built$row_id[1], "res1", tplyr_adsl)
+#' nrow(src)
+#' head(src[, c("USUBJID", "TRT01P", "AGEGR1")])
+#'
+#' # The row count matches the number displayed in the cell
+#' built$res1[1]
+#'
 #' @export
 tplyr_meta_subset <- function(result, row_id, column, data, pop_data = NULL) {
   meta_obj <- tplyr_meta_result(result, row_id, column)

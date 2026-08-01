@@ -33,4 +33,28 @@ summary functions. Default: \code{NULL}.}
 \item{tplyr2.scipen}{Integer. scipen value used during \code{tplyr_build()}
 to prevent scientific notation. Default: \code{9999}.}
 }
+
+An unrecognized option name is an error rather than a silent no-op, so a
+misspelling cannot quietly leave the build on the default behavior.
+}
+\examples{
+# Inspect the current values
+tplyr2_options()
+
+# Setting returns the previous values, so the change can be undone
+old <- tplyr2_options(IBMRounding = TRUE)
+getOption("tplyr2.IBMRounding")
+do.call(options, old)
+getOption("tplyr2.IBMRounding")
+
+# IBM (half-away-from-zero) rounding vs R's banker's rounding
+fmt <- f_str("xx", "n")
+apply_formats(fmt, n = 2.5)
+old <- tplyr2_options(IBMRounding = TRUE)
+apply_formats(fmt, n = 2.5)
+do.call(options, old)
+
+# A misspelled name errors instead of setting a dead option
+try(tplyr2_options(IBMrounding = TRUE))
+
 }

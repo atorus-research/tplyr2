@@ -53,6 +53,42 @@ cannot compute a statistic \emph{across} the treatment columns. For an
 omnibus association test that spans the columns (e.g. Fisher's exact or CMH
 on a count/shift layer), see \code{\link{assoc_test}}.
 }
+\examples{
+# format_strings mode: the function returns one row of named numbers, and
+# each format string becomes an output row.
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_analyze("AGE",
+      analyze_fn = function(.data, .target_var) {
+        v <- .data[[.target_var]]
+        data.frame(gmean = exp(mean(log(v))), rng = diff(range(v)))
+      },
+      settings = layer_settings(format_strings = list(
+        "Geometric mean" = f_str("xx.xx", "gmean"),
+        "Range"          = f_str("xx", "rng")
+      )))
+  )
+)
+tplyr_build(spec, tplyr_adsl)
+
+# Pre-formatted mode: the function supplies row_label and formatted itself.
+pre <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_analyze("AGE",
+      analyze_fn = function(.data, .target_var) {
+        v <- .data[[.target_var]]
+        data.frame(
+          row_label = "Median [IQR]",
+          formatted = sprintf("\%.1f [\%.1f]", median(v), IQR(v))
+        )
+      })
+  )
+)
+tplyr_build(pre, tplyr_adsl)
+
+}
 \seealso{
 \code{\link{assoc_test}} for cross-column association tests.
 }

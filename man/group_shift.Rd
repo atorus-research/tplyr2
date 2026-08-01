@@ -21,3 +21,24 @@ A tplyr_shift_layer object
 \description{
 Create a shift layer
 }
+\examples{
+# Baseline (rows) against post-baseline (columns) reference ranges
+spec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"))
+  )
+)
+head(tplyr_build(spec, tplyr_adlb))
+
+# Percentages relative to each baseline (column) group rather than the arm
+by_col <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_shift(c(row = "BNRIND", column = "ANRIND"),
+                settings = layer_settings(shift_denom = "column"))
+  )
+)
+head(tplyr_build(by_col, tplyr_adlb))
+
+}

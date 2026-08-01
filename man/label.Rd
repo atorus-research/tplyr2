@@ -16,3 +16,15 @@ A tplyr_label object
 Explicitly marks a string as a text label (not a data variable name).
 Useful when a label string might coincidentally match a column name.
 }
+\examples{
+# A `by` string that matches no column is already treated as a label, but
+# label() is explicit -- and necessary when the text matches a column name.
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1", by = label("Age Group (y)"))
+  )
+)
+head(tplyr_build(spec, tplyr_adsl))
+
+}

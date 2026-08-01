@@ -22,3 +22,25 @@ Configuration object specifying how population data maps to the spec.
 The actual population data.frame is provided at build time via
 \code{tplyr_build(spec, data, pop_data = ...)}.
 }
+\examples{
+# The AE data's TRTA maps to the subject-level TRT01P. Denominators and the
+# header N then come from the population, not from the AE records.
+spec <- tplyr_spec(
+  cols = "TRTA",
+  pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+  layers = tplyr_layers(
+    group_count("AEBODSYS",
+                settings = layer_settings(distinct_by = "USUBJID"))
+  )
+)
+built <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl)
+head(built)
+
+# Header N reflects the 254 enrolled subjects, not the 200 AE records
+tplyr_header_n(built)
+
+# Restrict the population to the safety set
+saf <- pop_data(cols = c("TRTA" = "TRT01P"), where = SAFFL == "Y")
+saf
+
+}

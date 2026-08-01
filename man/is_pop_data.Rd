@@ -15,3 +15,8 @@ Logical
 \description{
 Check if an object is a tplyr_pop_data
 }
+\examples{
+is_pop_data(pop_data(cols = "TRT01P"))
+is_pop_data("TRT01P")
+
+}

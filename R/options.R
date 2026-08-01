@@ -25,6 +25,29 @@
 #'     to prevent scientific notation. Default: \code{9999}.}
 #' }
 #'
+#' An unrecognized option name is an error rather than a silent no-op, so a
+#' misspelling cannot quietly leave the build on the default behavior.
+#'
+#' @examples
+#' # Inspect the current values
+#' tplyr2_options()
+#'
+#' # Setting returns the previous values, so the change can be undone
+#' old <- tplyr2_options(IBMRounding = TRUE)
+#' getOption("tplyr2.IBMRounding")
+#' do.call(options, old)
+#' getOption("tplyr2.IBMRounding")
+#'
+#' # IBM (half-away-from-zero) rounding vs R's banker's rounding
+#' fmt <- f_str("xx", "n")
+#' apply_formats(fmt, n = 2.5)
+#' old <- tplyr2_options(IBMRounding = TRUE)
+#' apply_formats(fmt, n = 2.5)
+#' do.call(options, old)
+#'
+#' # A misspelled name errors instead of setting a dead option
+#' try(tplyr2_options(IBMrounding = TRUE))
+#'
 #' @export
 tplyr2_options <- function(...) {
   defaults <- list(
@@ -78,6 +101,15 @@ tplyr2_options <- function(...) {
 #'
 #' @return Named character vector where names are column names and values are
 #'   labels. Columns without labels return \code{NA_character_}.
+#'
+#' @examples
+#' # CDISC data imported via haven carries a "label" attribute per column
+#' labs <- get_data_labels(tplyr_adsl)
+#' head(labs)
+#'
+#' # Columns with no label attribute come back NA
+#' get_data_labels(data.frame(a = 1, b = 2))
+#'
 #' @export
 get_data_labels <- function(data) {
   if (!is.data.frame(data)) stop("data must be a data.frame")

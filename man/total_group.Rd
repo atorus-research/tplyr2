@@ -18,3 +18,21 @@ A tplyr_total_group object
 Specifies that a synthetic "Total" column level should be added by
 duplicating all rows with the specified column variable set to the label.
 }
+\examples{
+# Adds a "Total" column spanning every arm, alongside the individual arms
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  total_groups = list(total_group("TRT01P")),
+  layers = tplyr_layers(group_count("AGEGR1"))
+)
+tplyr_build(spec, tplyr_adsl)
+
+# Rename the total column
+all_pts <- tplyr_spec(
+  cols = "TRT01P",
+  total_groups = list(total_group("TRT01P", label = "All Patients")),
+  layers = tplyr_layers(group_count("SEX"))
+)
+tplyr_build(all_pts, tplyr_adsl)
+
+}

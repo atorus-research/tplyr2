@@ -21,3 +21,35 @@ A tplyr_desc_layer object
 \description{
 Create a descriptive statistics layer
 }
+\examples{
+# Default summary: n, Mean (SD), Median, Q1/Q3, Min/Max, Missing
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_desc("AGE"))
+)
+tplyr_build(spec, tplyr_adsl)
+
+# Choose the statistics and their formats
+custom <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      format_strings = list(
+        "n"         = f_str("xx", "n"),
+        "Mean (SD)" = f_str("xx.x (xx.xx)", "mean", "sd")
+      )))
+  )
+)
+tplyr_build(custom, tplyr_adsl)
+
+# Several target variables in one layer, grouped by visit
+multi <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(group_desc(c("AVAL", "CHG"), by = "AVISIT"))
+)
+head(tplyr_build(multi, tplyr_adlb))
+
+}
+\seealso{
+\code{\link[=layer_settings]{layer_settings()}} for auto-precision and custom summaries.
+}
