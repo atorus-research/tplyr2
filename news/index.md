@@ -2,6 +2,42 @@
 
 ## tplyr2 0.2.0
 
+### Breaking changes
+
+Several settings that were previously accepted and silently ignored now
+error. Each of these produced a plausible-looking but wrong table, which
+is the wrong default for a clinical reporting package.
+
+- Unknown `...` overrides passed to
+  [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+  error instead of being ignored (#73).
+  `tplyr_build(spec, adsl, wher = "SAFFL == 'Y'")` used to build on
+  **unfiltered** data; it now errors and lists the valid override names.
+- Unknown option names passed to
+  [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
+  error (#74). A misspelled `IBMrounding` used to set a dead option and
+  leave the whole output package on banker’s rounding.
+- `result_order_var` naming a statistic the layer does not compute
+  errors instead of falling back to `"n"`, and `ordering_cols` matching
+  none of the observed column levels errors instead of zeroing every
+  sort key (#78). A partially unmatched `ordering_cols` warns and sorts
+  on the levels that matched.
+- `denoms_by` must name the layer’s own grouping variables — the column
+  variables, `by` variables, and (for count and shift layers) the target
+  variable (#77). An unrecognized name used to shrink the join key set
+  silently, either multiplying table rows or attaching another group’s
+  denominator.
+- Unrecognized `missing_count` keys error (#80).
+- [`tplyr_stats_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_stats_data.md)
+  now returns the grouping columns plus the requested statistic, as
+  documented, rather than the entire layer frame (#79). Use
+  [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+  for every statistic.
+- Count and shift layers now render a percentage with no usable
+  denominator as blank rather than `0` (#76), matching what desc layers
+  already did. A genuine zero count against a real denominator still
+  renders `0.0%`.
+
 ### New features
 
 - New single-proportion confidence-interval statistic for count layers
@@ -157,6 +193,27 @@
   conversion.
 - `tplyr_meta` objects gain an optional `statistic` field recording
   which statistic a cell displays (populated for `stat_columns` layers).
+- `missing_count` gains `denom_exclude` (#80), which was previously
+  accepted in config and never implemented. With `denom_exclude = TRUE`
+  the rows folded into the Missing row (`NA` plus anything in
+  `missing_values`) leave the layer’s denominator, so percentages are of
+  the non-missing population. Every key `missing_count` accepts is now
+  documented.
+- Failures in user-supplied code no longer discard their message (#75).
+  Custom summaries and `assoc_test` functions still cannot abort a build
+  and still render `NA` as a blank cell, but the reasons are now
+  collected and reported as one warning per build, deduplicated and
+  naming the summary or test and the group affected. Previously a
+  partial failure — real numbers everywhere and one blank cell where the
+  expression errored — was indistinguishable from data legitimately
+  missing. An `assoc_test` function whose return does not match its
+  format’s variable count is reported as the caller bug it is.
+- Missing and zero denominators are no longer silent (#76). A count with
+  `n > 0` against an `NA` or zero denominator warns, naming the layer
+  and the affected groups, and
+  [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+  warns when `pop_data` has no rows for a column level present in the
+  analysis data.
 
 ### Bug fixes
 
@@ -448,6 +505,78 @@
   alphabetically (#20). Previously a factor `by` such as visits came out
   mis-ordered (e.g. `Week 12` before `Week 2`); this applies to both the
   standard stats-as-rows output and `stats_as_columns = TRUE`.
+
+- Risk difference and pairwise `assoc_test` columns came out **entirely
+  blank** when `by` led with a string label (#72). Both merge functions
+  assumed the `by` data variables occupied the first `rowlabel` columns,
+  so with `by = c("Age Group", "SEX")` the join keyed the constant-label
+  column against `SEX` values and matched nothing. They now share one
+  helper that offsets past the label columns.
+
+- A `where` clause longer than about 60 characters could not be read
+  back from a spec file (#70).
+  [`rlang::expr_deparse()`](https://rlang.r-lib.org/reference/expr_print.html)
+  wraps at that width, and the resulting multi-element array was not
+  something `parse_expr()` could accept — so any realistic
+  multi-condition ADaM filter broke the spec file in both formats. Files
+  written by the old code still read.
+
+- `precision_cap` was silently dropped on a spec-file round trip in
+  **both** formats (#69). Both writers dropped the names of the named
+  numeric vector, and
+  [`apply_precision_cap()`](https://github.com/mstackhouse/tplyr2/reference/apply_precision_cap.md)
+  dispatches on those names, so a round-tripped spec rendered different
+  numbers than the original with no error or warning.
+  [`apply_precision_cap()`](https://github.com/mstackhouse/tplyr2/reference/apply_precision_cap.md)
+  now also warns when given a cap carrying neither an `int` nor a `dec`
+  name.
+
+- Multi-element character settings (`denoms_by`, `keep_levels`,
+  `precision_by`, and friends) deserialized as lists from JSON and broke
+  the build (#68); YAML was unaffected only because it auto-simplifies.
+  A `denoms_by` list made data.table’s `by=` error out. One field-type
+  table now restores every plain setting’s vector type, and a test
+  asserts that no
+  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  parameter is missing from it.
+
+- A `denom_where` expression read back from a spec file was evaluated as
+  a call rather than stored, erroring on the first variable name it
+  contained.
+
+- [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+  re-defaulted desc-layer format strings instead of sharing
+  [`get_desc_formats()`](https://github.com/mstackhouse/tplyr2/reference/get_desc_formats.md)
+  with the build path (#71), reconstructing a 1-row table at a different
+  width than the 6-row build. Format-string rows also kept `dcast`’s
+  alphabetical order rather than their declared order, which affected
+  ARD-reconstructed desc layers and analyze layers alike.
+
+- Unknown keys in a spec file are no longer dropped silently (#81).
+  Hand-editing spec files is supported, and a typo’d key such as
+  `total_rows` built a table without the requested behavior and said
+  nothing. Unknown layer settings and unknown top-level spec keys now
+  warn, naming the layer.
+
+- A `pop_data` that renames the column variable —
+  `pop_data(c(TRTA = "TRT01P"))` — skipped
+  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  and
+  [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+  on the population side, because the rename ran after those were
+  applied. The Total column had no population rows, so every nonzero
+  count in it displayed `0.0%`.
+
+- [`compute_risk_diff()`](https://github.com/mstackhouse/tplyr2/reference/compute_risk_diff.md)
+  computed the plain difference inside the same
+  [`tryCatch()`](https://rdrr.io/r/base/conditions.html) as the
+  confidence interval, so a
+  [`prop.test()`](https://rdrr.io/r/stats/prop.test.html) failure
+  blanked the difference along with the CI even though the difference
+  needs no test (#76). It also now pre-validates that counts do not
+  exceed their denominators instead of letting
+  [`prop.test()`](https://rdrr.io/r/stats/prop.test.html)’s error be
+  swallowed into an all-`NA` row.
 
 ### Documentation
 

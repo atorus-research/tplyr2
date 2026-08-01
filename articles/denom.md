@@ -521,17 +521,17 @@ kable(collapsed[show_rows, c("row_label", "res1", "res2", "res3", "res4")])
 | row_label                      | res1      | res2       | res3      | res4      |
 |:-------------------------------|:----------|:-----------|:----------|:----------|
 | CARDIAC DISORDERS              |           |            |           |           |
-|                                | 4 ( 4.7%) | 15 ( 0.0%) | 6 ( 7.1%) | 5 ( 6.0%) |
-| ATRIAL FIBRILLATION            | 0 ( 0.0%) | 1 ( 0.0%)  | 0 ( 0.0%) | 1 ( 1.2%) |
-| ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 0.0%)  | 1 ( 1.2%) | 0 ( 0.0%) |
-| ATRIAL HYPERTROPHY             | 1 ( 1.2%) | 1 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%) |
-| BUNDLE BRANCH BLOCK RIGHT      | 1 ( 1.2%) | 1 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%) |
-| CARDIAC FAILURE CONGESTIVE     | 1 ( 1.2%) | 1 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%) |
-| MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 3 ( 0.0%)  | 1 ( 1.2%) | 2 ( 2.4%) |
-| SINUS BRADYCARDIA              | 0 ( 0.0%) | 4 ( 0.0%)  | 3 ( 3.6%) | 1 ( 1.2%) |
-| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 2 ( 0.0%)  | 0 ( 0.0%) | 1 ( 1.2%) |
-| SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 1 ( 0.0%)  | 0 ( 0.0%) | 1 ( 1.2%) |
-| TACHYCARDIA                    | 1 ( 1.2%) | 1 ( 0.0%)  | 0 ( 0.0%) | 0 ( 0.0%) |
+|                                | 4 ( 4.7%) | 15 ( 5.9%) | 6 ( 7.1%) | 5 ( 6.0%) |
+| ATRIAL FIBRILLATION            | 0 ( 0.0%) | 1 ( 0.4%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| ATRIAL FLUTTER                 | 0 ( 0.0%) | 1 ( 0.4%)  | 1 ( 1.2%) | 0 ( 0.0%) |
+| ATRIAL HYPERTROPHY             | 1 ( 1.2%) | 1 ( 0.4%)  | 0 ( 0.0%) | 0 ( 0.0%) |
+| BUNDLE BRANCH BLOCK RIGHT      | 1 ( 1.2%) | 1 ( 0.4%)  | 0 ( 0.0%) | 0 ( 0.0%) |
+| CARDIAC FAILURE CONGESTIVE     | 1 ( 1.2%) | 1 ( 0.4%)  | 0 ( 0.0%) | 0 ( 0.0%) |
+| MYOCARDIAL INFARCTION          | 0 ( 0.0%) | 3 ( 1.2%)  | 1 ( 1.2%) | 2 ( 2.4%) |
+| SINUS BRADYCARDIA              | 0 ( 0.0%) | 4 ( 1.6%)  | 3 ( 3.6%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR EXTRASYSTOLES | 1 ( 1.2%) | 2 ( 0.8%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| SUPRAVENTRICULAR TACHYCARDIA   | 0 ( 0.0%) | 1 ( 0.4%)  | 0 ( 0.0%) | 1 ( 1.2%) |
+| TACHYCARDIA                    | 1 ( 1.2%) | 1 ( 0.4%)  | 0 ( 0.0%) | 0 ( 0.0%) |
 
 This spec includes population-based denominators from ADSL, a “Total”
 column, nested body system / preferred term counts, and a row for

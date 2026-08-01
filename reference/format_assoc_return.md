@@ -22,7 +22,7 @@ in the `pval` cell:
 ## Usage
 
 ``` r
-format_assoc_return(raw, format)
+format_assoc_return(raw, format, label = "assoc_test fn", group = NULL)
 ```
 
 ## Arguments
@@ -37,6 +37,14 @@ format_assoc_return(raw, format)
   An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
   object; its variable count determines how many values a numeric return
   must supply.
+
+- label:
+
+  What produced `raw`, used when reporting a shape mismatch.
+
+- group:
+
+  Optional group identifier used when reporting a shape mismatch.
 
 ## Value
 

@@ -1,4 +1,4 @@
-# Rename ordering columns to match DESIGN.md convention
+# Rename ordering columns to the public output names
 
 Renames `ordindx` to `ord_layer_index` and `ord1`/`ord2`/... to
 `ord_layer_1`/`ord_layer_2`/...

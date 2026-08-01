@@ -25,7 +25,7 @@ f_str(format_string, ..., empty = NULL)
   *every* format group in the string is NA. Supplied unnamed (e.g.
   `empty = "NA"`), it instead fills each NA format group in place,
   right-justified to the width that group would have occupied, so a
-  partially missing cell keeps its alignment —
+  partially missing cell keeps its alignment –
   `f_str("xx (xxx)", "n", "pct", empty = "NA")` renders `"NA ( NA)"`.
   The default (`NULL`) leaves NA groups as blanks of the field width.
 

@@ -5,7 +5,7 @@ Map data variable names to their rowlabel columns
 ## Usage
 
 ``` r
-build_var_to_rowlabel_map(layer, by_data_vars, by_labels, col_names)
+build_var_to_rowlabel_map(layer, by_data_vars, by_labels)
 ```
 
 ## Arguments
@@ -21,10 +21,6 @@ build_var_to_rowlabel_map(layer, by_data_vars, by_labels, col_names)
 - by_labels:
 
   Character vector of by-variable label strings
-
-- col_names:
-
-  Character vector of original data column names
 
 ## Value
 

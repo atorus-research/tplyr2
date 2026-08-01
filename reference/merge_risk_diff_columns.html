@@ -87,7 +87,8 @@ cast_to_wide()."></head><body>
 <span>  <span class="va">risk_diff_config</span>,</span>
 <span>  <span class="va">row_label_cols</span>,</span>
 <span>  <span class="va">tv</span>,</span>
-<span>  <span class="va">by_data_vars</span></span>
+<span>  <span class="va">by_data_vars</span>,</span>
+<span>  by_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -117,6 +118,12 @@ cast_to_wide()."></head><body>
 
 <dt id="arg-by-data-vars">by_data_vars<a class="anchor" aria-label="anchor" href="#arg-by-data-vars"></a></dt>
 <dd><p>Character vector of by-variable names</p></dd>
+
+
+<dt id="arg-by-labels">by_labels<a class="anchor" aria-label="anchor" href="#arg-by-labels"></a></dt>
+<dd><p>Character vector of constant <code>by</code> labels. Needed to find
+where the by data variables sit among the rowlabel columns — they follow
+the label columns, not <code>rowlabel1</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

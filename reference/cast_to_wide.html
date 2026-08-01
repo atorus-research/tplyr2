@@ -97,7 +97,8 @@ renderers can span the column group over its stat sub-columns.</p>
 <span>  <span class="va">layer_index</span>,</span>
 <span>  col_n <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stat_labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  col_levels <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  col_levels <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  row_order_col <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -113,7 +114,16 @@ the <code>stat_columns</code> setting), or NULL for the standard single-format c
 <dt id="arg-col-levels">col_levels<a class="anchor" aria-label="anchor" href="#arg-col-levels"></a></dt>
 <dd><p>Named list mapping factor column variables to their level
 order (from <code><a href="get_col_levels.html">get_col_levels()</a></code>); orders the resulting <code>res*</code> columns by
-factor levels instead of alphabetically. NULL preserves legacy behavior.</p></dd>
+factor levels instead of alphabetically. NULL leaves dcast's default
+alphabetical column order.</p></dd>
+
+
+<dt id="arg-row-order-col">row_order_col<a class="anchor" aria-label="anchor" href="#arg-row-order-col"></a></dt>
+<dd><p>Name of a numeric column in <code>dt</code> giving the intended
+row order. dcast sorts its LHS alphabetically, so a caller whose row
+labels are not alphabetical (e.g. format-string names) must carry the
+order through the cast; the column joins the LHS, sorts the result, and is
+then dropped.</p></dd>
 
 </dl></div>
 

@@ -149,9 +149,9 @@ kable(result[, !grepl("^ord", names(result))])
 
 | rowlabel1      | rowlabel2 | res1           | res2           | res3           |
 |:---------------|:----------|:---------------|:---------------|:---------------|
+| Urate (umol/L) | n         | 8              | 10             | 7              |
 | Urate (umol/L) | Mean (SD) | 323.4 ( 85.66) | 305.1 ( 61.56) | 301.6 ( 85.35) |
 | Urate (umol/L) | Median    | 288.48         | 294.43         | 279.56         |
-| Urate (umol/L) | n         | 8              | 10             | 7              |
 
 This produces the same style of output you would get from
 [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),

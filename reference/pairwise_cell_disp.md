@@ -10,7 +10,7 @@ test).
 ## Usage
 
 ``` r
-pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
+pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config, group = NULL)
 ```
 
 ## Arguments
@@ -26,6 +26,11 @@ pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
 - config:
 
   A `tplyr_assoc_test` object (pairwise mode).
+
+- group:
+
+  Optional group identifier used when reporting a failure of
+  `config$fn`.
 
 ## Value
 

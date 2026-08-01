@@ -262,9 +262,9 @@ kable(result[, !grepl("^ord_", names(result))])
 
 | rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
-| Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| Creatine Kinase | WEEK 24 | N | 0 ( 0.0%) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( 0.0%) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( 0.0%) | 6 ( 75.0%) | 2 (100.0%) |
-| Creatine Kinase | WEEK 24 | H | 0 ( 0.0%) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( 0.0%) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( 0.0%) | 2 ( 25.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | L | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | N | 0 ( %) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( %) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( %) | 6 ( 75.0%) | 2 (100.0%) |
+| Creatine Kinase | WEEK 24 | H | 0 ( %) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( %) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( %) | 2 ( 25.0%) | 0 ( 0.0%) |
 
 With `shift_denom = "column"` and no `by` variable, the header `(N=)`
 labels reflect the per-column-group denominators. When a `by` variable
@@ -309,9 +309,9 @@ kable(result[, !grepl("^ord_", names(result))])
 | rowlabel1 | rowlabel2 | rowlabel3 | res1 | res2 | res3 | res4 | res5 | res6 | res7 | res8 | res9 |
 |:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|
 | Creatine Kinase | WEEK 24 | n | 0 | 5 | 5 | 0 | 5 | 5 | 0 | 8 | 2 |
-| Creatine Kinase | WEEK 24 | L | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( 0.0%) |
-| Creatine Kinase | WEEK 24 | N | 0 ( 0.0%) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( 0.0%) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( 0.0%) | 6 ( 75.0%) | 2 (100.0%) |
-| Creatine Kinase | WEEK 24 | H | 0 ( 0.0%) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( 0.0%) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( 0.0%) | 2 ( 25.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | L | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) | 0 ( %) | 0 ( 0.0%) | 0 ( 0.0%) |
+| Creatine Kinase | WEEK 24 | N | 0 ( %) | 4 ( 80.0%) | 2 ( 40.0%) | 0 ( %) | 2 ( 40.0%) | 4 ( 80.0%) | 0 ( %) | 6 ( 75.0%) | 2 (100.0%) |
+| Creatine Kinase | WEEK 24 | H | 0 ( %) | 1 ( 20.0%) | 3 ( 60.0%) | 0 ( %) | 3 ( 60.0%) | 1 ( 20.0%) | 0 ( %) | 2 ( 25.0%) | 0 ( 0.0%) |
 
 The row is labelled `"n"` by default (`denom_row_label`). Without
 `denom_row_format` its integers are padded to the width of the shift

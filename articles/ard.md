@@ -206,10 +206,10 @@ kable(rebuilt[, !grepl("^ord", names(rebuilt))])
 |:----------|:-------------|:-------------|:-------------|
 | F         | 53 (61.6%)   | 40 (47.6%)   | 50 (59.5%)   |
 | M         | 33 (38.4%)   | 44 (52.4%)   | 34 (40.5%)   |
+| n         | 86           | 84           | 84           |
 | Mean (SD) | 75.2 ( 8.59) | 74.4 ( 7.89) | 75.7 ( 8.29) |
 | Median    | 76.0         | 76.0         | 77.5         |
 | Min, Max  | 52, 89       | 56, 88       | 51, 88       |
-| n         | 86           | 84           | 84           |
 
 The reconstructed table applies the same format strings, row labels, and
 column structure defined in the spec. This means the spec acts as a
@@ -283,8 +283,8 @@ kable(compact_result[, !grepl("^ord", names(compact_result))])
 |:----------|:-----|:-----|:-----|
 | F         | 53   | 40   | 50   |
 | M         | 33   | 44   | 34   |
-| Mean      | 75.2 | 74.4 | 75.7 |
 | n         | 86   | 84   | 84   |
+| Mean      | 75.2 | 74.4 | 75.7 |
 
 The same underlying data now appears in a more compact layout, with
 counts displayed without percentages and only two descriptive statistics

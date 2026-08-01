@@ -17,7 +17,8 @@ cast_to_wide(
   layer_index,
   col_n = NULL,
   stat_labels = NULL,
-  col_levels = NULL
+  col_levels = NULL,
+  row_order_col = NULL
 )
 ```
 
@@ -33,4 +34,12 @@ cast_to_wide(
   Named list mapping factor column variables to their level order (from
   [`get_col_levels()`](https://github.com/mstackhouse/tplyr2/reference/get_col_levels.md));
   orders the resulting `res*` columns by factor levels instead of
-  alphabetically. NULL preserves legacy behavior.
+  alphabetically. NULL leaves dcast's default alphabetical column order.
+
+- row_order_col:
+
+  Name of a numeric column in `dt` giving the intended row order. dcast
+  sorts its LHS alphabetically, so a caller whose row labels are not
+  alphabetical (e.g. format-string names) must carry the order through
+  the cast; the column joins the LHS, sorts the result, and is then
+  dropped.

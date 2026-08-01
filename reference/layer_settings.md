@@ -102,9 +102,8 @@ layer_settings(
   denominator row carry its own width independent of the `n_counts`
   format (e.g. `f_str("xx", "n")` for a plain narrow integer). The f_str
   must reference a single variable (the denominator count is passed
-  positionally). `NULL` (default) keeps the legacy behavior of padding
-  the integer to the width of the shift cells. An absent baseline group
-  renders as `0` either way.
+  positionally). `NULL` (default) pads the integer to the width of the
+  shift cells. An absent baseline group renders as `0` either way.
 
 - denom_where:
 
@@ -132,7 +131,36 @@ layer_settings(
 
 - missing_count:
 
-  List with missing count configuration
+  List configuring the Missing row. Recognized keys:
+
+  `missing_values`
+
+  :   Character vector of target values to fold into the Missing row
+      alongside `NA`.
+
+  `label`
+
+  :   Row label; defaults to `"Missing"`.
+
+  `sort_value`
+
+  :   Numeric sort key placing the row; defaults to `Inf` (last).
+
+  `format`
+
+  :   An
+      [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+      overriding the layer's count format for this row.
+
+  `denom_exclude`
+
+  :   Logical. When `TRUE`, the rows counted as missing leave the
+      layer's percentage denominator, so percentages are of the
+      non-missing population. This applies to every row in the layer,
+      including the Missing row itself and any total row. Defaults to
+      `FALSE`.
+
+  Any other key is an error.
 
 - missing_subjects:
 

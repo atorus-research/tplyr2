@@ -179,9 +179,8 @@ row. Defaults to <code>"n"</code>.</p></dd>
 its own width independent of the <code>n_counts</code> format (e.g.
 <code>f_str("xx", "n")</code> for a plain narrow integer). The f_str must
 reference a single variable (the denominator count is passed positionally).
-<code>NULL</code> (default) keeps the legacy behavior of padding the integer to
-the width of the shift cells. An absent baseline group renders as <code>0</code>
-either way.</p></dd>
+<code>NULL</code> (default) pads the integer to the width of the shift cells.
+An absent baseline group renders as <code>0</code> either way.</p></dd>
 
 
 <dt id="arg-denom-where">denom_where<a class="anchor" aria-label="anchor" href="#arg-denom-where"></a></dt>
@@ -209,7 +208,30 @@ either way.</p></dd>
 
 
 <dt id="arg-missing-count">missing_count<a class="anchor" aria-label="anchor" href="#arg-missing-count"></a></dt>
-<dd><p>List with missing count configuration</p></dd>
+<dd><p>List configuring the Missing row. Recognized keys:</p><dl><dt><code>missing_values</code></dt>
+<dd><p>Character vector of target values to fold into
+the Missing row alongside <code>NA</code>.</p></dd>
+
+<dt><code>label</code></dt>
+<dd><p>Row label; defaults to <code>"Missing"</code>.</p></dd>
+
+<dt><code>sort_value</code></dt>
+<dd><p>Numeric sort key placing the row; defaults to <code>Inf</code>
+(last).</p></dd>
+
+<dt><code>format</code></dt>
+<dd><p>An <code><a href="f_str.html">f_str()</a></code> overriding the layer's count format for
+this row.</p></dd>
+
+<dt><code>denom_exclude</code></dt>
+<dd><p>Logical. When <code>TRUE</code>, the rows counted as missing
+leave the layer's percentage denominator, so percentages are of the
+non-missing population. This applies to every row in the layer,
+including the Missing row itself and any total row. Defaults to
+<code>FALSE</code>.</p></dd>
+
+
+</dl><p>Any other key is an error.</p></dd>
 
 
 <dt id="arg-missing-subjects">missing_subjects<a class="anchor" aria-label="anchor" href="#arg-missing-subjects"></a></dt>
