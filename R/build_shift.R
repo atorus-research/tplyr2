@@ -89,7 +89,9 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
-    counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
+    # validate_denoms_by() guarantees denom_group is a subset of this layer's
+    # grouping columns, so joining on it directly cannot narrow the key set.
+    counts <- merge(counts, denoms, by = denom_group, all.x = TRUE)
     if (col_var %in% denom_group && length(by_data_vars) == 0 && !is.null(col_n)) {
       hn_vars <- intersect(all_cols, denom_group)
       header_col_n <- unique(denoms[, c(hn_vars, "total"), with = FALSE])
@@ -104,7 +106,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   if (!is.null(distinct_by)) {
     if (length(denom_group) > 0) {
       distinct_denoms <- denom_dt[, list(distinct_total = uniqueN(get(distinct_by))), by = denom_group]
-      counts <- merge(counts, distinct_denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
+      counts <- merge(counts, distinct_denoms, by = denom_group, all.x = TRUE)
     } else {
       counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
@@ -125,6 +127,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # --- Format ---
   # Route through apply_count_formats() (same as group_count) so shift layers

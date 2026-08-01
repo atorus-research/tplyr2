@@ -38,6 +38,7 @@ build_analyze_layer <- function(dt, layer, cols, layer_index,
 
   # Capture numeric snapshot before formatting
   numeric_snapshot <- data.table::copy(fn_combined)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   has_format_strings <- !is.null(settings$format_strings) &&
     length(settings$format_strings) > 0

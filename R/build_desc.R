@@ -135,8 +135,9 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
       denom_base <- denom_base[eval(settings$denom_where)]
     }
     denoms <- denom_base[, list(total = .N), by = denom_group]
-    stats <- merge(stats, denoms,
-                   by = intersect(denom_group, names(stats)), all.x = TRUE)
+    # validate_denoms_by() guarantees denom_group is a subset of this layer's
+    # grouping columns, so joining on it directly cannot narrow the key set.
+    stats <- merge(stats, denoms, by = denom_group, all.x = TRUE)
   } else {
     denom_base <- pop_dt %||% dt
     stats[, total := nrow(denom_base)]
@@ -145,6 +146,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(stats)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # Get format strings
   format_strings <- get_desc_formats(settings)

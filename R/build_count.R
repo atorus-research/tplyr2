@@ -155,6 +155,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # --- Compute risk difference on main counts (before special rows) ---
   rd_data <- NULL
@@ -339,6 +340,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
     if (length(denom_group) > 0) {
       denoms <- denom_dt[, list(total = .N), by = denom_group]
+      # Unlike the single-level path, the intersect here is load-bearing: a
+      # character denoms_by applies to every level, and the deeper levels'
+      # target variables are not columns of this level's counts.
       counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
     } else {
       counts[, total := nrow(denom_dt)]
@@ -507,6 +511,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # --- Capture numeric data before casting ---
   numeric_snapshot <- data.table::copy(combined)
+  tag_numeric_group_cols(numeric_snapshot,
+                         c(cols, by_data_vars, target_vars,
+                           str_c("rowlabel", seq_len(n_label_cols))))
 
   # Cast to wide
   row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
@@ -873,7 +880,9 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
   # Add target var column with the missing label
   missing_n[, (tv) := missing_label]
 
-  # Merge in denominator totals
+  # Merge in denominator totals. The intersect is load-bearing on the special
+  # rows: they aggregate across the target variable, so a denom_group naming it
+  # legitimately has no counterpart column here.
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
     missing_n <- merge(missing_n, denoms, by = intersect(denom_group, names(missing_n)), all.x = TRUE)

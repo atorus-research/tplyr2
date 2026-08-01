@@ -371,8 +371,58 @@ validate_build_data <- function(spec, dt) {
       })
     }
 
+    validate_denoms_by(layer, i, spec$cols, dt_names)
+
     # Warn about unknown stat names in format strings
     validate_layer_stats(layer, i)
+  })
+
+  invisible(TRUE)
+}
+
+#' Validate denoms_by against the layer's grouping variables
+#'
+#' Most denominator merges join on \code{intersect(denom_group, names(x))}. A
+#' \code{denoms_by} naming a variable that is not one of the layer's grouping
+#' columns silently shrinks the join-key set, leaving the denominator table with
+#' several rows per remaining key — so the merge either multiplies table rows or
+#' attaches another group's denominator, with no error. Pinning the invariant
+#' here makes every one of those intersects provably a no-op.
+#'
+#' @param layer A tplyr_layer object
+#' @param index Integer layer index
+#' @param cols Character vector of spec-level column variables
+#' @param dt_names Column names of the build data
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+validate_denoms_by <- function(layer, index, cols, dt_names) {
+  denoms_by <- layer$settings$denoms_by
+  if (is.null(denoms_by)) return(invisible(TRUE))
+
+  by_info <- classify_by(layer$by, dt_names)
+
+  # Count and shift layers group by their target variable(s), so those are
+  # legitimate denominator keys. Desc and analyze layers summarize the target
+  # rather than grouping by it, so naming it would be narrowed away.
+  groups_by_target <- inherits(layer, "tplyr_count_layer") ||
+    inherits(layer, "tplyr_shift_layer")
+  valid <- unique(c(cols, by_info$data_vars,
+                    if (groups_by_target) layer$target_var))
+
+  # Nested count layers accept a per-level list; every level draws from the
+  # same universe of grouping variables.
+  levels_to_check <- if (is.list(denoms_by)) denoms_by else list(denoms_by)
+
+  walk(levels_to_check, function(level_vars) {
+    unknown <- setdiff(as.character(level_vars), valid)
+    if (length(unknown) > 0) {
+      stop(str_glue(
+        "Layer {index}: denoms_by names variable(s) the layer does not group ",
+        "by: {str_c(unknown, collapse = ', ')}",
+        "\nValid values: {str_c(valid, collapse = ', ')}"
+      ), call. = FALSE)
+    }
   })
 
   invisible(TRUE)
