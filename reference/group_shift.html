@@ -59,6 +59,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -68,7 +69,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a shift layer</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/layers.R" class="external-link"><code>R/layers.R</code></a></small>
       <div class="d-none name"><code>group_shift.Rd</code></div>
     </div>
 
@@ -106,6 +107,33 @@
     <p>A tplyr_shift_layer object</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Baseline (rows) against post-baseline (columns) reference ranges</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu">group_shift</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>row <span class="op">=</span> <span class="st">"BNRIND"</span>, column <span class="op">=</span> <span class="st">"ANRIND"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adlb</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1        res1        res2        res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         N 75 (100.0%) 78 (100.0%) 47 (100.0%)           1               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Percentages relative to each baseline (column) group rather than the arm</span></span></span>
+<span class="r-in"><span><span class="va">by_col</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu">group_shift</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>row <span class="op">=</span> <span class="st">"BNRIND"</span>, column <span class="op">=</span> <span class="st">"ANRIND"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                settings <span class="op">=</span> <span class="fu"><a href="layer_settings.html">layer_settings</a></span><span class="op">(</span>shift_denom <span class="op">=</span> <span class="st">"column"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">by_col</span>, <span class="va">tplyr_adlb</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1        res1        res2        res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         N 75 (100.0%) 78 (100.0%) 47 (100.0%)           1               1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

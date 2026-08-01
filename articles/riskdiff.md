@@ -21,7 +21,7 @@ tplyr2 computes risk differences using
 continuity correction, producing an asymptotic Wald-type confidence
 interval. This is configured entirely through the `risk_diff` parameter
 in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md),
 and the results appear as additional columns in the output alongside the
 standard count summaries.
 
@@ -29,11 +29,11 @@ Because the proportions being compared are incidence rates, the
 denominators must be the treatment-arm populations, not just the
 subjects who had events. Every example below therefore supplies
 population data via
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 – exactly as an adverse event count layer would (see
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+[`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
 and
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)).
 Without it, [`prop.test()`](https://rdrr.io/r/stats/prop.test.html)
 would be handed the wrong denominators and every risk difference would
 be biased.
@@ -42,7 +42,7 @@ be biased.
 
 To add a risk difference to a count layer, pass a `risk_diff` list
 inside
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 At minimum, you need to specify which two treatment levels to compare
 via the `comparisons` parameter.
 
@@ -159,7 +159,7 @@ attr(result$rdiff2, "label")
 
 The risk difference format is controlled through the `format` parameter,
 which takes an
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 object just like the count format strings. Four variables are available
 for use in the format:
 
@@ -364,7 +364,7 @@ total row added after the risk difference computation.
 The formatted risk difference strings are useful for display, but
 sometimes you need the underlying numeric values for further analysis or
 custom formatting. The
-[`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+[`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md)
 function gives you access to the raw counts that were used to compute
 the risk differences.
 
@@ -413,7 +413,7 @@ into the [`prop.test()`](https://rdrr.io/r/stats/prop.test.html) calls.
 
 You can also extract numeric values directly from the formatted risk
 difference strings using
-[`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md).
+[`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md).
 This function pulls the nth number from a formatted string.
 
 ``` r
@@ -449,20 +449,20 @@ downstream tasks like sorting, filtering, or creating forest plots.
 A risk difference gives an *effect size* – the difference in incidence
 with a confidence interval. When you instead (or additionally) want a
 *p-value* per row from a formal test, use
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 in its pairwise mode. It sits in the same place as `risk_diff` (one
 `pval` column per comparison, a value on every target-level row) but
 delegates the test to a function you supply – typically
 [`fisher.test()`](https://rdrr.io/r/stats/fisher.test.html) for adverse
 event incidence. See
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 for the full treatment.
 
 `risk_diff` applies to **single-level** count layers, like the examples
 above. For a **nested** SOC/PT layer, pairwise
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 is the tool that produces a per-row comparison on every level;
-[`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+[`vignette("adverse-events")`](https://atorus-research.github.io/tplyr2/articles/adverse-events.md)
 shows that pattern.
 
 Do not confuse the two confidence-interval controls: `risk_diff`’s `ci`
@@ -470,14 +470,14 @@ argument sets the coverage of the *between-arm difference* interval
 shown here, whereas the `ci_method`/`ci_level` layer settings (and the
 `ci_lower`/`ci_upper` `f_str` keywords) produce a *single-proportion*
 interval for each individual cell. They are independent features – see
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
 for the single-proportion interval.
 
 ## Summary
 
 Risk difference in tplyr2 is configured entirely through the `risk_diff`
 parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 The key points to remember:
 
 - **Comparisons** are specified as pairs of treatment levels, with the
@@ -485,16 +485,16 @@ The key points to remember:
 - **Multiple comparisons** each produce a separate `rdiff` column
   (`rdiff1`, `rdiff2`, etc.).
 - **Formatting** uses
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   with the variables `rdiff`, `lower`, `upper`, and `p_value`.
 - **Confidence level** defaults to 0.95 and is adjustable via the `ci`
   parameter.
 - Risk differences are computed **before** special rows (total,
   missing), so those rows have empty risk difference values.
 - Raw count data is accessible through
-  [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md),
+  [`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md),
   and formatted values can be parsed with
-  [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md).
+  [`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md).
 
 ## Single-Level Layers Only
 
@@ -527,11 +527,11 @@ tplyr_build(spec, tplyr_adae)
 ```
 
 For a per-level comparison column on a nested layer, use a pairwise
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 instead. It emits one `pval` column per comparison with a value on every
 preferred-term row *and* every body-system subtotal row, and it accepts
 any 2x2 test you supply. See
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md),
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md),
 which also covers association tests on single-level and descriptive
 layers and the pattern for binding externally fitted model results onto
 a built table.

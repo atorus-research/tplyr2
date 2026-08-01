@@ -2,7 +2,7 @@
 
 Layer builders tag each snapshot with the columns that identify a row
 (see
-[`tag_numeric_group_cols()`](https://github.com/mstackhouse/tplyr2/reference/tag_numeric_group_cols.md)).
+[`tag_numeric_group_cols()`](https://atorus-research.github.io/tplyr2/reference/tag_numeric_group_cols.md)).
 Snapshots from an older build lack the attribute, so fall back to
 treating the non-numeric columns as grouping.
 

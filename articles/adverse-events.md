@@ -24,7 +24,7 @@ subjects at risk, and the incidences come out far too high.
 
 The denominator must come from the population dataset – here `ADSL`, the
 safety population. You wire it up in two places: a
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 mapping in the spec, and the population data frame supplied at build
 time. Throughout this vignette the spec carries
 
@@ -38,9 +38,9 @@ treatment) to its counterpart in the population data (`TRT01A`). We also
 restrict the analysis data to treatment-emergent events with a
 table-level `where`, while the denominators continue to come from the
 full population. (See
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+[`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
 and
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
 for the underlying mechanics.)
 
 ## Step 1: Incidence by System Organ Class and Preferred Term
@@ -48,7 +48,7 @@ for the underlying mechanics.)
 An AE table is a nested count: system organ class (`AEBODSYS`) as the
 outer level, preferred term (`AEDECOD`) as the inner level. Passing a
 two-element vector to
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
 produces the hierarchy, and `distinct_by = "USUBJID"` counts each
 subject once (a subject with three headaches counts once for HEADACHE).
 
@@ -93,7 +93,7 @@ Outer (system organ class) rows carry an empty `rowlabel2` and count the
 distinct subjects with *any* event in that class; inner (preferred term)
 rows carry the term in `rowlabel2`. Because the denominators come from
 `ADSL`, the column N is the full arm size – confirm it with
-[`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md):
+[`tplyr_header_n()`](https://atorus-research.github.io/tplyr2/reference/tplyr_header_n.md):
 
 ``` r
 
@@ -152,7 +152,7 @@ kable(summary_rows[, c("rowlabel1", "res1", "res2", "res3")])
 
 Reviewers frequently want a comparison against the control arm on every
 row.
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 in its pairwise mode does this: supply a `reference` arm and the
 `comparisons` to make, and a function that takes a 2x2 incidence matrix
 and returns a p-value. It emits one `pval` column per comparison, with a
@@ -209,21 +209,21 @@ kable(head(result[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3",
 | CARDIAC DISORDERS | VENTRICULAR EXTRASYSTOLES | 0 ( 0.0%) | 1 ( 1.2%) | 0 ( 0.0%) | 0.494 | 1.000 |
 
 The two `pval` columns compare each Xanomeline arm to Placebo.
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 is fully general – any test that takes a 2x2 matrix plugs in, and the
 function can even return a finished display string (a significance flag,
 a `>.99` ceiling) instead of a number.
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 covers the full contract, including nested layers, the total-row toggle,
 and character returns.
 
 > **Risk difference vs. association test on a nested layer.**
 > `risk_diff` (see
-> [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md))
+> [`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md))
 > is the tool for a *single-level* count layer – it emits a risk
 > difference with a confidence interval. For the *nested* SOC/PT layout
 > above, use pairwise
-> [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+> [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 > as shown here.
 
 ## Step 4: A “Most Frequent Events” Variant, With Risk Difference
@@ -232,7 +232,7 @@ A common companion display drops the body-system hierarchy and lists
 preferred terms overall, sorted by descending frequency, often with a
 risk difference. This is a *single-level* count layer, which is where
 `risk_diff` applies (on a nested layer, use the pairwise
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 from Step 3).
 
 ``` r
@@ -284,24 +284,24 @@ descending, so the most frequent events lead. The `rdiff1` column is the
 High Dose minus Placebo incidence difference with its 95% confidence
 interval. (`risk_diff` applies to single-level count layers; on the
 nested layer of Step 3 use the pairwise
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 shown there.)
 
 ## Step 5: A Display-Ready Table
 
 The final step turns the machine-friendly build into something a
 renderer can consume.
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 trims the frame to just the display columns (`rowlabel*`, `res*`,
 `pval*`), dropping the internal `ord_*` columns and, with
 `labels = TRUE`, renaming the result columns to their `(N=)` header
 labels.
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 then merges the two row-label columns into a single indented SOC/PT
 stub. Applying
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 first keeps the header labels while leaving the `rowlabel*` columns for
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 to fold together.
 
 ``` r
@@ -347,23 +347,23 @@ safety-population denominators applied throughout.
 
 ## See Also
 
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – count-layer fundamentals, population data, nested counts, and stat
   columns.
-- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+- [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
   – denominator control in depth, including single-proportion confidence
   intervals and the “no events reported” row.
-- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+- [`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md)
   – risk differences on single-level count layers.
-- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+- [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
   – the full
-  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   contract (omnibus, pairwise, nested, character returns) and binding
   externally computed model results.
-- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+- [`vignette("sort")`](https://atorus-research.github.io/tplyr2/articles/sort.md)
   – ordering rows by frequency, factor levels, or a VARN companion.
-- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+- [`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md)
   –
-  [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md),
-  [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md),
+  [`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md),
+  [`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md),
   and other display helpers.

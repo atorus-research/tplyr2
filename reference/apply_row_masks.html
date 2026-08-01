@@ -63,6 +63,7 @@ are identical to the previous row, respecting layer boundaries
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -72,7 +73,7 @@ are identical to the previous row, respecting layer boundaries
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Apply row masks to blank repeated row labels</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/post_process.R" class="external-link"><code>R/post_process.R</code></a></small>
       <div class="d-none name"><code>apply_row_masks.Rd</code></div>
     </div>
 
@@ -104,6 +105,51 @@ are identical to the previous row, respecting layer boundaries
     <p>A data.frame with repeated labels blanked</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span>, by <span class="op">=</span> <span class="st">"SEX"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">built</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># SEX repeats on every age-group row</span></span></span>
+<span class="r-in"><span><span class="va">built</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1 rowlabel2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         F       &lt;65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         F     65-80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3         F       &gt;80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         M       &lt;65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5         M     65-80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6         M       &gt;80</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Masked: each value prints once, at the top of its block</span></span></span>
+<span class="r-in"><span><span class="fu">apply_row_masks</span><span class="op">(</span><span class="va">built</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"rowlabel2"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1 rowlabel2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         F       &lt;65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               65-80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                 &gt;80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         M       &lt;65</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5               65-80</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6                 &gt;80</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># row_breaks inserts a blank row between layers</span></span></span>
+<span class="r-in"><span><span class="va">two</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>             layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"SEX"</span><span class="op">)</span>, <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">tplyr_adsl</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">apply_row_masks</span><span class="op">(</span><span class="va">two</span>, row_breaks <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rowlabel1"</span>, <span class="st">"res1"</span><span class="op">)</span><span class="op">]</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         F 53 (61.6%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         M 33 (38.4%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4       &lt;65 14 (16.3%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5     65-80 42 (48.8%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6       &gt;80 30 (34.9%)</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

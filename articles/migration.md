@@ -10,7 +10,7 @@ holding data and configuration, pipe in layers, set options with
 modifier functions, then call `build()`.
 
 **tplyr2** uses a declarative, spec-based approach: build a
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
 that is pure configuration (no data, no side effects), then supply data
 at build time via `tplyr_build(spec, data)`. This separation makes specs
 portable, serializable, and reusable across datasets and studies.
@@ -24,23 +24,23 @@ The table below maps v1 functions to their tplyr2 equivalents.
 | Tplyr v1 | tplyr2 | Notes |
 |----|----|----|
 | `tplyr_table(data, treat_var)` | `tplyr_spec(cols = "treat_var")` | Data at build time, not in the spec |
-| `add_layer()` | [`tplyr_layers()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_layers.md) inside [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md) | Declarative layer collection |
+| `add_layer()` | [`tplyr_layers()`](https://atorus-research.github.io/tplyr2/reference/tplyr_layers.md) inside [`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md) | Declarative layer collection |
 | `group_count(target_var)` | `group_count("target_var")` | Variable names are quoted strings |
 | `group_desc(target_var)` | `group_desc("target_var")` | Variable names are quoted strings |
 | `group_shift(vars)` | `group_shift(c(row = "v1", column = "v2"))` | Named character vector |
-| `set_format_strings()` | `format_strings` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Nested in settings object |
-| `set_distinct_by()` | `distinct_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character string |
-| `set_denoms_by()` | `denoms_by` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character vector |
+| `set_format_strings()` | `format_strings` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | Nested in settings object |
+| `set_distinct_by()` | `distinct_by` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | Character string |
+| `set_denoms_by()` | `denoms_by` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | Character vector |
 | `set_where()` | `where` parameter in layer or spec | Bare expression (unquoted) |
-| `add_total_group()` | [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md) in spec’s `total_groups` | Spec-level config |
-| `add_total_row()` | `total_row = TRUE` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Plus `total_row_label` |
-| `set_missing_count()` | `missing_count` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | List config |
-| `keep_levels()` | `keep_levels` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | Character vector |
-| `set_pop_data()` | [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) in spec + [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md) | Config in spec, data at build |
+| `add_total_group()` | [`total_group()`](https://atorus-research.github.io/tplyr2/reference/total_group.md) in spec’s `total_groups` | Spec-level config |
+| `add_total_row()` | `total_row = TRUE` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | Plus `total_row_label` |
+| `set_missing_count()` | `missing_count` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | List config |
+| `keep_levels()` | `keep_levels` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | Character vector |
+| `set_pop_data()` | [`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md) in spec + [`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md) | Config in spec, data at build |
 | `set_pop_treat_var()` | `pop_data(cols = c(...))` mapping | Maps analysis to population column |
-| `add_risk_diff()` | `risk_diff` in [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md) | See [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md) |
+| `add_risk_diff()` | `risk_diff` in [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md) | See [`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md) |
 | `build()` | `tplyr_build(spec, data)` | Data supplied at build time |
-| [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md) | Variable names are now quoted strings |
+| [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md) | [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md) | Variable names are now quoted strings |
 
 ## Key Differences in Detail
 
@@ -105,7 +105,7 @@ group_count(RACE) %>%
 ```
 
 In tplyr2, all configuration lives in a single
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 object:
 
 ``` r
@@ -123,7 +123,7 @@ group_count("RACE",
 ### Format Strings Use Quoted Variable Names
 
 The
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 function works the same way, but variable names are now strings. For
 desc layers, format strings are a named list (each name becomes a row
 label). For count layers, the list key is `n_counts`:
@@ -267,7 +267,7 @@ kable(head(result[, !grepl("^ord", names(result))], 15))
 
 Note how `vars(AEBODSYS, AEDECOD)` becomes `c("AEBODSYS", "AEDECOD")`,
 piped modifiers become arguments in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md),
 and data is supplied at build.
 
 ## New Features in tplyr2
@@ -281,35 +281,35 @@ tplyr2 can attach cross-arm comparisons directly to a layer – something
 Tplyr v1 handled only through `add_risk_diff()`:
 
 - **Risk difference** via `risk_diff` in
-  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+  [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
   (the direct successor to `add_risk_diff()`) – one `rdiff` column per
   comparison with a confidence interval. See
-  [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md).
+  [`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md).
 - **Association tests** via
-  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   – an omnibus p-value column (Fisher, chi-square, CMH, ANOVA/Kruskal on
   `group_desc`) or a pairwise per-level mode that emits a `pval` column
   per comparison, including on nested SOC/PT layers. See
-  [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+  [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md).
 - **Single-proportion confidence intervals** via the
   `ci_lower`/`ci_upper` `f_str` keywords with `ci_method`/`ci_level`
   (Clopper-Pearson, Wilson, and more). See
-  [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+  [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 ### Binding External Results and Display Helpers
 
-[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+[`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
 gained `na`, `width`, and `pad` arguments for formatting externally
 computed statistics (e.g. MMRM/ANCOVA results) into fixed-width cells
 you can row-bind onto a table, and
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 returns a render-ready frame (`rowlabel*`/`res*`/`rdiff*`/`pval*` only).
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
 also adds an `n_records` statistic (records assessed), and shift layers
 gain a `denom_row` (the “n” denominator line). See
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 and
-[`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md).
+[`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md).
 
 ### Multi-Column Count Layouts
 
@@ -333,7 +333,7 @@ group_count("AEDECOD",
 ```
 
 See
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+[`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
 for details.
 
 ### Spec Serialization
@@ -361,7 +361,7 @@ spec_loaded
 
 ### Custom Analysis Layers
 
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 accepts a user-defined function for arbitrary computations. The function
 receives each group’s data subset and returns a data.frame of numeric
 results:
@@ -398,7 +398,7 @@ kable(result[, !grepl("^ord", names(result))])
 ### Cell-Level Metadata
 
 When `metadata = TRUE` is passed to
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md),
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md),
 every cell carries metadata tracing back to source data rows for
 auditability:
 
@@ -433,9 +433,9 @@ kable(head(source_rows[, c("USUBJID", "SEX", "TRT01P")]))
 
 ### ARD Conversion and Numeric Data
 
-[`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+[`tplyr_to_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_to_ard.md)
 converts results into long-format Analysis Results Data.
-[`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+[`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md)
 provides raw unformatted numbers for validation:
 
 ``` r
@@ -551,7 +551,7 @@ The migration from Tplyr v1 to tplyr2 involves three main shifts:
 
 1.  **Declare, don’t pipe.** Replace
     `tplyr_table() %>% add_layer() %>% build()` with
-    [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md) +
+    [`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md) +
     `tplyr_build(spec, data)`.
 
 2.  **Quote your variable names.** Bare symbols like `AGE` become
@@ -560,7 +560,7 @@ The migration from Tplyr v1 to tplyr2 involves three main shifts:
 
 3.  **Collect settings in one place.** Instead of piping `set_*()`
     calls, pass a
-    [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+    [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
     object to the `settings` parameter of each layer.
 
 The output structure – `rowlabel` columns, `res` columns with label

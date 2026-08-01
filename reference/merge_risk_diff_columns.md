@@ -1,7 +1,7 @@
 # Merge risk difference columns onto wide result
 
 Appends formatted risk difference columns to the wide-format output from
-[`cast_to_wide()`](https://github.com/mstackhouse/tplyr2/reference/cast_to_wide.md).
+[`cast_to_wide()`](https://atorus-research.github.io/tplyr2/reference/cast_to_wide.md).
 
 ## Usage
 

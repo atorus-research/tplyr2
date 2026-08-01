@@ -97,7 +97,8 @@ layer_settings(
 
 - denom_row_format:
 
-  An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  An
+  [`f_str`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   object formatting the `denom_row` cells, shift layers only. Lets the
   denominator row carry its own width independent of the `n_counts`
   format (e.g. `f_str("xx", "n")` for a plain narrow integer). The f_str
@@ -149,7 +150,7 @@ layer_settings(
   `format`
 
   :   An
-      [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+      [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
       overriding the layer's count format for this row.
 
   `denom_exclude`
@@ -231,7 +232,7 @@ layer_settings(
   parity), `"wilson"` (score, matching
   `stats::prop.test(correct = FALSE)`), `"wald"`, `"agresti_coull"`, or
   `"jeffreys"`. See
-  [`proportion_ci`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md).
+  [`proportion_ci`](https://atorus-research.github.io/tplyr2/reference/proportion_ci.md).
 
 - ci_level:
 
@@ -241,7 +242,7 @@ layer_settings(
 - assoc_test:
 
   A
-  [`assoc_test`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  [`assoc_test`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   object attaching an association-test p-value column. Omnibus mode
   works on count, shift, and desc layers (a desc layer's continuous
   comparison, e.g. ANOVA/Kruskal); pairwise/per-level mode is count
@@ -321,3 +322,86 @@ settings are applicable for each of the four layer types:
 | `name`                     | X     | X    | X     | X       |
 
 Settings provided for an inapplicable layer type are silently ignored.
+
+## Examples
+
+``` r
+# Formats and special rows on a count layer
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1", settings = layer_settings(
+      format_strings = list(n_counts = f_str("xx (xx.x%)", "n", "pct")),
+      total_row = TRUE,
+      total_row_label = "Total subjects"
+    ))
+  )
+)
+tplyr_build(spec, tplyr_adsl)
+#>        rowlabel1        res1        res2        res3 ord_layer_1
+#> 1            <65  14 (16.3%)  11 (13.1%)   8 ( 9.5%)           1
+#> 2          65-80  42 (48.8%)  55 (65.5%)  47 (56.0%)           2
+#> 3            >80  30 (34.9%)  18 (21.4%)  29 (34.5%)           3
+#> 4 Total subjects 86 (100.0%) 84 (100.0%) 84 (100.0%)           4
+#>   ord_layer_index
+#> 1               1
+#> 2               1
+#> 3               1
+#> 4               1
+
+# Denominators: percentages within each arm-by-sex cell rather than the arm
+denom <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_count("AGEGR1", by = "SEX",
+                settings = layer_settings(denoms_by = c("TRT01P", "SEX")))
+  )
+)
+tplyr_build(denom, tplyr_adsl)
+#>   rowlabel1 rowlabel2       res1       res2       res3 ord_layer_1
+#> 1         F       <65  9 (17.0%)  5 (12.5%)  5 (10.0%)           1
+#> 2         F     65-80 22 (41.5%) 28 (70.0%) 28 (56.0%)           2
+#> 3         F       >80 22 (41.5%)  7 (17.5%) 17 (34.0%)           3
+#> 4         M       <65  5 (15.2%)  6 (13.6%)  3 ( 8.8%)           4
+#> 5         M     65-80 20 (60.6%) 27 (61.4%) 19 (55.9%)           5
+#> 6         M       >80  8 (24.2%) 11 (25.0%) 12 (35.3%)           6
+#>   ord_layer_index
+#> 1               1
+#> 2               1
+#> 3               1
+#> 4               1
+#> 5               1
+#> 6               1
+
+# Auto-precision on a desc layer: 'a' takes decimals from the data, and
+# precision_cap bounds them.
+prec <- tplyr_spec(
+  cols = "TRTA",
+  layers = tplyr_layers(
+    group_desc("AVAL", by = "PARAMCD", settings = layer_settings(
+      format_strings = list("Mean (SD)" = f_str("a.a+1 (a.a+2)", "mean", "sd")),
+      precision_by = "PARAMCD",
+      precision_cap = c(int = 3, dec = 2)
+    ))
+  )
+)
+head(tplyr_build(prec, tplyr_adlb))
+#>   rowlabel1 rowlabel2               res1               res2               res3
+#> 1     URATE Mean (SD) 322.223 ( 64.9688) 298.849 ( 55.5429) 287.149 ( 76.8221)
+#>   ord_layer_1 ord_layer_2 ord_layer_index
+#> 1           1           1               1
+
+# A custom summary adds a statistic the built-ins do not provide
+cv <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(
+      custom_summaries = list(cv = quote(sd(.var) / mean(.var) * 100)),
+      format_strings = list("CV%" = f_str("xx.x", "cv"))
+    ))
+  )
+)
+tplyr_build(cv, tplyr_adsl)
+#>   rowlabel1 res1 res2 res3 ord_layer_1 ord_layer_index
+#> 1       CV% 11.4 10.6 11.0           1               1
+```

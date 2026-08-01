@@ -15,7 +15,7 @@ These tables give reviewers a quick, matrix-style view of how a
 treatment affects lab values relative to their reference ranges.
 
 In tplyr2, shift tables are built with
-[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md).
+[`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md).
 Under the hood, a shift layer is an abstraction of a count layer. It
 reuses much of the same counting and formatting code, but the “column”
 dimension of the shift variable is folded into the result columns
@@ -34,7 +34,7 @@ count layers:
 For most shift table needs, these limitations are not a concern. If you
 need a text-style shift display (e.g., rows reading “Low to High”,
 “Normal to High”), a standard
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
 layer is a better fit.
 
 ## A Basic Example
@@ -174,7 +174,7 @@ interpretable.
 ## Customizing the Format
 
 Like count layers, shift layers accept format strings through
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 You can display just counts, just percentages, or any combination. The
 format string system is the same one used across all of tplyr2.
 
@@ -271,7 +271,7 @@ labels reflect the per-column-group denominators. When a `by` variable
 is present (as here), the column-group denominator varies by by-group,
 so no single header N can represent it and the header keeps the arm
 total. An explicit `denoms_by` overrides both choices – see
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 ## The Denominator Row
 
@@ -332,7 +332,7 @@ shows `<1`). Shift layers also compute the four single-proportion
 confidence-interval keywords (`ci_lower`, `ci_upper`, and the
 `distinct_` variants), against whichever denominator `shift_denom`
 selects. These are described in
-[`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
+[`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md).
 
 ## Distinct (Subject-Level) Shifts
 
@@ -345,17 +345,17 @@ count layer. The percentages then use the distinct-subject denominators.
 ## Association Tests
 
 An omnibus
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 attaches to shift layers as well, for a single p-value across the shift
 table (for example a chi-square or CMH test on the
 baseline-by-post-baseline table). The contract is identical to count
 layers; see
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md).
 
 ## One Thing to Note
 
 The
-[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
+[`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md)
 API is designed specifically for matrix-style shift tables, where
 baseline categories form the rows and post-baseline categories form the
 columns. This cross-tabulation style is the most common shift table
@@ -364,7 +364,7 @@ format in clinical reporting.
 However, not all shift displays take this form. Sometimes you may need a
 text-based summary where each row describes a specific transition, such
 as “Low to High” or “Normal to Normal”. For that style of display,
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
 is the right tool. You would create a derived variable in your data that
 concatenates the baseline and post-baseline values (e.g.,
 `paste(BNRIND, "to", ANRIND)`) and then count that variable directly.
@@ -375,20 +375,20 @@ Shift layers share much of their underlying machinery with count layers,
 so many of the concepts from the count layer documentation apply here as
 well. For further reading:
 
-- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+- [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
   – how denominators are computed and customized (`denoms_by`,
   `denom_where`), which directly affects shift percentages.
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – the shared count machinery.
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – `zero_count_display`, the `pct_lt`/`pct_gt` conventions, and the
   `shift_denom`/`denom_row` combination shown above.
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – the statistic keywords available in `n_counts`.
-- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+- [`vignette("sort")`](https://atorus-research.github.io/tplyr2/articles/sort.md)
   – how row and column ordering works, including the role of factor
   levels touched on here.
-- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+- [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
   – attaching an
-  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   p-value column to a shift table.

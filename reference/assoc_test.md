@@ -35,7 +35,8 @@ assoc_test(
 
 - format:
 
-  An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  An
+  [`f_str`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   object formatting a **numeric** return; it is ignored when `fn`
   returns a character string. Its variable count sets how many values
   `fn` must return: one variable for a scalar (e.g.

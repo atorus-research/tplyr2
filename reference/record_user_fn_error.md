@@ -1,7 +1,7 @@
 # Record a failure in user-supplied code
 
 A no-op outside
-[`collect_user_fn_errors()`](https://github.com/mstackhouse/tplyr2/reference/collect_user_fn_errors.md),
+[`collect_user_fn_errors()`](https://atorus-research.github.io/tplyr2/reference/collect_user_fn_errors.md),
 so helpers stay callable from tests and from code paths that run outside
 a build.
 

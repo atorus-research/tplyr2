@@ -1,7 +1,7 @@
 # Compute pairwise per-level association-test p-values for a nested layer
 
 Like
-[`compute_pairwise_assoc()`](https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc.md)
+[`compute_pairwise_assoc()`](https://atorus-research.github.io/tplyr2/reference/compute_pairwise_assoc.md)
 but keyed directly by the assembled `rowlabel*` columns rather than a
 single target variable, so it works at every nesting level at once: each
 inner (e.g. preferred-term) row and each outer (e.g. system-organ-class

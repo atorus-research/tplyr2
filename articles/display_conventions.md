@@ -3,16 +3,16 @@
 ## Introduction
 
 The two companion vignettes cover how a number becomes a string:
-[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+[`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
 for the grammar and
-[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+[`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
 for widths and delimiters. This one covers the rules that come from
 somewhere else entirely – a statistical analysis plan, a sponsor’s mock
 shell, a regulatory reviewing convention. They are not properties of the
 data. They are decisions about what the table is allowed to say.
 
 Most of them are
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 arguments, and most are one line each:
 
 | Convention | Setting |
@@ -25,8 +25,8 @@ arguments, and most are one line each:
 | Put each statistic in its own column | `stat_columns`, `stats_as_columns` |
 | Change what a shift-table percent is out of | `shift_denom`, `denoms_by` |
 | Show the shift denominator as an `n` row | `denom_row`, `denom_row_format` |
-| Indent and wrap nested terms | [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md), [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md) |
-| Anything else, applied after the build | [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md) |
+| Indent and wrap nested terms | [`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md), [`str_indent_wrap()`](https://atorus-research.github.io/tplyr2/reference/str_indent_wrap.md) |
+| Anything else, applied after the build | [`apply_conditional_format()`](https://atorus-research.github.io/tplyr2/reference/apply_conditional_format.md) |
 
 ## Small and Large Percentages
 
@@ -301,7 +301,7 @@ That is usually the correct behavior – for a flag variable, `n (%)` of
 “Yes” should be out of the whole arm. When you do want the kept levels
 to sum to 100%, remove the dropped subjects from the denominator too
 with `denom_where` or `denom_ignore`; see
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 ## Missing and Total Rows
 
@@ -451,7 +451,7 @@ vapply(grep("^res", names(result), value = TRUE),
 A renderer splits those on `" | "` to build a two-level header spanning
 each arm over its sub-columns. Stat names may not themselves contain
 `" | "` or `"(N="`, which the label grammar reserves. See
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+[`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
 for more.
 
 ### Descriptive layers: `stats_as_columns`
@@ -524,7 +524,7 @@ Note that `stats_as_columns` produces a *different* shape when there is
 no `by` variable: the treatment groups become the rows and the result
 columns are named for the statistics directly rather than `res1`,
 `res2`, …, in the order the format strings declared them.
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 handles that shape – it drops the internal ordering columns and keeps
 everything else – but the `"<arm> | <stat>"` label grammar does not
 apply, since the column names *are* the statistics. Reach for this form
@@ -665,7 +665,7 @@ denoms_by = c(“TRTA”, “BNRIND”) – row-wise percentages {.table}
 An explicit `denoms_by` overrides `shift_denom`, and must list every
 variable that scopes the denominator (including any `by` variables) or
 the groups pool together. See
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 ### The denominator row
 
@@ -725,7 +725,7 @@ sizes the row independently, usually narrower.
 An adverse event table is hierarchical – system organ class over
 preferred term – and the display convention is a single row-label column
 with the preferred terms indented under their class.
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 does the merge:
 
 ``` r
@@ -766,7 +766,7 @@ show_table(head(collapsed[, c("row_label", "res1", "res2", "res3")], 10))
 |    SUPRAVENTRICULAR TACHYCARDIA   |  0         |  0         |  1 ( 1.2%) |
 
 Real preferred terms then overflow the column width the shell allows.
-[`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)
+[`str_indent_wrap()`](https://atorus-research.github.io/tplyr2/reference/str_indent_wrap.md)
 wraps them to a width while *preserving* the indentation on continuation
 lines, and hyphenates any single word at least as long as the width:
 
@@ -791,7 +791,7 @@ cat(head(collapsed$row_label, 9), sep = "\n")
 `BUNDLE BRANCH BLOCK RIGHT` breaks after `BLOCK` and its continuation
 line keeps the three-space preferred-term indent, so the hierarchy
 survives the wrap. That is why
-[`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)
+[`str_indent_wrap()`](https://atorus-research.github.io/tplyr2/reference/str_indent_wrap.md)
 exists rather than plain
 [`stringr::str_wrap()`](https://stringr.tidyverse.org/reference/str_wrap.html):
 it detects the existing indentation and re-applies it to every
@@ -810,7 +810,7 @@ which is where you want a display rule: the numeric data behind the cell
 stays intact, and the convention travels with the spec through
 serialization, metadata, and ARD conversion. For the rules that have no
 setting,
-[`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)
+[`apply_conditional_format()`](https://atorus-research.github.io/tplyr2/reference/apply_conditional_format.md)
 rewrites a built column based on a number found inside it.
 
 You pick a **format group** – the *n*th number in the string, counting
@@ -839,16 +839,16 @@ apply_conditional_format(res$res1, 2, x == 0, "    -     ", full_string = TRUE)
 
 Because the condition reads the *displayed* number, the same function
 works on externally bound statistics and on risk-difference columns.
-[`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)
+[`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md)
 pulls a format group out as a number when you want to compute with it
 rather than replace it. Both are covered in
-[`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md).
+[`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md).
 
 ## Getting the Table Out
 
 Two last conventions belong to the hand-off rather than the build.
 
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 drops the internal ordering columns and returns just what belongs on the
 page. `labels = TRUE` renames the result columns to their column-group
 headers:
@@ -867,7 +867,7 @@ kable(as_display(result, labels = TRUE))
 
 And the padding that every format string in these vignettes produces is
 real whitespace, which HTML collapses.
-[`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md)
+[`replace_leading_whitespace()`](https://atorus-research.github.io/tplyr2/reference/replace_leading_whitespace.md)
 converts leading spaces to non-breaking spaces so indentation and
 alignment survive a web or RTF renderer:
 
@@ -887,17 +887,17 @@ all.
 
 ## Where to Go From Here
 
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – the format string grammar, statistic keywords, rounding, and
   missing-value handling.
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – data-driven widths and parenthesis hugging.
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – count layers, including total rows, missing rows, `keep_levels`, and
   nested counts.
-- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+- [`vignette("shift")`](https://atorus-research.github.io/tplyr2/articles/shift.md)
   – shift layers and factor-driven completion.
-- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+- [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
   – what the denominator behind every percentage actually is.
-- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+- [`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md)
   – row masks, label collapsing, and the rest of the display helpers.

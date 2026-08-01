@@ -3,16 +3,16 @@
 ## Introduction
 
 tplyr2 provides three built-in layer types –
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md),
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md),
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md),
 and
-[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
+[`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md)
 – that cover most clinical table patterns. But sometimes you need
 computations that do not fit neatly into any of these: geometric means,
 custom ratios, composite endpoints, or any analysis where you need full
 control over both the calculation and the presentation.
 
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 fills this gap. It lets you supply your own function to compute summary
 statistics for each group, while preserving tplyr2’s column-based
 layout, formatting, and ordering infrastructure. This vignette covers
@@ -23,7 +23,7 @@ display-ready strings).
 ## The analyze_fn Contract
 
 Every
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 layer requires an `analyze_fn` – a function that tplyr2 calls once for
 each combination of column and `by` variables. The function signature
 is:
@@ -43,7 +43,7 @@ to process the results.
 
 In format strings mode, your `analyze_fn` returns a single-row
 data.frame of named numeric columns. You then supply `format_strings` in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 to control how each statistic is formatted and labeled in the output.
 This mode is useful when you want tplyr2’s formatting system (alignment,
 decimal precision, parenthesis hugging) to handle the display.
@@ -92,10 +92,10 @@ A few things to note:
 
 - The names of the `format_strings` list (“Geometric Mean”, “Geometric
   SD”) become the row labels in the output, just like
-  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  [`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
   format strings.
 - Each
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   references a column name from the data.frame your function returns.
   The `"xxx.xx"` template means three integer digits and two decimal
   places.
@@ -108,7 +108,7 @@ A few things to note:
 
 Format strings can combine multiple statistics into a single row, just
 as in
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md).
 Here we compute a mean and standard deviation in one row, and a median
 in another:
 
@@ -154,7 +154,7 @@ kable(result[, !grepl("^ord", names(result))])
 | Urate (umol/L) | Median    | 288.48         | 294.43         | 279.56         |
 
 This produces the same style of output you would get from
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md),
 but computed by your own function.
 
 ## Pre-Formatted Mode
@@ -162,7 +162,7 @@ but computed by your own function.
 Sometimes you want complete control over the output strings – for
 example, when the formatting logic is complex, when you need conditional
 formatting, or when the output does not map cleanly to the
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 system. In pre-formatted mode, your `analyze_fn` returns a data.frame
 with two columns: `row_label` (character) and `formatted` (character).
 No `format_strings` are needed in this case.
@@ -210,7 +210,7 @@ the strings for you.
 ## Integration with by Variables
 
 The `by` parameter in
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 works the same way as in other layer types. Strings that match column
 names in the data are treated as grouping variables; strings that do not
 match are treated as text labels. Your `analyze_fn` is called once for
@@ -259,12 +259,12 @@ automatically.
 ## Combining with Other Layers
 
 A
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 layer integrates naturally into a multi-layer spec alongside
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md),
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md),
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md),
 or
-[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md).
+[`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md).
 Each layer gets its own `ord_layer_index` value in the output, so layers
 stack in the order they are specified.
 
@@ -374,7 +374,7 @@ output.
 
 ## Summary
 
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 is the escape hatch for when tplyr2’s built-in layer types are not
 enough. It gives you full control over computation while preserving the
 structural benefits of the tplyr2 framework: column-based layout,
@@ -387,7 +387,7 @@ The key points to remember:
   `.target_var` (a character string) for each group.
 - In **format strings mode**, return a single-row numeric data.frame and
   let
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   handle formatting.
 - In **pre-formatted mode**, return a data.frame with `row_label` and
   `formatted` columns.
@@ -398,14 +398,14 @@ The key points to remember:
 
 ### See Also
 
-- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+- [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md)
   and
-  [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+  [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – the built-in layer types a custom analyze layer usually sits
   alongside.
-- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+- [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
   – for a comparison p-value or an externally computed model result,
-  [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+  [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   and binding via
-  [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+  [`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
   are often a simpler fit than a custom analyze layer.

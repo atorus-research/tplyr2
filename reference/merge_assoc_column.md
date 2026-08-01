@@ -19,7 +19,7 @@ merge_assoc_column(wide, assoc, by_rl_cols, by_data_vars, config)
 - assoc:
 
   data.table from
-  [`compute_assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/compute_assoc_test.md).
+  [`compute_assoc_test()`](https://atorus-research.github.io/tplyr2/reference/compute_assoc_test.md).
 
 - by_rl_cols:
 

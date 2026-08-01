@@ -13,7 +13,7 @@ entirely.
 
 tplyr2 provides several mechanisms for controlling denominators in count
 layers, all configured through
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 This vignette walks through each one, starting with the default behavior
 and building up to more specialized scenarios.
 
@@ -52,7 +52,7 @@ scenarios call for something different.
 ## Controlling Denominator Grouping with `denoms_by`
 
 The `denoms_by` parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 lets you specify exactly which variables define the denominator groups.
 When you add a `by` variable to a count layer, the default denominator
 is still the column total. But sometimes you want the percentage to
@@ -240,7 +240,7 @@ You can pass multiple values to `denom_ignore` as a character vector.
 ## Denominators with Distinct Counts
 
 When `distinct_by` is set in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md),
 tplyr2 computes both event-level and subject-level counts. The
 denominator system applies separately to each:
 
@@ -299,7 +299,7 @@ column-by-target-level cell on the same percentage scale as `pct`:
   `distinct_n` / `distinct_total`
 
 Two
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 controls choose how the interval is built: `ci_method` (the estimation
 method) and `ci_level` (the coverage, default `0.95`). The default
 method, `"clopper_pearson"`, is the exact interval that matches SAS
@@ -352,13 +352,13 @@ just like the percentage does. The bounds are only computed when a
 format string actually references one of the four keywords, so layers
 that do not display a CI incur no extra cost. The vectorized engine
 behind the keywords,
-[`proportion_ci()`](https://github.com/mstackhouse/tplyr2/reference/proportion_ci.md),
+[`proportion_ci()`](https://atorus-research.github.io/tplyr2/reference/proportion_ci.md),
 is exported for standalone use.
 
 This single-proportion interval is distinct from the *between-arm*
 confidence interval that `risk_diff` produces; the two are independent
 and can appear in the same table.
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 discusses the single-proportion CI alongside the other comparative
 statistics.
 
@@ -371,7 +371,7 @@ denominators from the event data alone, you will undercount the
 population.
 
 The
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 configuration at the spec level tells tplyr2 to draw denominators from a
 separate population dataset. When `pop_data` is specified, the
 denominator for each treatment arm comes from the population dataset
@@ -542,7 +542,7 @@ proportion of all randomized subjects in each arm.
 ## Summary
 
 The table below summarizes the denominator controls available in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md):
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md):
 
 | Parameter | Purpose | Default |
 |----|----|----|
@@ -551,7 +551,7 @@ The table below summarizes the denominator controls available in
 | `denom_ignore` | Target variable values to exclude from denominators | None |
 | `distinct_by` | Variable for distinct subject counting | NULL (event-level only) |
 | `missing_subjects` | Add row for subjects absent from analysis data | FALSE |
-| [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md) | Separate population dataset for denominators | None (use analysis data) |
+| [`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md) | Separate population dataset for denominators | None (use analysis data) |
 
 Each of these can be used independently or combined as needed. The key
 principle is that the numerator (what you are counting) and the
@@ -561,13 +561,13 @@ clinical tables.
 
 ## See Also
 
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – count-layer fundamentals, where population data is first introduced.
-- [`vignette("table")`](https://github.com/mstackhouse/tplyr2/articles/table.md)
+- [`vignette("table")`](https://atorus-research.github.io/tplyr2/articles/table.md)
   – population data and header N from the spec-level perspective.
-- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+- [`vignette("adverse-events")`](https://atorus-research.github.io/tplyr2/articles/adverse-events.md)
   – these denominator controls applied in a complete adverse event
   table.
-- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+- [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
   – the single-proportion CI alongside risk difference and association
   tests.

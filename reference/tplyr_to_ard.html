@@ -63,6 +63,7 @@ This is compatible with the CDISC Analysis Results Data standard."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -72,7 +73,7 @@ This is compatible with the CDISC Analysis Results Data standard."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Convert tplyr_build output to Analysis Results Data (ARD) format</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/ard.R" class="external-link"><code>R/ard.R</code></a></small>
       <div class="d-none name"><code>tplyr_to_ard.Rd</code></div>
     </div>
 
@@ -111,7 +112,44 @@ This is compatible with the CDISC Analysis Results Data standard.</p>
 
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="tplyr_from_ard.html">tplyr_from_ard()</a></code> to rebuild a formatted table from an ARD.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">built</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">ard</span> <span class="op">&lt;-</span> <span class="fu">tplyr_to_ard</span><span class="op">(</span><span class="va">built</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">ard</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   analysis_id               TRT01P AGEGR1 stat_name stat_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1           1              Placebo  65-80         n         42</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           1              Placebo    &lt;65         n         14</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3           1              Placebo    &gt;80         n         30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4           1 Xanomeline High Dose  65-80         n         55</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5           1 Xanomeline High Dose    &lt;65         n         11</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6           1 Xanomeline High Dose    &gt;80         n         18</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># One row per statistic per group; analysis_id identifies the layer</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">ard</span><span class="op">$</span><span class="va">analysis_id</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  1  2 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 27 42 </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="va">ard</span><span class="op">$</span><span class="va">stat_name</span><span class="op">[</span><span class="va">ard</span><span class="op">$</span><span class="va">analysis_id</span> <span class="op">==</span> <span class="fl">2</span><span class="op">]</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "n"         "n_records" "mean"      "sd"        "median"    "var"      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "min"       "max"       "iqr"       "q1"        "q3"        "missing"  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "total"     "pct"      </span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

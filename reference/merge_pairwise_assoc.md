@@ -24,12 +24,12 @@ merge_pairwise_assoc(
 - wide:
 
   data.table in wide format (after
-  [`cast_to_wide()`](https://github.com/mstackhouse/tplyr2/reference/cast_to_wide.md)).
+  [`cast_to_wide()`](https://atorus-research.github.io/tplyr2/reference/cast_to_wide.md)).
 
 - assoc_data:
 
   data.table from
-  [`compute_pairwise_assoc()`](https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc.md).
+  [`compute_pairwise_assoc()`](https://atorus-research.github.io/tplyr2/reference/compute_pairwise_assoc.md).
 
 - config:
 

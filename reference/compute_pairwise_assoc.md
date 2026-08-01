@@ -4,7 +4,7 @@ For each comparison arm and each target-variable level, builds a 2x2
 contingency matrix from the assembled cell counts and population
 denominators and calls `config$fn` to obtain a scalar p-value. This
 mirrors
-[`compute_risk_diff()`](https://github.com/mstackhouse/tplyr2/reference/compute_risk_diff.md)
+[`compute_risk_diff()`](https://atorus-research.github.io/tplyr2/reference/compute_risk_diff.md)
 in placement (a value per target level per comparison) but delegates the
 test to the caller-supplied function.
 

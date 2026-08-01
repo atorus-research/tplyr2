@@ -8,11 +8,11 @@ of four routes, and knowing which to reach for is most of the work:
 
 | You need | Use | Notes |
 |----|----|----|
-| A descriptive summary (mean, SD, quantiles, …) | **[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)** built-in stats | See [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md) |
-| Counts / incidence, `n (%)` | **[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)** built-in stats | See [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md) |
-| A test or interval computed **across the treatment columns** *from the cell counts* | **`risk_diff`**, **[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)**, single-proportion CIs | This vignette |
+| A descriptive summary (mean, SD, quantiles, …) | **[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)** built-in stats | See [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md) |
+| Counts / incidence, `n (%)` | **[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)** built-in stats | See [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md) |
+| A test or interval computed **across the treatment columns** *from the cell counts* | **`risk_diff`**, **[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)**, single-proportion CIs | This vignette |
 | A statistic computed by a **model fit** (MMRM, ANCOVA, Cox, logistic, …) | fit it **externally** and **bind** the formatted result on | This vignette |
-| A fully custom in-spec statistic computed *within* one column | **[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)** | See [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md) |
+| A fully custom in-spec statistic computed *within* one column | **[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)** | See [`vignette("analyze")`](https://atorus-research.github.io/tplyr2/articles/analyze.md) |
 
 The dividing line is simple: if the statistic can be built from the
 assembled cell counts (or the raw rows) *across arms*, tplyr2 can
@@ -32,13 +32,13 @@ source of truth with the `n (%)` / summary block beside it.
 target-level row) via
 [`stats::prop.test()`](https://rdrr.io/r/stats/prop.test.html). It has
 its own vignette,
-[`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md);
+[`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md);
 reach for it when you want an asymptotic risk difference with a
 confidence interval.
 
 ### Association tests with `assoc_test()`
 
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 attaches an **arbitrary** test — you supply the function, so Fisher’s
 exact, a chi-square, or a `coin::cmh_test()` all drop in. It has two
 modes.
@@ -138,23 +138,23 @@ Because it is just a matrix in and a scalar out, any 2x2 test (Fisher,
 chi-square, relative risk, …) plugs in.
 
 These snippets show only the count layer, to keep the focus on
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md).
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md).
 In a real adverse-event build the enclosing
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
 sets
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md),
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md),
 so the displayed incidence *and* the `N_ref`/`N_cmp` cells of the 2x2
 use the safety population rather than only the subjects who had events
 (see
-[`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+[`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
 and
-[`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md),
+[`vignette("adverse-events")`](https://atorus-research.github.io/tplyr2/articles/adverse-events.md),
 which builds this pattern end to end). The `stat_columns` shown here is
 also optional — `format_strings` works identically; pairwise mode does
 not require `stat_columns`.
 
 **Nested layers** — the AE-by-SOC/PT case — work the same way: give
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
 a nested target such as `c("AEBODSYS", "AEDECOD")` and the `pval`
 columns land on **every** row of **every** level. Each preferred-term
 row and each system-organ-class subtotal row gets its own 2x2, built
@@ -254,13 +254,13 @@ the assembled table. The workflow is always the same five steps:
 
 1.  **Build** the descriptive block with tplyr2 and pull the display
     frame with
-    [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+    [`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
     (drops the internal `ord_*` columns; the build is already ordered).
 2.  **Compute** the statistic with whatever package you like.
 3.  **Format** the result into character cells with
-    [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+    [`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
     (the same
-    [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+    [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
     spec, rounding, and alignment as the rest of the table).
 4.  **Align** it to the table — as a new *column* (join on the row
     label) or a new *row* (`rbind`), matching the `rowlabel*` / `res*`
@@ -304,7 +304,7 @@ kable(disp)
 | M         | 33 (38.4%) | 44 (52.4%) | 34 (40.5%) | 0.141 |
 
 Formatting the external value through
-[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+[`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
 — rather than [`sprintf()`](https://rdrr.io/r/base/sprintf.html) or
 [`format()`](https://rdrr.io/r/base/format.html) — keeps rounding
 (including the IBM half-up option) and width identical to the
@@ -352,7 +352,7 @@ kable(out)
 
 When a model does not converge or a cell is not estimable, the statistic
 is `NA`.
-[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+[`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
 gains an `na` argument (new in 0.2.0) so a missing value collapses to a
 truly empty string rather than a run of spaces — which keeps
 [`is.na()`](https://rdrr.io/r/base/NA.html) /
@@ -374,29 +374,29 @@ own it.
 
 ### `group_analyze()` for in-spec custom statistics
 
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 runs a function you supply *inside the spec*, so a custom statistic
 travels with the layer, ordering, and metadata. It is the right tool for
 a bespoke *descriptive* statistic (a trimmed mean, a custom responder
 definition, a formatted median with a non-standard CI). See
-[`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
+[`vignette("analyze")`](https://atorus-research.github.io/tplyr2/articles/analyze.md)
 for the full contract.
 
 One boundary is worth stating here: `analyze_fn` is called **once per
 `cols` x `by` combination**, so it only ever sees a *single* treatment
 column at a time. It therefore cannot compute a statistic that compares
 *across* arms — for that, use
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 (which sees all columns) or the external-binding pattern above.
 
 ## Handing off to a table package
 
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 returns the display columns only (`rowlabel*`, `res*`, `rdiff*`,
 `pval*`), already ordered, ready for `clinify`, `flextable`, `gt`, or
 `huxtable`. Pass `labels = TRUE` to rename the result columns to their
 column-group headers, and see
-[`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+[`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md)
 for row masking and label collapsing.
 
 ``` r

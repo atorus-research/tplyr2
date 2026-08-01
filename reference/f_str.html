@@ -59,6 +59,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -68,7 +69,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a format string object</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/f_str.R" class="external-link"><code>R/f_str.R</code></a></small>
       <div class="d-none name"><code>f_str.Rd</code></div>
     </div>
 
@@ -108,7 +109,61 @@ NA groups as blanks of the field width.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tplyr_f_str object</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>Each run of <code>x</code> characters is one format group, and each group is filled by
+the correspondingly-positioned variable in <code>...</code>. The count of <code>x</code>s sets the
+field width, so <code>"xx.x"</code> renders two integer digits and one decimal. Literal
+text between groups is preserved verbatim. <code>a</code> (and <code>A</code>) request
+auto-precision, where the decimal count comes from the data.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="apply_formats.html">apply_formats()</a></code> to render values outside a build.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Two format groups filled by n and pct</span></span></span>
+<span class="r-in"><span><span class="va">fmt</span> <span class="op">&lt;-</span> <span class="fu">f_str</span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fmt</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tplyr format string: "xx (xx.x%)"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Variables: n, pct</span>
+<span class="r-in"><span><span class="fu"><a href="apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="va">fmt</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">5</span>, <span class="fl">12</span><span class="op">)</span>, pct <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4.5</span>, <span class="fl">33.33</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] " 5 ( 4.5%)" "12 (33.3%)"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Width is set by the number of x's</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu">f_str</span><span class="op">(</span><span class="st">"xxx"</span>, <span class="st">"n"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "  7"</span>
+<span class="r-in"><span><span class="fu"><a href="apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu">f_str</span><span class="op">(</span><span class="st">"x"</span>, <span class="st">"n"</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">7</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "7"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># `empty` fills each NA group in place, preserving alignment</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="fu">f_str</span><span class="op">(</span><span class="st">"xx (xxx)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span>, empty <span class="op">=</span> <span class="st">"NA"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>              n <span class="op">=</span> <span class="cn">NA</span>, pct <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "NA ( NA)"</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># `.overall` replaces the whole cell, but only when every group is NA</span></span></span>
+<span class="r-in"><span><span class="va">both_na</span> <span class="op">&lt;-</span> <span class="fu">f_str</span><span class="op">(</span><span class="st">"xx (xxx)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span>, empty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>.overall <span class="op">=</span> <span class="st">"Not est."</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="apply_formats.html">apply_formats</a></span><span class="op">(</span><span class="va">both_na</span>, n <span class="op">=</span> <span class="cn">NA</span>, pct <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Not est."</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Used in a layer</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span>, settings <span class="op">=</span> <span class="fu"><a href="layer_settings.html">layer_settings</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu">f_str</span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1       res2       res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       &lt;65 14 (16.3%) 11 (13.1%)  8 ( 9.5%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     65-80 42 (48.8%) 55 (65.5%) 47 (56.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       &gt;80 30 (34.9%) 18 (21.4%) 29 (34.5%)           3               1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

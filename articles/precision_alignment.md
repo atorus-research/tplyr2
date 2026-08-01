@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+[`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
 covers format strings whose widths you declare yourself: `xx.x` is
 always two integer positions and one decimal. That works when you know
 the scale of the data in advance. Two situations break it.
@@ -45,7 +45,7 @@ precision group:
 
 An `a` on the integer side resolves to `max_int`, and an `a` on the
 decimal side resolves to `max_dec`. Four
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 arguments control how those widths are resolved – the first three shape
 the scan, and the fourth replaces it:
 
@@ -339,7 +339,7 @@ layer-level `precision_cap` overrides it. That combination is the useful
 one: a conservative session default protects every table in the study,
 and the occasional layer that genuinely needs more digits asks for them
 explicitly. See
-[`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md).
+[`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md).
 
 ## Supplying Precision From Outside
 
@@ -406,7 +406,7 @@ so a genuine upstream change in the assay looks like nothing at all.
 
 One scope limit is worth stating plainly, because it is easy to assume
 otherwise: **the precision scan runs only for
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
 layers.** Count, shift, and analyze layers never resolve `a` against the
 data. In those layers an `a` degrades silently to a fixed width equal to
 the number of characters you wrote, exactly as if you had typed `x`:
@@ -501,7 +501,7 @@ either, so a spec written for tplyr2 may not load in v1.
 A hugged group with no literal in front of it has nowhere to move its
 spaces *to*, so it would simply left-justify the number and leave the
 padding trailing.
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 warns when you ask for that:
 
 ``` r
@@ -634,14 +634,14 @@ show_table(tplyr_build(spec, labs))
 
 ## Where to Go From Here
 
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – the format string grammar, statistic keywords, rounding, and
   missing-value handling.
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – `<1%` and `>99%` percents, zero-count suppression, statistics as
   separate columns, denominator rows.
-- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+- [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md)
   – descriptive statistics layers, custom summaries, and multi-variable
   summaries.
-- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+- [`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md)
   – the session-wide `precision_cap` and `IBMRounding`.

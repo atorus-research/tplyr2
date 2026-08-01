@@ -1,7 +1,7 @@
 # Locate the rowlabel columns to join summary statistics back on
 
 The inverse of
-[`build_row_labels_long()`](https://github.com/mstackhouse/tplyr2/reference/build_row_labels_long.md)'s
+[`build_row_labels_long()`](https://atorus-research.github.io/tplyr2/reference/build_row_labels_long.md)'s
 layout: one rowlabel column per constant `by` label first, then one per
 `by` data variable, then the target variable last. Callers that merge
 per-group statistics (risk difference, pairwise p-values) onto the

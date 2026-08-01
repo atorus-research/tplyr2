@@ -9,10 +9,10 @@ compute summary statistics for a continuous variable, then present them
 in a formatted, publication-ready layout grouped by treatment arm.
 
 In tplyr2, descriptive statistics layers are created with
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md).
 The core of your control over the output comes from the `format_strings`
 parameter within
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 Format strings let you specify exactly which statistics appear, what row
 label each statistic gets, and how numbers are formatted – all in one
 place.
@@ -59,10 +59,10 @@ A few things to note about this example:
 - The `format_strings` parameter is a named list. Each **name** becomes
   the row label in the output (e.g., “Mean (SD)”), and each **value** is
   an
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   object that controls the numeric format.
 - Inside
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md),
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md),
   the first argument is the format template. The characters `x` define
   the display width: `xx.x` means two integer digits and one decimal
   place. The remaining arguments are strings naming the statistics to
@@ -77,7 +77,7 @@ A few things to note about this example:
 tplyr2 provides a set of built-in summary statistics that cover the most
 common needs in clinical reporting. These are computed automatically for
 every
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
 layer – you simply reference them by name in your format strings.
 
 | Statistic | Description | Details |
@@ -105,7 +105,7 @@ A few important notes about these built-in summaries:
 - `total` and `pct` give a desc layer an `n (%)` row – the number of
   subjects who contributed data and what share of the arm that is. They
   respect `denoms_by` and `denom_where` just as a count layer would. See
-  [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md).
+  [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md).
 - `min` and `max` operate on finite values only. If all values in a
   group are `NA`, the result is `NA_real_` rather than `Inf` or `-Inf`.
   This avoids formatting issues where infinity symbols would appear in
@@ -122,7 +122,7 @@ clinical trial reporting often needs to match SAS output, which uses a
 different algorithm (closest to R’s Type 3).
 
 You can change the quantile algorithm globally using
-[`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md):
+[`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md):
 
 ``` r
 
@@ -189,7 +189,7 @@ tplyr2 handles this through custom summaries.
 ### Layer-Level Custom Summaries
 
 You can define custom summaries directly in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 using the `custom_summaries` parameter. Each custom summary is a named
 expression that uses `.var` as a placeholder for the target variable’s
 values.
@@ -243,7 +243,7 @@ The key points about custom summaries:
 
 If you find yourself using the same custom summary across many tables in
 a study, you can register it at the session level using
-[`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md).
+[`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md).
 Once registered, the custom statistic is available by name in any
 `format_strings` specification, just like the built-in summaries.
 
@@ -333,7 +333,7 @@ It is common to summarize several continuous variables in a single table
 – for example, a demographics table that includes age, height, and
 weight. Rather than creating separate layers for each variable, you can
 pass a character vector of variable names to
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md).
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md).
 
 ``` r
 
@@ -510,7 +510,7 @@ collapsed.
 A demographics table often carries a p-value comparing a continuous
 characteristic across arms – an ANOVA, a Kruskal-Wallis test, or a
 t-test. Attach one with
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 in omnibus mode: it runs a function you supply once over the raw source
 rows and lands the result in a trailing `pval` column. This is the same
 mechanism count layers use, so the continuous and categorical rows of a
@@ -550,7 +550,7 @@ The p-value sits on the first statistic row of each `by` group (here
 there is no `by`, so it appears once, on the first row). The `fn`
 receives the by-group’s raw data frame and returns a scalar; a character
 return is passed through verbatim.
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 covers this in full, including how to bind externally computed model
 results.
 
@@ -561,16 +561,16 @@ in tplyr2: built-in summaries, custom summaries, quantile algorithms,
 and multi-variable analysis. But there is more to explore when it comes
 to controlling how your numbers look on the page.
 
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – the format string grammar, the complete statistic keyword reference,
   rounding, and what happens when a statistic is `NA` (including the
   `empty` argument of
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)).
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)).
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – **auto-precision**, which lets the data set the decimal width via
   `precision_by`, `precision_on`, `precision_data`, and `precision_cap`,
   and **parenthesis hugging**, which closes the gap between a number and
   its delimiter.
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – **`stats_as_columns`**, which transposes the statistics into
   columns, plus the other display rules a shell may impose.

@@ -3,64 +3,64 @@
 ### Getting Started
 
 - [Getting Started with
-  tplyr2](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md):
+  tplyr2](https://atorus-research.github.io/tplyr2/articles/tplyr2.md):
 - [Table
-  Properties](https://github.com/mstackhouse/tplyr2/articles/table.md):
+  Properties](https://atorus-research.github.io/tplyr2/articles/table.md):
 
 ### Layer Basics
 
 - [Descriptive Statistics
-  Layers](https://github.com/mstackhouse/tplyr2/articles/desc.md):
+  Layers](https://atorus-research.github.io/tplyr2/articles/desc.md):
 - [Count
-  Layers](https://github.com/mstackhouse/tplyr2/articles/count.md):
+  Layers](https://atorus-research.github.io/tplyr2/articles/count.md):
 - [Shift
-  Layers](https://github.com/mstackhouse/tplyr2/articles/shift.md):
+  Layers](https://atorus-research.github.io/tplyr2/articles/shift.md):
 
 ### Worked Examples
 
 - [Building an Adverse Events
-  Table](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md):
+  Table](https://atorus-research.github.io/tplyr2/articles/adverse-events.md):
 
 ### Formatting
 
 - [Format
-  Strings](https://github.com/mstackhouse/tplyr2/articles/format_strings.md):
+  Strings](https://atorus-research.github.io/tplyr2/articles/format_strings.md):
 - [Precision and
-  Alignment](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md):
+  Alignment](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md):
 - [Clinical Display
-  Conventions](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md):
+  Conventions](https://atorus-research.github.io/tplyr2/articles/display_conventions.md):
 
 ### Table Customization
 
 - [Sorting a tplyr2
-  Table](https://github.com/mstackhouse/tplyr2/articles/sort.md):
-- [Denominators](https://github.com/mstackhouse/tplyr2/articles/denom.md):
+  Table](https://atorus-research.github.io/tplyr2/articles/sort.md):
+- [Denominators](https://atorus-research.github.io/tplyr2/articles/denom.md):
 - [tplyr2
-  Options](https://github.com/mstackhouse/tplyr2/articles/options.md):
+  Options](https://atorus-research.github.io/tplyr2/articles/options.md):
 
 ### Metadata
 
 - [Metadata and
-  Traceability](https://github.com/mstackhouse/tplyr2/articles/metadata.md):
+  Traceability](https://atorus-research.github.io/tplyr2/articles/metadata.md):
 
 ### Advanced
 
 - [Risk
-  Difference](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md):
+  Difference](https://atorus-research.github.io/tplyr2/articles/riskdiff.md):
 - [Custom Analysis
-  Layers](https://github.com/mstackhouse/tplyr2/articles/analyze.md):
+  Layers](https://atorus-research.github.io/tplyr2/articles/analyze.md):
 - [Comparative Statistics and Binding External
-  Results](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md):
+  Results](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md):
 - [Spec
-  Serialization](https://github.com/mstackhouse/tplyr2/articles/serialization.md):
+  Serialization](https://atorus-research.github.io/tplyr2/articles/serialization.md):
 - [Analysis Results
-  Data](https://github.com/mstackhouse/tplyr2/articles/ard.md):
+  Data](https://atorus-research.github.io/tplyr2/articles/ard.md):
 
 ### Post-Processing
 
-- [Post-Processing](https://github.com/mstackhouse/tplyr2/articles/post_processing.md):
+- [Post-Processing](https://atorus-research.github.io/tplyr2/articles/post_processing.md):
 
 ### Migration
 
 - [Migrating from Tplyr
-  v1](https://github.com/mstackhouse/tplyr2/articles/migration.md):
+  v1](https://atorus-research.github.io/tplyr2/articles/migration.md):

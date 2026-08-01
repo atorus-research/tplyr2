@@ -1,7 +1,7 @@
 # Extract a display-ready frame from a build result
 
 Returns just the display content of a
-[`tplyr_build`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+[`tplyr_build`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 result, dropping the internal ordering helpers (`ord_layer_index`,
 `ord_layer_*`) and the `row_id` metadata column, and giving a frame
 ready to hand to a table-rendering package (clinify, flextable, gt,
@@ -19,14 +19,14 @@ as_display(x, labels = FALSE)
 - x:
 
   A data.frame produced by
-  [`tplyr_build`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md).
+  [`tplyr_build`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md).
 
 - labels:
 
   Logical. When `TRUE`, the `res*` / `rdiff*` / `pval*` columns are
   renamed to their header labels (their `label` attribute, as returned
   by
-  [`get_data_labels`](https://github.com/mstackhouse/tplyr2/reference/get_data_labels.md));
+  [`get_data_labels`](https://atorus-research.github.io/tplyr2/reference/get_data_labels.md));
   the row-label columns keep their names. Defaults to `FALSE`.
 
 ## Value

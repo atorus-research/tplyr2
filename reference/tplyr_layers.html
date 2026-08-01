@@ -59,6 +59,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -68,7 +69,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a list of layers</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/layers.R" class="external-link"><code>R/layers.R</code></a></small>
       <div class="d-none name"><code>tplyr_layers.Rd</code></div>
     </div>
 
@@ -95,6 +96,34 @@ group_shift(), or group_analyze()</p></dd>
     <p>A list of tplyr_layer objects</p>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Layers stack in the order given, and may mix types freely</span></span></span>
+<span class="r-in"><span><span class="va">layers</span> <span class="op">&lt;-</span> <span class="fu">tplyr_layers</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"SEX"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">layers</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 3</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="st">"TRT01P"</span>, layers <span class="op">=</span> <span class="va">layers</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    rowlabel1         res1         res2         res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1          n           86           84           84           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  Mean (SD) 75.2 ( 8.59) 74.4 ( 7.89) 75.7 ( 8.29)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3     Median         76.0         76.0         77.5           3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4     Q1, Q3   69.2, 81.8   70.8, 80.0   71.0, 82.0           4               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5   Min, Max       52, 89       56, 88       51, 88           5               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    Missing            0            0            0           6               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7          F   53 (61.6%)   40 (47.6%)   50 (59.5%)           1               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8          M   33 (38.4%)   44 (52.4%)   34 (40.5%)           2               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9        &lt;65   14 (16.3%)   11 (13.1%)    8 ( 9.5%)           1               3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 10     65-80   42 (48.8%)   55 (65.5%)   47 (56.0%)           2               3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 11       &gt;80   30 (34.9%)   18 (21.4%)   29 (34.5%)           3               3</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

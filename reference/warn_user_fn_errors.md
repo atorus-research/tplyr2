@@ -13,7 +13,7 @@ warn_user_fn_errors(entries)
 - entries:
 
   List of entries recorded by
-  [`record_user_fn_error()`](https://github.com/mstackhouse/tplyr2/reference/record_user_fn_error.md)
+  [`record_user_fn_error()`](https://atorus-research.github.io/tplyr2/reference/record_user_fn_error.md)
 
 ## Value
 

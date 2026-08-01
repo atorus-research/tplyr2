@@ -3,7 +3,7 @@
 Single-format mode (unnamed) writes a single `formatted` column.
 Stat-columns mode (named formats) writes one `formatted_<i>` column per
 format;
-[`cast_to_wide()`](https://github.com/mstackhouse/tplyr2/reference/cast_to_wide.md)
+[`cast_to_wide()`](https://atorus-research.github.io/tplyr2/reference/cast_to_wide.md)
 spreads these into separate res columns per column group. All count
 statistics are already present on `dt` (including the special total and
 missing row tables), so every format can be applied to every row.
@@ -29,12 +29,12 @@ apply_count_formats(
 - fmts:
 
   List of f_str objects from
-  [`get_count_formats()`](https://github.com/mstackhouse/tplyr2/reference/get_count_formats.md)
+  [`get_count_formats()`](https://atorus-research.github.io/tplyr2/reference/get_count_formats.md)
 
 - pct_lt:
 
   Optional numeric less-than threshold for percents (see
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md))
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md))
 
 - pct_gt:
 

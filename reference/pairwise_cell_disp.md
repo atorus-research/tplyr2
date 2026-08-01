@@ -3,7 +3,7 @@
 Shared by the single-level and nested pairwise paths. Builds
 `matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)`, calls
 `config$fn` on it, and renders the return via
-[`format_assoc_return`](https://github.com/mstackhouse/tplyr2/reference/format_assoc_return.md).
+[`format_assoc_return`](https://atorus-research.github.io/tplyr2/reference/format_assoc_return.md).
 A missing count/denominator or a zero denominator renders a blank (no
 test).
 

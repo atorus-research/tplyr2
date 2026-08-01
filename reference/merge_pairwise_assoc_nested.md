@@ -23,12 +23,12 @@ merge_pairwise_assoc_nested(
 - wide:
 
   data.table in wide format (after
-  [`cast_to_wide()`](https://github.com/mstackhouse/tplyr2/reference/cast_to_wide.md)).
+  [`cast_to_wide()`](https://atorus-research.github.io/tplyr2/reference/cast_to_wide.md)).
 
 - assoc_data:
 
   data.table from
-  [`compute_pairwise_assoc_nested()`](https://github.com/mstackhouse/tplyr2/reference/compute_pairwise_assoc_nested.md).
+  [`compute_pairwise_assoc_nested()`](https://atorus-research.github.io/tplyr2/reference/compute_pairwise_assoc_nested.md).
 
 - config:
 

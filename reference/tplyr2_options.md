@@ -49,5 +49,52 @@ Available options:
 - tplyr2.scipen:
 
   Integer. scipen value used during
-  [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+  [`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
   to prevent scientific notation. Default: `9999`.
+
+An unrecognized option name is an error rather than a silent no-op, so a
+misspelling cannot quietly leave the build on the default behavior.
+
+## Examples
+
+``` r
+# Inspect the current values
+tplyr2_options()
+#> $tplyr2.IBMRounding
+#> [1] FALSE
+#> 
+#> $tplyr2.quantile_type
+#> [1] 7
+#> 
+#> $tplyr2.precision_cap
+#> NULL
+#> 
+#> $tplyr2.custom_summaries
+#> NULL
+#> 
+#> $tplyr2.scipen
+#> [1] 9999
+#> 
+
+# Setting returns the previous values, so the change can be undone
+old <- tplyr2_options(IBMRounding = TRUE)
+getOption("tplyr2.IBMRounding")
+#> [1] TRUE
+do.call(options, old)
+getOption("tplyr2.IBMRounding")
+#> NULL
+
+# IBM (half-away-from-zero) rounding vs R's banker's rounding
+fmt <- f_str("xx", "n")
+apply_formats(fmt, n = 2.5)
+#> [1] " 2"
+old <- tplyr2_options(IBMRounding = TRUE)
+apply_formats(fmt, n = 2.5)
+#> [1] " 3"
+do.call(options, old)
+
+# A misspelled name errors instead of setting a dead option
+try(tplyr2_options(IBMrounding = TRUE))
+#> Error : Unknown option: IBMrounding
+#> Valid options: IBMRounding, quantile_type, precision_cap, custom_summaries, scipen
+```

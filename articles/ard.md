@@ -12,9 +12,9 @@ represents a single statistic for a single group combination.
 
 tplyr2 supports this through two functions:
 
-- [`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+- [`tplyr_to_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_to_ard.md)
   converts a built result into ARD long format.
-- [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+- [`tplyr_from_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_from_ard.md)
   reconstructs a formatted table from ARD data and a spec.
 
 Together, these functions let you separate the *computed values* from
@@ -24,10 +24,10 @@ exchanged, or validated independently of formatting.
 ## Converting to ARD
 
 Any result from
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 can be converted to ARD format. The raw numeric data is already attached
 to every build result as an attribute;
-[`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+[`tplyr_to_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_to_ard.md)
 melts that data into one-row-per-statistic long format.
 
 Here is a complete example using a demographics table with both count
@@ -192,7 +192,7 @@ computed value, not just those that appear in the formatted output.
 ## Reconstructing from ARD
 
 Given an ARD data frame and the original spec,
-[`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+[`tplyr_from_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_from_ard.md)
 applies the spec’s formatting rules to rebuild the display table. This
 completes the round-trip:
 
@@ -295,7 +295,7 @@ rows.
 The examples above use count and descriptive layers, but the ARD
 round-trip covers all four layer types – **count** (including nested),
 **desc** (including multi-target), **shift**, and **analyze**.
-[`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+[`tplyr_from_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_from_ard.md)
 reconstructs the appropriate layer from the `analysis_id` and the stored
 statistics. One detail worth knowing: for `stat_columns` layers, the
 pre-formatted sub-columns are not carried into the ARD (they are display
@@ -307,7 +307,7 @@ are retained, so the values still round-trip.
 Because the ARD captures every computed statistic as a plain numeric
 value, it serves as a durable archive of the analysis results. Paired
 with a saved spec (see
-[`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)),
+[`vignette("serialization")`](https://atorus-research.github.io/tplyr2/articles/serialization.md)),
 the full table can be reproduced at any time without re-running the
 analysis against the source data.
 
@@ -316,13 +316,13 @@ analysis against the source data.
 The ARD workflow in tplyr2 is straightforward:
 
 1.  Build your table with
-    [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+    [`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
     as usual.
 2.  Convert to long format with
-    [`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+    [`tplyr_to_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_to_ard.md)
     to get one row per statistic.
 3.  Reconstruct a formatted table with
-    [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+    [`tplyr_from_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_from_ard.md)
     using any compatible spec.
 
 This separation of computed results from formatted output supports

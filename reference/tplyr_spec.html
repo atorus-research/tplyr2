@@ -61,6 +61,7 @@ No data processing occurs until tplyr_build() is called."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -70,7 +71,7 @@ No data processing occurs until tplyr_build() is called."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a tplyr2 table specification</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/spec.R" class="external-link"><code>R/spec.R</code></a></small>
       <div class="d-none name"><code>tplyr_spec.Rd</code></div>
     </div>
 
@@ -128,7 +129,51 @@ No data processing occurs until <code><a href="tplyr_build.html">tplyr_build()</
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tplyr_spec object</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="tplyr_build.html">tplyr_build()</a></code> to execute a spec, <code><a href="tplyr_layers.html">tplyr_layers()</a></code> to assemble
+layers, and <code><a href="layer_settings.html">layer_settings()</a></code> for per-layer configuration.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># A spec is inert configuration -- nothing is computed until tplyr_build()</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu">tplyr_spec</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_desc.html">group_desc</a></span><span class="op">(</span><span class="st">"AGE"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">spec</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tplyr2 table specification</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Column variables: TRT01PLayers: 2[1] count: AGEGR1 (Layer 1)[2] desc: AGE (Layer 2)</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1         res1         res2         res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       &lt;65   14 (16.3%)   11 (13.1%)    8 ( 9.5%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     65-80   42 (48.8%)   55 (65.5%)   47 (56.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       &gt;80   30 (34.9%)   18 (21.4%)   29 (34.5%)           3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         n           86           84           84           1               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 Mean (SD) 75.2 ( 8.59) 74.4 ( 7.89) 75.7 ( 8.29)           2               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6    Median         76.0         76.0         77.5           3               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 7    Q1, Q3   69.2, 81.8   70.8, 80.0   71.0, 82.0           4               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 8  Min, Max       52, 89       56, 88       51, 88           5               2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 9   Missing            0            0            0           6               2</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A global `where` filter applies to every layer</span></span></span>
+<span class="r-in"><span><span class="va">safety</span> <span class="op">&lt;-</span> <span class="fu">tplyr_spec</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  where <span class="op">=</span> <span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"SEX"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">safety</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1       res2       res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         F 53 (61.6%) 40 (47.6%) 50 (59.5%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         M 33 (38.4%) 44 (52.4%) 34 (40.5%)           2               1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

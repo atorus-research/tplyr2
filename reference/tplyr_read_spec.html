@@ -61,6 +61,7 @@ string representations."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -70,7 +71,7 @@ string representations."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Read a tplyr_spec from JSON or YAML</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/serialize.R" class="external-link"><code>R/serialize.R</code></a></small>
       <div class="d-none name"><code>tplyr_read_spec.Rd</code></div>
     </div>
 
@@ -96,7 +97,51 @@ string representations.</p>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tplyr_spec object</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="tplyr_write_spec.html">tplyr_write_spec()</a></code> to write one.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  where <span class="op">=</span> <span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span>, by <span class="op">=</span> <span class="st">"SEX"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"spec.json"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_write_spec.html">tplyr_write_spec</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">path</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The round trip reproduces the spec, and the same table</span></span></span>
+<span class="r-in"><span><span class="va">spec2</span> <span class="op">&lt;-</span> <span class="fu">tplyr_read_spec</span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">spec2</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> tplyr2 table specification</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Column variables: TRT01PWhere: SAFFL == "Y"Layers: 1[1] count: AGEGR1 (Layer 1)</span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span>, <span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec2</span>, <span class="va">tplyr_adsl</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] TRUE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># tplyr_build() also accepts a spec file path directly</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">path</span>, <span class="va">tplyr_adsl</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1 rowlabel2       res1       res2       res3 ord_layer_1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         F       &lt;65  9 (10.5%)  5 ( 6.0%)  5 ( 6.0%)           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2         F     65-80 22 (25.6%) 28 (33.3%) 28 (33.3%)           2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3         F       &gt;80 22 (25.6%)  7 ( 8.3%) 17 (20.2%)           3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4         M       &lt;65  5 ( 5.8%)  6 ( 7.1%)  3 ( 3.6%)           4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5         M     65-80 20 (23.3%) 27 (32.1%) 19 (22.6%)           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6         M       &gt;80  8 ( 9.3%) 11 (13.1%) 12 (14.3%)           6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

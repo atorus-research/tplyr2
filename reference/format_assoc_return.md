@@ -34,7 +34,8 @@ format_assoc_return(raw, format, label = "assoc_test fn", group = NULL)
 
 - format:
 
-  An [`f_str`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  An
+  [`f_str`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   object; its variable count determines how many values a numeric return
   must supply.
 

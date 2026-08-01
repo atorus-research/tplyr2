@@ -1,7 +1,7 @@
 # Retrieve raw statistic values from a tplyr_build result
 
 Filters the raw numeric data for a specific layer and statistic. Use
-[`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+[`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md)
 to get every statistic for the layer.
 
 ## Usage
@@ -15,7 +15,7 @@ tplyr_stats_data(result, layer, statistic)
 - result:
 
   A data.frame produced by
-  [`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+  [`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 
 - layer:
 

@@ -12,7 +12,7 @@ Every number tplyr2 puts on the page passes through a **format string**:
 a compact template that declares how wide each numeric field is, how
 many decimal places it carries, and what literal text surrounds it. You
 write format strings with
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md),
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md),
 and the same object drives count cells, descriptive statistics, shift
 counts, risk differences, p-values, and standalone formatting of numbers
 that never went through a layer at all.
@@ -22,10 +22,10 @@ format strings attach for each layer type, which statistic names are
 available, how rounding works, and what happens when a value is missing.
 Two companion vignettes build on it:
 
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – letting the *data* set the decimal width (`a`/`A`), and closing the
   gap between a number and its delimiter (`X`/`A`).
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – the regulatory display rules layered on top: `<1%`, zero-count
   suppression, statistics in their own columns.
 
@@ -58,13 +58,13 @@ show_table <- function(x, ...) {
 This is not a trick reserved for vignettes – it is the same problem you
 hit shipping a tplyr2 table to any HTML or RTF report, which is why
 tplyr2 exports
-[`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md).
+[`replace_leading_whitespace()`](https://atorus-research.github.io/tplyr2/reference/replace_leading_whitespace.md).
 Row labels get that treatment, so their indentation survives but long
 terms can still wrap; numeric cells get every space converted, so their
 alignment is exact. See
-[`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md).
+[`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md).
 
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 does the other half of the work: it strips the internal `ord_layer_*`
 bookkeeping columns and hands back just the `rowlabel*`, `res*`,
 `rdiff*`, and `pval*` columns that belong on the page.
@@ -98,7 +98,7 @@ parentheses, brackets, commas, slashes, percent signs, even a leading
 
 The number of format groups must match the number of statistic names,
 and
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 tells you immediately when it does not:
 
 ``` r
@@ -152,7 +152,7 @@ apply_formats(f_str("xx.x (xx.xx)", "mean", "sd"), 3.2, 1)   # units live in the
 
 One further exception: a `+` immediately after a format group and
 followed by digits is the auto-precision offset (see
-[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)),
+[`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)),
 not literal text, so it disappears from the output. A space in front of
 it restores the literal:
 
@@ -201,7 +201,7 @@ apply_formats(f_str("x.x", "v"), c(5.55, 1234.567))
 
 If a column goes ragged, the field was declared too narrow. Widen it, or
 let the data choose the width for you with auto-precision (see
-[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)).
+[`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)).
 
 Negative numbers consume one position for the sign, and a value that
 rounds to negative zero is normalized so it never prints as `-0.0`:
@@ -215,7 +215,7 @@ apply_formats(f_str("xx.x", "v"), c(-2.34, 5.6, -0.04))
 ## Where Format Strings Go
 
 Format strings live in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md),
 but the shape of the `format_strings` argument depends on the layer
 type.
 
@@ -259,7 +259,7 @@ entry.
 ### Descriptive statistics layers: a named list, one entry per row
 
 A
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
 layer produces a *block* of rows, so `format_strings` is a named list.
 Each **name** becomes the row label and each **value** is the format
 string for that row. List order is row order.
@@ -307,22 +307,22 @@ sensible default widths.
 
 ### Analyze layers: whatever your function returns
 
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 calls a function you supply, so the statistic names are the column names
 of the data frame it returns. See
-[`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md).
+[`vignette("analyze")`](https://atorus-research.github.io/tplyr2/articles/analyze.md).
 
 ### One format string per column: `stat_columns`
 
 When the display wants the subject count and the event count in
 *separate columns* rather than packed into one cell, that is
 `stat_columns` rather than `format_strings`. See
-[`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
+[`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md).
 
 ## Statistic Keywords by Layer Type
 
 The names passed to
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 after the template must be statistics the layer actually computes. Here
 is the complete set.
 
@@ -369,14 +369,14 @@ show_table(tplyr_build(spec, tplyr_adsl))
 
 What the denominator behind `total` and `pct` actually is – the column
 total, a subgroup, a separate population dataset – is the subject of
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 The four confidence-interval keywords are computed only when a format
 string references one, and are configured with `ci_method` and
 `ci_level`; see
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
 and
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md).
 
 ### Descriptive statistics layers
 
@@ -443,15 +443,15 @@ Point the same format string at a BDS dataset with many rows per subject
 and `total` counts records, so `pct` becomes the share of *records*
 rather than of subjects. On multi-record data, supply a
 one-row-per-subject
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 if you want a subject-level percent. `pct` divides `n` by the same
 denominator the layer would use for a count, so `denoms_by` and
 `denom_where` apply to desc layers as well as count layers – see
-[`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md).
+[`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md).
 
 Any statistic registered through `custom_summaries` is also available by
 name – see
-[`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md).
+[`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md).
 
 Referencing a name the layer does not compute is a **warning**, not an
 error, because custom summaries can introduce arbitrary names. Read
@@ -546,7 +546,7 @@ The option applies to every rounded value in a build – percentages,
 means, quartiles, risk differences – so a table stays internally
 consistent either way. Set it once at the top of your script or in
 `.Rprofile` rather than per table; see
-[`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md).
+[`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md).
 
 ## Missing Values and the `empty` Argument
 
@@ -565,7 +565,7 @@ apply_formats(f_str("xx.x (xx.xx)", "mean", "sd"), NA, NA)
 
 Many tables want something visible instead – a dash, an `NE`, an `N/A`.
 The `empty` argument of
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 supplies it, keyed by the reserved name `.overall`:
 
 ``` r
@@ -653,12 +653,12 @@ long, the same rule format strings follow for numbers.
 
 ## Formatting Numbers Outside a Layer
 
-[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+[`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
 is the engine behind every cell, and it is exported so you can point it
 at numbers that never went through a layer – a model-based p-value, an
 LS-mean from `emmeans`, a hazard ratio. Formatting these through the
 same
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 machinery keeps their rounding, width, and alignment identical to the
 layer-computed cells beside them, which
 [`sprintf()`](https://rdrr.io/r/base/sprintf.html) and
@@ -720,25 +720,25 @@ apply_formats(f_str("xx (xx.x%)", "n", "pct"),
 
 Inside a count layer you would reach for the `pct_lt` and `pct_gt`
 settings instead, which drive exactly this machinery; see
-[`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
+[`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md).
 
 The `precision` argument accepts resolved auto-precision widths; see
-[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md).
+[`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md).
 
 A full worked example of binding externally computed statistics onto a
 built table lives in
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md).
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md).
 
 ## Where to Go From Here
 
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – data-driven decimal widths with `a`/`A`, and parenthesis hugging
   with `X`/`A`.
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – `<1%` and `>99%` percents, zero-count suppression, statistics as
   separate columns, denominator rows.
-- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+- [`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md)
   – reformatting, indenting, and wrapping a built table on its way to a
   renderer.
-- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+- [`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md)
   – session options including `IBMRounding` and `quantile_type`.

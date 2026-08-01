@@ -61,6 +61,7 @@ a formatted output data frame."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -70,7 +71,7 @@ a formatted output data frame."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Build a tplyr2 table from a spec and data</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/build.R" class="external-link"><code>R/build.R</code></a></small>
       <div class="d-none name"><code>tplyr_build.Rd</code></div>
     </div>
 
@@ -107,14 +108,76 @@ back to source data rows via <code><a href="tplyr_meta_result.html">tplyr_meta_r
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional named arguments to override spec-level parameters</p></dd>
+<dd><p>Additional named arguments overriding spec-level parameters. Names
+must match a field of <code>spec</code> (or <code>where</code>/<code>pop_data</code>); an unrecognized name
+is an error rather than a silent no-op. Because <code>...</code> is evaluated eagerly,
+a <code>where</code> override must be a character string or a quoted expression, not
+the bare expression <code><a href="tplyr_spec.html">tplyr_spec()</a></code> accepts.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A data.frame with rowlabel, res, and ord columns</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="tplyr_spec.html">tplyr_spec()</a></code> to build the specification, and
+<code><a href="tplyr_numeric_data.html">tplyr_numeric_data()</a></code> for the unformatted values behind the cells.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">tplyr_build</span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1       res2       res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       &lt;65 14 (16.3%) 11 (13.1%)  8 ( 9.5%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     65-80 42 (48.8%) 55 (65.5%) 47 (56.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       &gt;80 30 (34.9%) 18 (21.4%) 29 (34.5%)           3               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Override spec fields at build time without editing the spec. Overrides go</span></span></span>
+<span class="r-in"><span><span class="co"># through `...`, which evaluates eagerly, so a `where` must be a string or</span></span></span>
+<span class="r-in"><span><span class="co"># quoted -- not the bare expression tplyr_spec() accepts.</span></span></span>
+<span class="r-in"><span><span class="fu">tplyr_build</span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span>, where <span class="op">=</span> <span class="st">"SEX == 'F'"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1       res2       res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       &lt;65  9 (17.0%)  5 (12.5%)  5 (10.0%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     65-80 22 (41.5%) 28 (70.0%) 28 (56.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       &gt;80 22 (41.5%)  7 (17.5%) 17 (34.0%)           3               1</span>
+<span class="r-in"><span><span class="fu">tplyr_build</span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span>, where <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">quote</a></span><span class="op">(</span><span class="va">SEX</span> <span class="op">==</span> <span class="st">"F"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1       res1       res2       res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1       &lt;65  9 (17.0%)  5 (12.5%)  5 (10.0%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2     65-80 22 (41.5%) 28 (70.0%) 28 (56.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3       &gt;80 22 (41.5%)  7 (17.5%) 17 (34.0%)           3               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Population data supplies the denominators and the header N</span></span></span>
+<span class="r-in"><span><span class="va">pop_spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span></span>
+<span class="r-in"><span>  pop_data <span class="op">=</span> <span class="fu"><a href="pop_data.html">pop_data</a></span><span class="op">(</span>cols <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRTA"</span> <span class="op">=</span> <span class="st">"TRT01P"</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AEBODSYS"</span>,</span></span>
+<span class="r-in"><span>                settings <span class="op">=</span> <span class="fu"><a href="layer_settings.html">layer_settings</a></span><span class="op">(</span>distinct_by <span class="op">=</span> <span class="st">"USUBJID"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu">tplyr_build</span><span class="op">(</span><span class="va">pop_spec</span>, <span class="va">tplyr_adae</span>, pop_data <span class="op">=</span> <span class="va">tplyr_adsl</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                              rowlabel1       res1       res2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1                                    CARDIAC DISORDERS  5 ( 5.8%)  6 ( 7.1%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2           CONGENITAL, FAMILIAL AND GENETIC DISORDERS  0 ( 0.0%)  1 ( 1.2%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3                           GASTROINTESTINAL DISORDERS  6 ( 7.0%)  6 ( 7.1%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 GENERAL DISORDERS AND ADMINISTRATION SITE CONDITIONS 11 (12.8%) 21 (25.0%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5                              IMMUNE SYSTEM DISORDERS  0 ( 0.0%)  0 ( 0.0%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6                          INFECTIONS AND INFESTATIONS  5 ( 5.8%)  4 ( 4.8%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  6 ( 7.1%)           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2  0 ( 0.0%)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3  3 ( 3.6%)           3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 21 (25.0%)           4               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  1 ( 1.2%)           5               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6  3 ( 3.6%)           6               1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

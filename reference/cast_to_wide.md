@@ -32,7 +32,7 @@ cast_to_wide(
 - col_levels:
 
   Named list mapping factor column variables to their level order (from
-  [`get_col_levels()`](https://github.com/mstackhouse/tplyr2/reference/get_col_levels.md));
+  [`get_col_levels()`](https://atorus-research.github.io/tplyr2/reference/get_col_levels.md));
   orders the resulting `res*` columns by factor levels instead of
   alphabetically. NULL leaves dcast's default alphabetical column order.
 

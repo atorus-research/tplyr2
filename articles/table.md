@@ -3,16 +3,16 @@
 ## Introduction
 
 In tplyr2, a table is defined by its **specification**. The
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
 function captures the full configuration – column variables, filters,
 treatment groups, population data, and layers – as a pure description of
 what you want. No data processing happens until you call
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md).
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md).
 This vignette covers the spec-level parameters that control the overall
 structure of your table.
 
 Every tplyr2 workflow follows two steps: **define** a spec with
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md),
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md),
 then **build** the table with `tplyr_build(spec, data)`. Let’s look at
 an example using the included `tplyr_adsl` dataset.
 
@@ -249,7 +249,7 @@ events, but percentages should reflect the full safety population from
 `ADSL`.
 
 The
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 configuration specifies how the population dataset maps to the spec. The
 actual data is provided at build time.
 
@@ -296,7 +296,7 @@ A few things to note:
 
 After building a table with population data, you can extract the header
 N values using
-[`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md):
+[`tplyr_header_n()`](https://atorus-research.github.io/tplyr2/reference/tplyr_header_n.md):
 
 ``` r
 
@@ -317,7 +317,7 @@ headers or integrate with other reporting tools.
 
 The population data is **not** subject to the spec-level `where` filter.
 It uses its own `where` clause, specified in the
-[`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+[`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
 call:
 
 ``` r
@@ -387,7 +387,7 @@ count is zero.
 
 Sometimes completing all combinations is too aggressive. The
 `limit_data_by` parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 restricts the completion grid to combinations that actually exist in the
 data. This is essential for AE tables where preferred terms should only
 appear under their actual body system:
@@ -437,28 +437,28 @@ This vignette covered the table-level properties that control the
 overall structure of your tplyr2 output. For details on specific layer
 types and additional features, see:
 
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   –
-  [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+  [`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
   for frequency tables, including nested counts, distinct subject
   counts, population data, and missing value handling.
-- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+- [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
   – denominator control in depth (this vignette and the denominators
   vignette both cover `pop_data`; that one goes deeper on `denoms_by`,
   `denom_where`, and confidence intervals).
-- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+- [`vignette("adverse-events")`](https://atorus-research.github.io/tplyr2/articles/adverse-events.md)
   – a full adverse event table built end to end, the canonical use of
   population data.
-- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+- [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md)
   –
-  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+  [`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
   for summary statistics.
-- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+- [`vignette("shift")`](https://atorus-research.github.io/tplyr2/articles/shift.md)
   –
-  [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md)
+  [`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md)
   for baseline-by-post-baseline cross-tabulations.
-- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+- [`vignette("sort")`](https://atorus-research.github.io/tplyr2/articles/sort.md)
   – how tplyr2 orders rows.
-- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+- [`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md)
   – package-level options via
-  [`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md).
+  [`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md).

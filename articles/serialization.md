@@ -4,7 +4,7 @@
 
 One of the central design principles of tplyr2 is the separation of
 specification from data. A
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
 object describes *what* a table should contain – the column structure,
 the layers, the formatting rules – without touching any actual dataset.
 Data is only supplied at build time via `tplyr_build(spec, data)`.
@@ -28,7 +28,7 @@ several practical workflows:
 ## Writing a Spec to JSON
 
 The
-[`tplyr_write_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_write_spec.md)
+[`tplyr_write_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_write_spec.md)
 function takes a spec object and a file path. The format is determined
 by the file extension: use `.json` for JSON output.
 
@@ -64,7 +64,7 @@ read it back and build the same table.
 ## Reading a Spec Back
 
 The
-[`tplyr_read_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_read_spec.md)
+[`tplyr_read_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_read_spec.md)
 function reads a spec from a JSON or YAML file and reconstructs the full
 `tplyr_spec` object, including all expressions, format strings, and
 layer configurations.
@@ -152,7 +152,7 @@ This preserves the original filter logic exactly.
 
 ### Format Strings
 
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 objects are stored as their component parts: the format template, the
 variable names, and the optional `empty` parameter. A marker class field
 (`_class: "tplyr_f_str"`) identifies them for reconstruction.
@@ -166,18 +166,18 @@ variable names, and the optional `empty` parameter. A marker class field
 ```
 
 When read back, the
-[`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
 constructor is called with these components, re-parsing the format
 string and rebuilding the internal structure.
 
 ### Labels in `by`
 
 When you use
-[`label()`](https://github.com/mstackhouse/tplyr2/reference/label.md) in
-a `by` parameter to create an explicit text label, the label is
+[`label()`](https://atorus-research.github.io/tplyr2/reference/label.md)
+in a `by` parameter to create an explicit text label, the label is
 serialized with a type marker so it can be distinguished from a data
 variable name. A single
-[`label()`](https://github.com/mstackhouse/tplyr2/reference/label.md)
+[`label()`](https://atorus-research.github.io/tplyr2/reference/label.md)
 uses the key `values`:
 
 ``` json
@@ -194,7 +194,7 @@ variable names (character strings) pass through as-is.
 ### Functions
 
 Analyze layers created with
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 include a user-defined function. These are serialized by deparsing the
 entire function definition to a string.
 
@@ -213,7 +213,7 @@ are self-contained.
 ### Layer Settings
 
 The full
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md)
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md)
 surface round-trips, not just the simple flags. Fields that hold richer
 objects are serialized with the same machinery shown above – `f_str`
 objects via the `_class` marker, expressions via `_expr`, functions via
@@ -223,7 +223,7 @@ formatting settings are preserved:
 - `stat_columns` – the named list of `f_str` objects (one result column
   per statistic).
 - `risk_diff` – comparisons, `ci`, and the optional `f_str` `format`.
-- [`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+- [`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
   – the `fn` (as a deparsed function), `format`, `label`, `reference`,
   `comparisons`, and `total_row`.
 - `ci_method` / `ci_level` – the single-proportion confidence-interval
@@ -233,7 +233,7 @@ formatting settings are preserved:
   (expressions), and `precision_data` (a data frame).
 
 So a spec carrying an
-[`assoc_test()`](https://github.com/mstackhouse/tplyr2/reference/assoc_test.md)
+[`assoc_test()`](https://atorus-research.github.io/tplyr2/reference/assoc_test.md)
 Fisher column, `stat_columns`, and a custom `risk_diff` format can be
 written to disk and read back with those settings intact.
 
@@ -434,8 +434,8 @@ configured, in a format that does not require R to interpret.
 
 ## See Also
 
-- [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md)
+- [`vignette("ard")`](https://atorus-research.github.io/tplyr2/articles/ard.md)
   – exporting the computed *results* (not just the spec) as Analysis
   Results Data, which pairs with a saved spec for full reproducibility.
-- [`vignette("metadata")`](https://github.com/mstackhouse/tplyr2/articles/metadata.md)
+- [`vignette("metadata")`](https://atorus-research.github.io/tplyr2/articles/metadata.md)
   – cell-level traceability back to source data.

@@ -23,7 +23,10 @@ apply_formats(
 
 - fmt:
 
-  An f_str object or character format string
+  An
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
+  object. A bare character format string is rejected, since the variable
+  names are what bind `...` to the format groups.
 
 - ...:
 
@@ -37,7 +40,7 @@ apply_formats(
 
   Optional numeric less-than threshold applied to the group named by
   `lt_gt_group`: values in `(0, lt)` render as `"<" lt` (see
-  [`format_number_vec()`](https://github.com/mstackhouse/tplyr2/reference/format_number_vec.md)).
+  [`format_number_vec()`](https://atorus-research.github.io/tplyr2/reference/format_number_vec.md)).
 
 - gt:
 
@@ -74,3 +77,36 @@ apply_formats(
 ## Value
 
 Character vector of formatted values
+
+## See also
+
+[`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
+for the format-string grammar.
+
+## Examples
+
+``` r
+# Vectorized: one formatted string per element
+apply_formats(f_str("xx (xx.x%)", "n", "pct"),
+              n = c(5, 12, 103), pct = c(4.5, 33.333, 99.9))
+#> [1] " 5 ( 4.5%)"  "12 (33.3%)"  "103 (99.9%)"
+
+# `na` replaces the default blank-width fill
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA))
+#> [1] " 1.2" "    "
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "NE")
+#> [1] " 1.2" "NE"  
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, NA), na = "")
+#> [1] " 1.2" ""    
+
+# lt/gt thresholds, targeting the percent group (index 2)
+apply_formats(f_str("xx (xx.x%)", "n", "pct"), n = c(1, 199), pct = c(0.4, 99.7),
+              lt = 1, gt = 99, lt_gt_group = 2)
+#> [1] " 1 (<1.0%)"   "199 (>99.0%)"
+
+# Pad to a fixed width for row-binding against other output
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10)
+#> [1] " 1.2      " "10.8      "
+apply_formats(f_str("xx.x", "mean"), mean = c(1.2, 10.75), width = 10, pad = "left")
+#> [1] "       1.2" "      10.8"
+```

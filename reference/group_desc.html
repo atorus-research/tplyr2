@@ -59,6 +59,7 @@
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -68,7 +69,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Create a descriptive statistics layer</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/layers.R" class="external-link"><code>R/layers.R</code></a></small>
       <div class="d-none name"><code>group_desc.Rd</code></div>
     </div>
 
@@ -105,7 +106,66 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tplyr_desc_layer object</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="layer_settings.html">layer_settings()</a></code> for auto-precision and custom summaries.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Default summary: n, Mean (SD), Median, Q1/Q3, Min/Max, Missing</span></span></span>
+<span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu">group_desc</span><span class="op">(</span><span class="st">"AGE"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">spec</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1         res1         res2         res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         n           86           84           84           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Mean (SD) 75.2 ( 8.59) 74.4 ( 7.89) 75.7 ( 8.29)           2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    Median         76.0         76.0         77.5           3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    Q1, Q3   69.2, 81.8   70.8, 80.0   71.0, 82.0           4               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5  Min, Max       52, 89       56, 88       51, 88           5               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Missing            0            0            0           6               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Choose the statistics and their formats</span></span></span>
+<span class="r-in"><span><span class="va">custom</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu">group_desc</span><span class="op">(</span><span class="st">"AGE"</span>, settings <span class="op">=</span> <span class="fu"><a href="layer_settings.html">layer_settings</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>        <span class="st">"n"</span>         <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx"</span>, <span class="st">"n"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>        <span class="st">"Mean (SD)"</span> <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx.x (xx.xx)"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>      <span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">custom</span>, <span class="va">tplyr_adsl</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1         res1         res2         res3 ord_layer_1 ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1         n           86           84           84           1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 Mean (SD) 75.2 ( 8.59) 74.4 ( 7.89) 75.7 ( 8.29)           2               1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Several target variables in one layer, grouped by visit</span></span></span>
+<span class="r-in"><span><span class="va">multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRTA"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span><span class="fu">group_desc</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AVAL"</span>, <span class="st">"CHG"</span><span class="op">)</span>, by <span class="op">=</span> <span class="st">"AVISIT"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="tplyr_build.html">tplyr_build</a></span><span class="op">(</span><span class="va">multi</span>, <span class="va">tplyr_adlb</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   rowlabel1 rowlabel2 rowlabel3 res1 res2 res3 ord_layer_1 ord_layer_2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1  Baseline      AVAL         n    8   10    7         101           1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2    Week 2      AVAL         n    8    9    7         101           2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3    Week 4      AVAL         n    8    8    6         101           3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4    Week 6      AVAL         n    6    8    5         101           4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5    Week 8      AVAL         n    6    6    4         101           5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6   Week 12      AVAL         n    6    6    2         101           6</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ord_layer_index</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5               1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6               1</span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

@@ -27,7 +27,7 @@ prepare_cast_column(dt, cols, col_levels = NULL)
 - col_levels:
 
   Named list from
-  [`get_col_levels()`](https://github.com/mstackhouse/tplyr2/reference/get_col_levels.md)
+  [`get_col_levels()`](https://atorus-research.github.io/tplyr2/reference/get_col_levels.md)
   (may be NULL/empty)
 
 ## Value

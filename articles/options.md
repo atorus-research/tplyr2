@@ -9,7 +9,7 @@ limits, custom summary functions, and scientific notation handling –
 without repeating yourself in every spec.
 
 All tplyr2 options are managed through a single function:
-[`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md).
+[`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md).
 When called with no arguments, it returns the current values of all
 options. When called with named arguments, it sets those options. Under
 the hood, each option is stored as a standard R option with the
@@ -20,7 +20,7 @@ prefer.
 ## Viewing Current Options
 
 To see what every option is currently set to, call
-[`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
+[`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md)
 with no arguments:
 
 ``` r
@@ -138,7 +138,7 @@ The setting applies to every rounded value in a build — percentages,
 means, quartiles, risk differences — so a table is internally consistent
 either way. Negative values round away from zero as well, so `-2.5`
 becomes `-3`. See
-[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+[`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
 for how rounding interacts with format string widths.
 
 ## Quantile Algorithm
@@ -277,14 +277,14 @@ tplyr2_options(precision_cap = NULL)
 
 Note that the `precision_cap` option serves as a global default. If a
 specific layer provides its own `precision_cap` in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md),
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md),
 the layer-level cap takes priority. This gives you a safety net at the
 session level while allowing individual layers to override when needed.
 
 The cap applies to the width measured from the data, *before* any `+N`
 offset in the format string is added – so `dec = 1` does not guarantee
 one decimal in the output.
-[`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+[`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
 covers the auto-precision system in full, including `precision_by`,
 `precision_on`, and `precision_data`.
 
@@ -348,7 +348,7 @@ A few things to keep in mind about custom summaries:
   the build.
 - Session-level custom summaries can be overridden by layer-level
   `custom_summaries` in
-  [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+  [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
   This means you can set study-wide defaults and still customize
   individual layers.
 - A custom summary can even share a name with a built-in statistic
@@ -366,7 +366,7 @@ R may format very large or very small numbers in scientific notation
 (e.g., `1e+05` instead of `100000`). This is controlled by R’s `scipen`
 option, which sets a penalty against scientific notation – higher values
 make it less likely. During
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md),
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md),
 tplyr2 temporarily overrides `scipen` to prevent scientific notation
 from appearing in formatted output.
 
@@ -384,7 +384,7 @@ tplyr2_options()$tplyr2.scipen
 ```
 
 The `scipen` override is applied only for the duration of
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 and is automatically restored to its previous value when the build
 completes. This means it will not affect other code in your session.
 
@@ -393,7 +393,7 @@ completes. This means it will not affect other code in your session.
 Clinical datasets usually carry a SAS-style `label` attribute on each
 column (the descriptive text like “Age” or “Planned Treatment”). The
 helper
-[`get_data_labels()`](https://github.com/mstackhouse/tplyr2/reference/get_data_labels.md)
+[`get_data_labels()`](https://atorus-research.github.io/tplyr2/reference/get_data_labels.md)
 pulls those labels off a data frame as a named character vector,
 returning `NA` for any column that has no label. It is handy for
 building column headers or annotating output.
@@ -443,18 +443,18 @@ tplyr2_options()
 Because tplyr2 options are stored as standard R options (with the
 `tplyr2.` prefix), they reset automatically when you start a new R
 session. If you want your options to persist, place the
-[`tplyr2_options()`](https://github.com/mstackhouse/tplyr2/reference/tplyr2_options.md)
+[`tplyr2_options()`](https://atorus-research.github.io/tplyr2/reference/tplyr2_options.md)
 call in your project’s `.Rprofile` or at the top of your analysis
 script.
 
 ### See Also
 
-- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+- [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md)
   – descriptive statistics, where `quantile_type` and `custom_summaries`
   apply.
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – auto-precision, which `precision_cap` bounds.
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – the
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   system that IBM rounding feeds into.

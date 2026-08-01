@@ -28,10 +28,10 @@ devtools::install_github("atorus-research/tplyr2")
 ## Example
 
 Every table starts with a
-[`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+[`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
 that declares the column structure and layers. Data is supplied at build
 time with
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md).
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md).
 
 ``` r
 
@@ -72,19 +72,19 @@ knitr::kable(result[, !grepl("^ord", names(result))])
 ## Key Concepts
 
 - **Spec**: A
-  [`tplyr_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_spec.md)
+  [`tplyr_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_spec.md)
   object is pure configuration – no data, no side effects. It describes
   the column variable, filters, population data, and layers.
 - **Layers**: Each layer is a summary block created with
-  [`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md),
-  [`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md),
-  [`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md),
+  [`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md),
+  [`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md),
+  [`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md),
   or
-  [`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md).
+  [`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md).
 - **Build**: `tplyr_build(spec, data)` executes the spec against a
   dataset and returns a formatted data frame.
 - **Format strings**:
-  [`f_str()`](https://github.com/mstackhouse/tplyr2/reference/f_str.md)
+  [`f_str()`](https://atorus-research.github.io/tplyr2/reference/f_str.md)
   declarations control numeric precision and alignment (e.g.,
   `f_str("xx.x (xx.xx)", "mean", "sd")`).
 
@@ -139,25 +139,25 @@ custom summary functions.
 
 Cross-tabulate a baseline value against a post-baseline value within
 each treatment arm using
-[`group_shift()`](https://github.com/mstackhouse/tplyr2/reference/group_shift.md).
+[`group_shift()`](https://atorus-research.github.io/tplyr2/reference/group_shift.md).
 
 ### Analyze Layers
 
 Run user-defined analysis functions with
-[`group_analyze()`](https://github.com/mstackhouse/tplyr2/reference/group_analyze.md)
+[`group_analyze()`](https://atorus-research.github.io/tplyr2/reference/group_analyze.md)
 for full flexibility.
 
 ## Features
 
 - **Population data**: Control denominators with
-  [`pop_data()`](https://github.com/mstackhouse/tplyr2/reference/pop_data.md)
+  [`pop_data()`](https://atorus-research.github.io/tplyr2/reference/pop_data.md)
   and display `(N=n)` header counts with
-  [`tplyr_header_n()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_header_n.md)
+  [`tplyr_header_n()`](https://atorus-research.github.io/tplyr2/reference/tplyr_header_n.md)
 - **Total & custom groups**: Add “Total” columns or combine treatment
   arms with
-  [`total_group()`](https://github.com/mstackhouse/tplyr2/reference/total_group.md)
+  [`total_group()`](https://atorus-research.github.io/tplyr2/reference/total_group.md)
   and
-  [`custom_group()`](https://github.com/mstackhouse/tplyr2/reference/custom_group.md)
+  [`custom_group()`](https://atorus-research.github.io/tplyr2/reference/custom_group.md)
 - **Auto-precision**: Dynamically set decimal places based on collected
   precision with the precision cap system
 - **Risk difference**: Compute risk differences and confidence intervals
@@ -167,69 +167,69 @@ for full flexibility.
 - **Metadata**: Cell-level traceability to trace any result back to its
   source records
 - **Numeric data**: Access raw unformatted results via
-  [`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md)
+  [`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md)
 - **Serialization**: Save and load specs as JSON or YAML with
-  [`tplyr_write_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_write_spec.md)
+  [`tplyr_write_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_write_spec.md)
   /
-  [`tplyr_read_spec()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_read_spec.md)
+  [`tplyr_read_spec()`](https://atorus-research.github.io/tplyr2/reference/tplyr_read_spec.md)
 - **ARD**: Convert to and from Analysis Results Data format with
-  [`tplyr_to_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_to_ard.md)
+  [`tplyr_to_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_to_ard.md)
   /
-  [`tplyr_from_ard()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_from_ard.md)
+  [`tplyr_from_ard()`](https://atorus-research.github.io/tplyr2/reference/tplyr_from_ard.md)
 
 ## Learning More
 
 Getting started
 
-- [`vignette("tplyr2")`](https://github.com/mstackhouse/tplyr2/articles/tplyr2.md)
+- [`vignette("tplyr2")`](https://atorus-research.github.io/tplyr2/articles/tplyr2.md)
   – Getting started
-- [`vignette("table")`](https://github.com/mstackhouse/tplyr2/articles/table.md)
+- [`vignette("table")`](https://atorus-research.github.io/tplyr2/articles/table.md)
   – Spec-level table properties
 
 Layers
 
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – Count layers in depth
-- [`vignette("desc")`](https://github.com/mstackhouse/tplyr2/articles/desc.md)
+- [`vignette("desc")`](https://atorus-research.github.io/tplyr2/articles/desc.md)
   – Descriptive statistics layers
-- [`vignette("shift")`](https://github.com/mstackhouse/tplyr2/articles/shift.md)
+- [`vignette("shift")`](https://atorus-research.github.io/tplyr2/articles/shift.md)
   – Shift layers
-- [`vignette("analyze")`](https://github.com/mstackhouse/tplyr2/articles/analyze.md)
+- [`vignette("analyze")`](https://atorus-research.github.io/tplyr2/articles/analyze.md)
   – Custom analyze layers
-- [`vignette("adverse-events")`](https://github.com/mstackhouse/tplyr2/articles/adverse-events.md)
+- [`vignette("adverse-events")`](https://atorus-research.github.io/tplyr2/articles/adverse-events.md)
   – A full adverse event table, end to end
 
 Formatting
 
-- [`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+- [`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
   – The format string system
-- [`vignette("precision_alignment")`](https://github.com/mstackhouse/tplyr2/articles/precision_alignment.md)
+- [`vignette("precision_alignment")`](https://atorus-research.github.io/tplyr2/articles/precision_alignment.md)
   – Data-driven precision and parenthesis hugging
-- [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md)
+- [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md)
   – `<1%`, zero-count suppression, statistics as columns
 
 Table customization
 
-- [`vignette("denom")`](https://github.com/mstackhouse/tplyr2/articles/denom.md)
+- [`vignette("denom")`](https://atorus-research.github.io/tplyr2/articles/denom.md)
   – Denominators, population data, header N
-- [`vignette("sort")`](https://github.com/mstackhouse/tplyr2/articles/sort.md)
+- [`vignette("sort")`](https://atorus-research.github.io/tplyr2/articles/sort.md)
   – Ordering rows and layers
-- [`vignette("options")`](https://github.com/mstackhouse/tplyr2/articles/options.md)
+- [`vignette("options")`](https://atorus-research.github.io/tplyr2/articles/options.md)
   – Session options
-- [`vignette("post_processing")`](https://github.com/mstackhouse/tplyr2/articles/post_processing.md)
+- [`vignette("post_processing")`](https://atorus-research.github.io/tplyr2/articles/post_processing.md)
   – Post-processing helpers
 
 Statistics and traceability
 
-- [`vignette("riskdiff")`](https://github.com/mstackhouse/tplyr2/articles/riskdiff.md)
+- [`vignette("riskdiff")`](https://atorus-research.github.io/tplyr2/articles/riskdiff.md)
   – Risk difference columns
-- [`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+- [`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
   – Association tests and binding external model results
-- [`vignette("metadata")`](https://github.com/mstackhouse/tplyr2/articles/metadata.md)
+- [`vignette("metadata")`](https://atorus-research.github.io/tplyr2/articles/metadata.md)
   – Cell-level metadata and traceability
-- [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)
+- [`vignette("serialization")`](https://atorus-research.github.io/tplyr2/articles/serialization.md)
   – Saving and loading specs
-- [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md)
+- [`vignette("ard")`](https://atorus-research.github.io/tplyr2/articles/ard.md)
   – Analysis Results Data conversion
-- [`vignette("migration")`](https://github.com/mstackhouse/tplyr2/articles/migration.md)
+- [`vignette("migration")`](https://atorus-research.github.io/tplyr2/articles/migration.md)
   – Moving from Tplyr v1

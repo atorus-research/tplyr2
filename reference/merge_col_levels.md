@@ -20,7 +20,7 @@ merge_col_levels(pinned, layer_levels)
 - layer_levels:
 
   Named list from
-  [`get_col_levels()`](https://github.com/mstackhouse/tplyr2/reference/get_col_levels.md)
+  [`get_col_levels()`](https://atorus-research.github.io/tplyr2/reference/get_col_levels.md)
   on the layer data
 
 ## Value

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 produces a data.frame with `rowlabel*`, `res*`, and `ord_layer_*`
 columns. This output is complete and correct, but it is not yet ready
 for a polished report. Row labels still repeat across consecutive rows.
@@ -71,7 +71,7 @@ post-processing functions address both of these issues.
 
 ## Row Masks
 
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md)
 walks each `rowlabel*` column top-to-bottom and blanks any value that is
 identical to the row above it. This deduplication respects layer
 boundaries, so a label that appears at the end of one layer and the
@@ -131,7 +131,7 @@ kable(head(masked_breaks[, c("rowlabel1", "rowlabel2", "res1", "res2", "res3")],
 
 Many display formats expect a single row label column rather than
 separate `rowlabel1`, `rowlabel2`, etc.
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 takes the specified columns and collapses them into one column.
 Repeating parent values are split into their own rows, and each nesting
 level receives progressively more indentation.
@@ -167,7 +167,7 @@ repeated at each nesting level. The output column name defaults to
 Formatted tplyr2 strings like `" 5 ( 6.1%)"` are useful for display, but
 sometimes you need the underlying numbers for programmatic comparisons,
 sorting, or conditional formatting.
-[`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)
+[`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md)
 pulls out the Nth numeric value from each string.
 
 ``` r
@@ -189,7 +189,7 @@ of numeric values in a cell.
 
 ## Conditional Formatting
 
-[`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)
+[`apply_conditional_format()`](https://atorus-research.github.io/tplyr2/reference/apply_conditional_format.md)
 allows you to conditionally re-format a string of numbers based on a
 numeric value within the string itself. By selecting a “format group”
 (targeting a specific number within the string, numbered left to right),
@@ -220,13 +220,13 @@ preserve column alignment within the format group’s character space.
 > function is most often used for – rendering small percentages as `<1%`
 > and suppressing the percent on zero counts – have declarative
 > equivalents in
-> [`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md):
+> [`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md):
 > `pct_lt`/`pct_gt` and `zero_count_display`. Those run at build time,
 > so the underlying numeric data stays intact and the convention
 > survives serialization, metadata, and ARD conversion. See
-> [`vignette("display_conventions")`](https://github.com/mstackhouse/tplyr2/articles/display_conventions.md).
+> [`vignette("display_conventions")`](https://atorus-research.github.io/tplyr2/articles/display_conventions.md).
 > Use
-> [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md)
+> [`apply_conditional_format()`](https://atorus-research.github.io/tplyr2/reference/apply_conditional_format.md)
 > for the rules that have no setting – flagging a threshold, blanking a
 > cell on a condition the layer does not know about, reformatting a
 > bound external statistic.
@@ -236,7 +236,7 @@ preserve column alignment within the format group’s character space.
 tplyr2 uses leading spaces to align numbers within format fields. This
 works in fixed-width contexts (PDFs, monospaced fonts), but HTML
 collapses consecutive spaces.
-[`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md)
+[`replace_leading_whitespace()`](https://atorus-research.github.io/tplyr2/reference/replace_leading_whitespace.md)
 swaps each leading space for a non-breaking space (`\u00a0`), preserving
 alignment in web-based output.
 
@@ -258,7 +258,7 @@ any string. For example, you might use `"&nbsp;"` for raw HTML output.
 ## Standalone Format Application
 
 The
-[`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md)
+[`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md)
 function is the engine behind all of tplyr2’s string formatting, but it
 can also be used on its own. Given an `f_str` object and matching
 numeric vectors, it returns formatted character strings.
@@ -286,9 +286,9 @@ apply_formats(f_str("xx.x", "v"), c(2.3, NA, 12.7), width = 8)    # padded to 8
 ```
 
 When `na` applies to a cell, it wins and that cell is *not* padded. See
-[`vignette("format_strings")`](https://github.com/mstackhouse/tplyr2/articles/format_strings.md)
+[`vignette("format_strings")`](https://atorus-research.github.io/tplyr2/articles/format_strings.md)
 for the full argument list and
-[`vignette("binding-statistics")`](https://github.com/mstackhouse/tplyr2/articles/binding-statistics.md)
+[`vignette("binding-statistics")`](https://atorus-research.github.io/tplyr2/articles/binding-statistics.md)
 for a worked example of binding external results onto a built table.
 
 This is useful when you need to format numbers from external data
@@ -298,7 +298,7 @@ auto-precision formatting.
 
 ## Text Wrapping
 
-[`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md)
+[`str_indent_wrap()`](https://atorus-research.github.io/tplyr2/reference/str_indent_wrap.md)
 wraps long text strings to a specified width while automatically
 preserving any existing indentation and applying hyphenation to words
 that exceed the column width.
@@ -381,16 +381,16 @@ kable(head(display[, c("row_label", "res1", "res2", "res3")], 20))
 | CONSTIPATION                               | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
 When combining
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md)
 and
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md),
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md),
 note that
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 inserts its own stub rows and removes the original label columns, so it
 typically replaces the need for
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md).
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md).
 For deeply nested tables (3+ label columns), applying
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md)
 on the raw output first can still be useful.
 
 ### Adding Conditional Formatting to the Pipeline
@@ -433,7 +433,7 @@ kable(head(display_formatted[, c("row_label", "res1", "res2", "res3")], 15))
 ### Collapsing In Place (Nest Mode)
 
 By default
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md)
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md)
 inserts a stub row for each outer group (a header row with no results).
 Passing `nest = TRUE` instead collapses the labels *in place*: the outer
 value and its indented inner value share a single column with no extra
@@ -467,7 +467,7 @@ at least two), which makes it convenient for one-off relabeling as well.
 ## The Final Step: `as_display()`
 
 Once a table is post-processed,
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 trims it to just the columns a renderer needs, dropping the internal
 `ord_*` (and `row_id`) columns and preserving row order. That is
 normally the `rowlabel*`, `res*`, `rdiff*`, and `pval*` columns – but it
@@ -499,14 +499,14 @@ kable(head(final, 12))
 | SUPRAVENTRICULAR TACHYCARDIA | 0 ( 0.0%) | 0 ( 0.0%) | 1 ( 1.2%) |
 | TACHYCARDIA | 1 ( 1.2%) | 0 ( 0.0%) | 0 ( 0.0%) |
 
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 is layout-only; it does not change any cell values. It is the natural
 last call in a build-then-polish pipeline – and it has to be last,
 because
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md)
 reads `ord_layer_index` to avoid blanking labels across a layer
 boundary, and
-[`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md)
+[`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md)
 removes it.
 
 The header labels follow a small grammar renderers can rely on:
@@ -522,18 +522,18 @@ designed to work together:
 
 | Function | Purpose |
 |:---|:---|
-| [`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md) | Blank repeated row labels, optionally insert row breaks |
-| [`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md) | Merge label columns into one with indentation (stub-row or `nest` mode) |
-| [`apply_conditional_format()`](https://github.com/mstackhouse/tplyr2/reference/apply_conditional_format.md) | Conditionally reformat strings based on numeric values within them |
-| [`apply_formats()`](https://github.com/mstackhouse/tplyr2/reference/apply_formats.md) | Format numeric vectors using f_str objects |
-| [`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md) | Pull numeric values from formatted strings |
-| [`str_indent_wrap()`](https://github.com/mstackhouse/tplyr2/reference/str_indent_wrap.md) | Wrap long text with hyphenation and indentation preservation |
-| [`replace_leading_whitespace()`](https://github.com/mstackhouse/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces |
-| [`as_display()`](https://github.com/mstackhouse/tplyr2/reference/as_display.md) | Trim to display columns (`rowlabel*`/`res*`/`rdiff*`/`pval*`), optionally with header labels |
+| [`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md) | Blank repeated row labels, optionally insert row breaks |
+| [`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md) | Merge label columns into one with indentation (stub-row or `nest` mode) |
+| [`apply_conditional_format()`](https://atorus-research.github.io/tplyr2/reference/apply_conditional_format.md) | Conditionally reformat strings based on numeric values within them |
+| [`apply_formats()`](https://atorus-research.github.io/tplyr2/reference/apply_formats.md) | Format numeric vectors using f_str objects |
+| [`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md) | Pull numeric values from formatted strings |
+| [`str_indent_wrap()`](https://atorus-research.github.io/tplyr2/reference/str_indent_wrap.md) | Wrap long text with hyphenation and indentation preservation |
+| [`replace_leading_whitespace()`](https://atorus-research.github.io/tplyr2/reference/replace_leading_whitespace.md) | Swap leading spaces for non-breaking spaces |
+| [`as_display()`](https://atorus-research.github.io/tplyr2/reference/as_display.md) | Trim to display columns (`rowlabel*`/`res*`/`rdiff*`/`pval*`), optionally with header labels |
 
 A typical pipeline runs
-[`apply_row_masks()`](https://github.com/mstackhouse/tplyr2/reference/apply_row_masks.md)
+[`apply_row_masks()`](https://atorus-research.github.io/tplyr2/reference/apply_row_masks.md)
 first, then
-[`collapse_row_labels()`](https://github.com/mstackhouse/tplyr2/reference/collapse_row_labels.md).
+[`collapse_row_labels()`](https://atorus-research.github.io/tplyr2/reference/collapse_row_labels.md).
 Conditional formatting and whitespace replacement can be inserted
 wherever they make sense for your output format.

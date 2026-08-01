@@ -61,6 +61,7 @@ extension: .json for JSON, .yaml or .yml for YAML."></head><body>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/atorus-research/tplyr2/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul></div>
 
 
@@ -70,7 +71,7 @@ extension: .json for JSON, .yaml or .yml for YAML."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Write a tplyr_spec to JSON or YAML</h1>
-
+      <small class="dont-index">Source: <a href="https://github.com/atorus-research/tplyr2/blob/main/R/serialize.R" class="external-link"><code>R/serialize.R</code></a></small>
       <div class="d-none name"><code>tplyr_write_spec.Rd</code></div>
     </div>
 
@@ -106,7 +107,106 @@ extension: <code>.json</code> for JSON, <code>.yaml</code> or <code>.yml</code> 
 reconstructed on read. Format string objects (<code>f_str</code>) are stored as
 their component parts and regenerated on read.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="tplyr_read_spec.html">tplyr_read_spec()</a></code> to read one back.</p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">spec</span> <span class="op">&lt;-</span> <span class="fu"><a href="tplyr_spec.html">tplyr_spec</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cols <span class="op">=</span> <span class="st">"TRT01P"</span>,</span></span>
+<span class="r-in"><span>  where <span class="op">=</span> <span class="va">SAFFL</span> <span class="op">==</span> <span class="st">"Y"</span>,</span></span>
+<span class="r-in"><span>  layers <span class="op">=</span> <span class="fu"><a href="tplyr_layers.html">tplyr_layers</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="group_count.html">group_count</a></span><span class="op">(</span><span class="st">"AGEGR1"</span>, by <span class="op">=</span> <span class="st">"SEX"</span>, settings <span class="op">=</span> <span class="fu"><a href="layer_settings.html">layer_settings</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>      denoms_by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"TRT01P"</span>, <span class="st">"SEX"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>      format_strings <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>n_counts <span class="op">=</span> <span class="fu"><a href="f_str.html">f_str</a></span><span class="op">(</span><span class="st">"xx (xx.x%)"</span>, <span class="st">"n"</span>, <span class="st">"pct"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"spec.json"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">tplyr_write_spec</span><span class="op">(</span><span class="va">spec</span>, <span class="va">path</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   "cols": "TRT01P",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   "where": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     "_expr": "SAFFL == \"Y\""</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   },</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   "layers": [</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       "target_var": "AGEGR1",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       "by": "SEX",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       "where": null,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       "layer_type": "count",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       "settings": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "format_strings": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           "n_counts": {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             "format_string": "xx (xx.x%)",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             "vars": ["n", "pct"],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             "_class": "tplyr_f_str"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         },</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "denoms_by": ["TRT01P", "SEX"],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "shift_denom": "total",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "denom_row": false,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "denom_row_label": "n",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "total_row": false,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "total_row_label": "Total",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "total_row_count_missings": true,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "missing_subjects": false,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "missing_subjects_label": "Missing",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "stats_as_columns": false,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "ci_method": "clopper_pearson",</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "ci_level": 0.95,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         "zero_count_display": "full"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># YAML is chosen by the file extension</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"yaml"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">ypath</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"spec.yaml"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu">tplyr_write_spec</span><span class="op">(</span><span class="va">spec</span>, <span class="va">ypath</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/readLines.html" class="external-link">readLines</a></span><span class="op">(</span><span class="va">ypath</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">ypath</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> cols: TRT01P</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> where:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   _expr: SAFFL == "Y"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> layers:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - target_var: AGEGR1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   by: SEX</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   where: ~</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   layer_type: count</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   settings:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     format_strings:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       n_counts:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         format_string: xx (xx.x%)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         vars:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         - 'n'</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         - pct</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         _class: tplyr_f_str</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     denoms_by:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     - TRT01P</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     - SEX</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     shift_denom: total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     denom_row: no</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     denom_row_label: 'n'</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     total_row: no</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     total_row_label: Total</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     total_row_count_missings: yes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     missing_subjects: no</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     missing_subjects_label: Missing</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     stats_as_columns: no</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ci_method: clopper_pearson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     ci_level: 0.95</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     zero_count_display: full</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/unlink.html" class="external-link">unlink</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

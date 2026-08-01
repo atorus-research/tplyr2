@@ -19,7 +19,7 @@ in Shiny applications.
 ## Building with Metadata
 
 Enabling metadata is a single argument to
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md):
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md):
 
 ``` r
 
@@ -63,14 +63,14 @@ result$row_id
 
 IDs are deterministic – building the same spec against the same data
 always produces the same values. The
-[`generate_row_ids()`](https://github.com/mstackhouse/tplyr2/reference/generate_row_ids.md)
+[`generate_row_ids()`](https://atorus-research.github.io/tplyr2/reference/generate_row_ids.md)
 function creates these identifiers and can also be called on any tplyr2
 output, even one built without metadata.
 
 ## Inspecting Cell Metadata
 
 Once you have a row ID and a column name,
-[`tplyr_meta_result()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_result.md)
+[`tplyr_meta_result()`](https://atorus-research.github.io/tplyr2/reference/tplyr_meta_result.md)
 returns the metadata object for that cell:
 
 ``` r
@@ -112,7 +112,7 @@ tplyr_meta_result(result_no_meta, "1_F", "res1")
 ## Getting Source Data
 
 The real power of metadata is in
-[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md).
+[`tplyr_meta_subset()`](https://atorus-research.github.io/tplyr2/reference/tplyr_meta_subset.md).
 It evaluates the stored filters against the original data, returning the
 rows that produced a cell:
 
@@ -339,7 +339,7 @@ meta
 
 The `anti_join` contains a `join_meta` (filters for the population side)
 and `on` (the join key, typically `"USUBJID"`). When calling
-[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md)
+[`tplyr_meta_subset()`](https://atorus-research.github.io/tplyr2/reference/tplyr_meta_subset.md)
 on such a row, you must supply `pop_data`:
 
 ``` r
@@ -417,7 +417,7 @@ nrow(source)
 
 The metadata system also lends itself to Shiny applications where
 clicking a cell triggers
-[`tplyr_meta_subset()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_meta_subset.md),
+[`tplyr_meta_subset()`](https://atorus-research.github.io/tplyr2/reference/tplyr_meta_subset.md),
 displaying the source records in a detail panel:
 
 ``` r
@@ -448,10 +448,10 @@ providing exact reproducibility of every number in your table.
 
 ## See Also
 
-- [`vignette("ard")`](https://github.com/mstackhouse/tplyr2/articles/ard.md)
+- [`vignette("ard")`](https://atorus-research.github.io/tplyr2/articles/ard.md)
   – exporting the raw numeric results as Analysis Results Data.
-- [`vignette("serialization")`](https://github.com/mstackhouse/tplyr2/articles/serialization.md)
+- [`vignette("serialization")`](https://atorus-research.github.io/tplyr2/articles/serialization.md)
   – saving the spec so a table (and its metadata) can be regenerated
   later.
-- [`vignette("count")`](https://github.com/mstackhouse/tplyr2/articles/count.md)
+- [`vignette("count")`](https://atorus-research.github.io/tplyr2/articles/count.md)
   – the layer types whose cells the metadata traces back to source.

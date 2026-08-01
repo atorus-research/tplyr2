@@ -3,7 +3,7 @@
 ## Introduction
 
 When you build a table with
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md),
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md),
 the output includes a set of ordering columns alongside the formatted
 results. These columns – `ord_layer_index`, `ord_layer_1`,
 `ord_layer_2`, and so on – carry the sorting information that tplyr2
@@ -18,7 +18,7 @@ you need.
 ## Ordering Columns Explained
 
 Every output from
-[`tplyr_build()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_build.md)
+[`tplyr_build()`](https://atorus-research.github.io/tplyr2/reference/tplyr_build.md)
 includes at least two ordering columns:
 
 - **`ord_layer_index`**: An integer identifying which layer produced
@@ -128,7 +128,7 @@ kable(reordered[, c("rowlabel1", "rowlabel2", "res1", "ord_layer_index", "ord_la
 
 Within a layer, tplyr2 determines row order using a priority system
 implemented in the internal
-[`compute_var_order()`](https://github.com/mstackhouse/tplyr2/reference/compute_var_order.md)
+[`compute_var_order()`](https://atorus-research.github.io/tplyr2/reference/compute_var_order.md)
 function. The priority is:
 
 1.  **Factor levels** – If the target variable is a factor, rows follow
@@ -228,7 +228,7 @@ Here, `RACEN` values of 1 (WHITE), 2 (BLACK OR AFRICAN AMERICAN), and 6
 ## Sorting Descriptive Statistics
 
 For
-[`group_desc()`](https://github.com/mstackhouse/tplyr2/reference/group_desc.md)
+[`group_desc()`](https://atorus-research.github.io/tplyr2/reference/group_desc.md)
 layers, `ord_layer_1` reflects the position of each statistic within the
 `format_strings` list. The first entry gets 1, the second gets 2, and so
 forth. There is no additional setting needed – the order you write your
@@ -272,7 +272,7 @@ earlier in the `format_strings` list.
 
 Count layers offer the most flexibility through the `order_count_method`
 parameter in
-[`layer_settings()`](https://github.com/mstackhouse/tplyr2/reference/layer_settings.md).
+[`layer_settings()`](https://atorus-research.github.io/tplyr2/reference/layer_settings.md).
 The available methods are:
 
 | Method           | Description                                        |
@@ -364,15 +364,15 @@ counts.
 If you need an ordering that no setting expresses, you can always sort
 the built frame yourself in post-processing – pull values out of the
 result with
-[`str_extract_num()`](https://github.com/mstackhouse/tplyr2/reference/str_extract_num.md)
+[`str_extract_num()`](https://atorus-research.github.io/tplyr2/reference/str_extract_num.md)
 (or
-[`tplyr_numeric_data()`](https://github.com/mstackhouse/tplyr2/reference/tplyr_numeric_data.md))
+[`tplyr_numeric_data()`](https://atorus-research.github.io/tplyr2/reference/tplyr_numeric_data.md))
 and reorder.
 
 ## Nested Count Sorting
 
 Nested count layers – created by passing two variables to
-[`group_count()`](https://github.com/mstackhouse/tplyr2/reference/group_count.md)
+[`group_count()`](https://atorus-research.github.io/tplyr2/reference/group_count.md)
 – produce an interleaved output where outer-level rows (e.g., body
 system) alternate with their inner-level rows (e.g., preferred term).
 The ordering system handles both levels.

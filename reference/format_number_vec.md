@@ -17,7 +17,7 @@ format_number_vec(values, group, precision = NULL, lt = NULL, gt = NULL)
 - group:
 
   A parsed format group (from
-  [`parse_format_group()`](https://github.com/mstackhouse/tplyr2/reference/parse_format_group.md))
+  [`parse_format_group()`](https://atorus-research.github.io/tplyr2/reference/parse_format_group.md))
 
 - precision:
 
