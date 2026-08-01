@@ -262,6 +262,45 @@ validate_layer <- function(layer, index, cols = NULL) {
     }
   }
 
+  validate_missing_count(layer$settings$missing_count, index)
+
+  invisible(TRUE)
+}
+
+#' Validate the keys of a missing_count configuration
+#'
+#' \code{missing_count} is a free-form list, so an unrecognized key used to be
+#' accepted and then never read — the table built without the requested
+#' behavior and nothing pointed at the mistake.
+#'
+#' @param missing_count The layer's \code{missing_count} setting
+#' @param index Integer layer index
+#' @return Invisible TRUE
+#' @keywords internal
+validate_missing_count <- function(missing_count, index) {
+  if (is.null(missing_count)) return(invisible(TRUE))
+
+  if (!is.list(missing_count)) {
+    stop(str_glue("Layer {index}: missing_count must be a list"), call. = FALSE)
+  }
+
+  nms <- names(missing_count) %||% rep("", length(missing_count))
+  unknown <- setdiff(nms, missing_count_keys)
+  if (length(unknown) > 0) {
+    stop(str_glue(
+      "Layer {index}: unknown missing_count key(s): ",
+      "{str_c(ifelse(unknown == '', '<unnamed>', unknown), collapse = ', ')}",
+      "\nValid keys: {str_c(missing_count_keys, collapse = ', ')}"
+    ), call. = FALSE)
+  }
+
+  if (!is.null(missing_count$denom_exclude) &&
+      !(is.logical(missing_count$denom_exclude) &&
+        length(missing_count$denom_exclude) == 1)) {
+    stop(str_glue("Layer {index}: missing_count$denom_exclude must be TRUE or FALSE"),
+         call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 

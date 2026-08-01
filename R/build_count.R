@@ -75,6 +75,9 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (!is.null(denom_ignore)) {
     denom_dt <- denom_dt[!get(tv) %in% denom_ignore]
   }
+  if (!is.null(missing_count)) {
+    denom_dt <- apply_denom_exclude(denom_dt, tv, missing_count, layer_index)
+  }
 
   # --- Compute denominators ---
   denom_group <- if (!is.null(denoms_by)) denoms_by else {
@@ -312,6 +315,12 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   if (!is.null(denom_ignore)) {
     # Ignore values in the outermost target variable
     denom_dt <- denom_dt[!get(target_vars[1]) %in% denom_ignore]
+  }
+  if (!is.null(missing_count)) {
+    # The Missing row is computed on the outer level, so exclude on that
+    # variable too.
+    denom_dt <- apply_denom_exclude(denom_dt, target_vars[1], missing_count,
+                                    layer_index)
   }
 
   # Total number of rowlabel columns needed
@@ -846,21 +855,65 @@ drop_missing_value_levels <- function(counts, tv, missing_count) {
   counts[is.na(get(tv)) | !as.character(get(tv)) %in% as.character(mv)]
 }
 
+# The keys a missing_count list may carry. Anything else is a typo that would
+# otherwise vanish without changing the table.
+missing_count_keys <- c("missing_values", "sort_value", "label", "format",
+                        "denom_exclude")
+
+#' Which values a missing_count setting treats as missing
+#'
+#' \code{NA}, plus anything named in \code{missing_values}. Shared by the
+#' Missing-row computation and \code{denom_exclude} so the two cannot disagree
+#' about what "missing" means.
+#'
+#' @param x Vector of target-variable values
+#' @param missing_count The layer's \code{missing_count} setting
+#' @return Logical vector the same length as \code{x}
+#' @keywords internal
+is_missing_value <- function(x, missing_count) {
+  out <- is.na(x)
+  mv <- missing_count$missing_values %||% character(0)
+  if (length(mv) > 0) {
+    out <- out | as.character(x) %in% as.character(mv)
+  }
+  out
+}
+
+#' Drop missing-counted rows from the denominator source
+#'
+#' Implements \code{missing_count$denom_exclude}: the rows folded into the
+#' Missing row leave the denominator, so the layer's percentages are of the
+#' non-missing population rather than of everyone.
+#'
+#' @param denom_dt data.table used as the denominator source
+#' @param tv Character string, target variable name
+#' @param missing_count The layer's \code{missing_count} setting
+#' @param layer_index Integer layer index, used in the warning message
+#' @return \code{denom_dt}, filtered when \code{denom_exclude} is TRUE
+#' @keywords internal
+apply_denom_exclude <- function(denom_dt, tv, missing_count, layer_index = NULL) {
+  if (!isTRUE(missing_count$denom_exclude)) return(denom_dt)
+
+  if (!tv %in% names(denom_dt)) {
+    # Population data need not carry the target variable; say so rather than
+    # applying percentages that quietly ignore the setting.
+    warning("Layer ", layer_index %||% "?", ": missing_count$denom_exclude was ",
+            "requested but the denominator data has no '", tv, "' column, so ",
+            "no rows were excluded.", call. = FALSE)
+    return(denom_dt)
+  }
+
+  denom_dt[!is_missing_value(get(tv), missing_count)]
+}
+
 #' Compute missing count row
 #' @keywords internal
 compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_vars,
                                    denom_group, denom_dt, distinct_by, missing_count) {
-  missing_values <- missing_count$missing_values %||% character(0)
   sort_value <- missing_count$sort_value %||% Inf
   missing_label <- missing_count$label %||% "Missing"
 
-  # Identify missing rows in the original data
-  is_missing <- is.na(dt[[tv]])
-  if (length(missing_values) > 0) {
-    is_missing <- is_missing | dt[[tv]] %in% missing_values
-  }
-
-  missing_dt <- dt[is_missing]
+  missing_dt <- dt[is_missing_value(get(tv), missing_count)]
   summary_group <- c(cols, by_data_vars)
 
   if (length(summary_group) > 0) {

@@ -873,3 +873,96 @@ test_that("an empty cols level does not disturb total_row_count_missings", {
     expect_equal(str_extract_num(tot$res2, 1), 0)
   }
 })
+
+# --- missing_count$denom_exclude and key validation (#80) ---
+
+mc_data <- function() {
+  data.frame(TRT = rep("A", 10),
+             VAL = c(rep("X", 4), rep("Y", 3), rep(NA, 3)),
+             stringsAsFactors = FALSE)
+}
+
+mc_spec <- function(mc) {
+  tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_count("VAL", settings = layer_settings(missing_count = mc))))
+}
+
+test_that("denom_exclude removes missing rows from the denominator (#80)", {
+  d <- mc_data()
+  incl <- tplyr_build(mc_spec(list(label = "Missing")), d)
+  excl <- tplyr_build(mc_spec(list(label = "Missing", denom_exclude = TRUE)), d)
+
+  # 4/10 = 40.0% against everyone; 4/7 = 57.1% against the non-missing
+  expect_match(incl$res1[incl$rowlabel1 == "X"], "40\\.0%")
+  expect_match(excl$res1[excl$rowlabel1 == "X"], "57\\.1%")
+  # Counts are untouched — only the denominator changed
+  expect_equal(str_extract_num(incl$res1), str_extract_num(excl$res1))
+})
+
+test_that("denom_exclude also drops named missing_values (#80)", {
+  d <- data.frame(TRT = rep("A", 10),
+                  VAL = c(rep("X", 4), rep("Y", 3), rep("UNK", 3)),
+                  stringsAsFactors = FALSE)
+  out <- tplyr_build(
+    mc_spec(list(label = "Missing", missing_values = "UNK", denom_exclude = TRUE)), d)
+  expect_match(out$res1[out$rowlabel1 == "X"], "57\\.1%")
+})
+
+test_that("denom_exclude defaults off, leaving percentages unchanged (#80)", {
+  d <- mc_data()
+  expect_equal(
+    as.vector(tplyr_build(mc_spec(list(label = "Missing")), d)$res1),
+    as.vector(tplyr_build(
+      mc_spec(list(label = "Missing", denom_exclude = FALSE)), d)$res1))
+})
+
+test_that("denom_exclude warns when the denominator data lacks the target (#80)", {
+  d <- mc_data()
+  pop <- data.frame(TRT = rep("A", 12), stringsAsFactors = FALSE)
+  spec <- tplyr_spec(cols = "TRT", pop_data = pop_data("TRT"),
+                     layers = tplyr_layers(group_count("VAL",
+                       settings = layer_settings(
+                         missing_count = list(denom_exclude = TRUE)))))
+  # Previously this would have been a silent no-op — the whole point of #80.
+  expect_warning(tplyr_build(spec, d, pop_data = pop), "denom_exclude.*no 'VAL' column")
+})
+
+test_that("unknown missing_count keys error (#80)", {
+  d <- mc_data()
+  expect_error(tplyr_build(mc_spec(list(labl = "Missing")), d),
+               "unknown missing_count key\\(s\\): labl")
+  expect_error(tplyr_build(mc_spec(list(labl = "Missing")), d),
+               "Valid keys.*denom_exclude")
+})
+
+test_that("a non-logical denom_exclude errors (#80)", {
+  expect_error(tplyr_build(mc_spec(list(denom_exclude = "yes")), mc_data()),
+               "denom_exclude must be TRUE or FALSE")
+})
+
+test_that("all supported missing_count keys are accepted (#80)", {
+  d <- mc_data()
+  spec <- mc_spec(list(missing_values = character(0), sort_value = 99,
+                       label = "Not reported", format = f_str("xx", "n"),
+                       denom_exclude = TRUE))
+  out <- tplyr_build(spec, d)
+  expect_true("Not reported" %in% out$rowlabel1)
+})
+
+test_that("denom_exclude round-trips through a spec file (#80)", {
+  skip_if_not_installed("yaml")
+  d <- mc_data()
+  spec <- mc_spec(list(label = "Missing", denom_exclude = TRUE))
+  expected <- as.vector(tplyr_build(spec, d)$res1)
+
+  dir <- file.path(tempdir(), "tplyr2_denom_exclude")
+  dir.create(dir, showWarnings = FALSE, recursive = TRUE)
+  for (ext in c("json", "yaml")) {
+    path <- file.path(dir, str_c("s.", ext))
+    tplyr_write_spec(spec, path)
+    rt <- tplyr_read_spec(path)
+    expect_true(isTRUE(rt$layers[[1]]$settings$missing_count$denom_exclude),
+                info = ext)
+    expect_equal(as.vector(tplyr_build(rt, d)$res1), expected, info = ext)
+  }
+})

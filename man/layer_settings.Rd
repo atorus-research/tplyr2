@@ -100,7 +100,22 @@ An absent baseline group renders as \code{0} either way.}
 
 \item{total_row_count_missings}{Logical, include missing in total}
 
-\item{missing_count}{List with missing count configuration}
+\item{missing_count}{List configuring the Missing row. Recognized keys:
+\describe{
+\item{\code{missing_values}}{Character vector of target values to fold into
+the Missing row alongside \code{NA}.}
+\item{\code{label}}{Row label; defaults to \code{"Missing"}.}
+\item{\code{sort_value}}{Numeric sort key placing the row; defaults to \code{Inf}
+(last).}
+\item{\code{format}}{An \code{\link[=f_str]{f_str()}} overriding the layer's count format for
+this row.}
+\item{\code{denom_exclude}}{Logical. When \code{TRUE}, the rows counted as missing
+leave the layer's percentage denominator, so percentages are of the
+non-missing population. This applies to every row in the layer,
+including the Missing row itself and any total row. Defaults to
+\code{FALSE}.}
+}
+Any other key is an error.}
 
 \item{missing_subjects}{Logical, add missing subjects row}
 
