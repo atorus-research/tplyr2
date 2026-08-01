@@ -84,9 +84,8 @@
 #'   its own width independent of the \code{n_counts} format (e.g.
 #'   \code{f_str("xx", "n")} for a plain narrow integer). The f_str must
 #'   reference a single variable (the denominator count is passed positionally).
-#'   \code{NULL} (default) keeps the legacy behavior of padding the integer to
-#'   the width of the shift cells. An absent baseline group renders as \code{0}
-#'   either way.
+#'   \code{NULL} (default) pads the integer to the width of the shift cells.
+#'   An absent baseline group renders as \code{0} either way.
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting

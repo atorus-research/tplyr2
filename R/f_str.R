@@ -81,8 +81,6 @@ apply_formats <- function(fmt, ..., precision = NULL, lt = NULL, gt = NULL,
                           lt_gt_group = NULL, na = NULL, width = NULL,
                           pad = c("right", "left")) {
   if (is.character(fmt)) {
-    # Parse on the fly for standalone use
-    fmt <- f_str(fmt, ...)
     stop("Standalone character format strings require variable names. Use an f_str object.")
   }
 

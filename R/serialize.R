@@ -146,18 +146,13 @@ serialize_settings <- function(settings) {
     out$denom_row_format <- serialize_f_str(settings$denom_row_format)
   }
 
-  # Simple pass-through fields
-  simple_fields <- c("denoms_by", "shift_denom", "denom_row", "denom_row_label",
-                      "denom_ignore", "distinct_by",
-                      "total_row", "total_row_label",
-                      "total_row_count_missings", "missing_subjects",
-                      "missing_subjects_label", "keep_levels",
-                      "limit_data_by", "stats_as_columns",
-                      "precision_by", "precision_on", "precision_cap",
-                      "order_count_method", "ordering_cols",
-                      "result_order_var", "outer_sort_position",
-                      "ci_method", "ci_level",
-                      "pct_lt", "pct_gt", "zero_count_display", "name")
+  # Simple pass-through fields: every layer_settings() parameter that needs no
+  # special encoding. Derived from the formals so a newly added setting cannot
+  # be silently dropped from serialization.
+  special_fields <- c("format_strings", "stat_columns", "denom_row_format",
+                      "denom_where", "custom_summaries", "risk_diff",
+                      "assoc_test", "missing_count", "precision_data")
+  simple_fields <- setdiff(names(formals(layer_settings)), special_fields)
   for (f in simple_fields) {
     if (!is.null(settings[[f]])) {
       out[[f]] <- settings[[f]]

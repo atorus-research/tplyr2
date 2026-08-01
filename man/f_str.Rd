@@ -16,7 +16,7 @@ f_str(format_string, ..., empty = NULL)
 \emph{every} format group in the string is NA. Supplied unnamed (e.g.
 \code{empty = "NA"}), it instead fills each NA format group in place,
 right-justified to the width that group would have occupied, so a partially
-missing cell keeps its alignment — \code{f_str("xx (xxx)", "n", "pct",
+missing cell keeps its alignment -- \code{f_str("xx (xxx)", "n", "pct",
 empty = "NA")} renders \code{"NA ( NA)"}. The default (\code{NULL}) leaves
 NA groups as blanks of the field width.}
 }

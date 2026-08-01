@@ -151,7 +151,7 @@ collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label",
         depth <- integer(.N)
         for (ci in rev(seq_along(dot_names))) {
           col_val <- trimws(as.character(.SD[[dot_names[ci]]]))
-          unfilled <- nchar(val) == 0L & nchar(col_val) > 0L
+          unfilled <- str_length(val) == 0L & str_length(col_val) > 0L
           val[unfilled] <- col_val[unfilled]
           depth[unfilled] <- ci
         }
@@ -178,7 +178,7 @@ collapse_row_labels <- function(x, ..., indent = "  ", target_col = "row_label",
     stop("Must have two or more columns to collapse", call. = FALSE)
   }
 
-  all_but_last_names <- dot_names[seq_len(length(dot_names) - 1)]
+  all_but_last_names <- head(dot_names, -1)
   last_name <- dot_names[length(dot_names)]
 
   # Work with data.table copy

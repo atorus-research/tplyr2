@@ -39,7 +39,7 @@ collect_precision <- function(dt, precision_on, precision_by = character(0),
         }
         uncovered <- in_data[!supplied, on = have]
         if (nrow(uncovered) > 0) {
-          labs <- apply(uncovered, 1, function(r) str_c(r, collapse = " / "))
+          labs <- pmap_chr(uncovered, function(...) str_c(c(...), collapse = " / "))
           warning(str_glue(
             "precision_data does not cover {nrow(uncovered)} precision_by ",
             "group(s): {str_c(head(labs, 5), collapse = '; ')}",

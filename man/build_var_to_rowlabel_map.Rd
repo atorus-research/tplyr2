@@ -4,7 +4,7 @@
 \alias{build_var_to_rowlabel_map}
 \title{Map data variable names to their rowlabel columns}
 \usage{
-build_var_to_rowlabel_map(layer, by_data_vars, by_labels, col_names)
+build_var_to_rowlabel_map(layer, by_data_vars, by_labels)
 }
 \arguments{
 \item{layer}{A tplyr_layer object}
@@ -12,8 +12,6 @@ build_var_to_rowlabel_map(layer, by_data_vars, by_labels, col_names)
 \item{by_data_vars}{Character vector of by-variable data column names}
 
 \item{by_labels}{Character vector of by-variable label strings}
-
-\item{col_names}{Character vector of original data column names}
 }
 \value{
 Named list where names are data variables and values are rowlabel

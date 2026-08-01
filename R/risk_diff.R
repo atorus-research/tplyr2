@@ -22,7 +22,6 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
     return(NULL)
   }
 
-  # We need the column variable (first element of cols)
   if (length(cols) == 0) {
     stop("Risk difference requires at least one column variable (cols)")
   }
@@ -52,14 +51,6 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
         n_trt = trt_dt$n[1], total_trt = trt_dt$total[1],
         n_ref = ref_dt$n[1], total_ref = ref_dt$total[1]
       )
-    }
-
-    # Rename merge-suffixed columns for clarity
-    if (length(row_vars) > 0) {
-      setnames(paired,
-               c("n_trt", "total_trt", "n_ref", "total_ref"),
-               c("n_trt", "total_trt", "n_ref", "total_ref"),
-               skip_absent = TRUE)
     }
 
     # Apply prop.test per row (inherently scalar)
@@ -159,16 +150,10 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
     fmt <- f_str("xx.x (xx.x, xx.x)", "rdiff", "lower", "upper")
   }
 
-  # Determine which rowlabel column holds the target variable
-  # (It's the last rowlabel column if no by_data_vars, or after them)
-  tv_label_idx <- length(by_data_vars) + 1L
-  # Account for by_labels (string labels in `by` that aren't data vars)
-  # The TV is in the last rowlabel position
+  # The target variable occupies the last rowlabel position
   all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
   if (length(all_label_cols) == 0) return(wide)
   tv_label_col <- all_label_cols[length(all_label_cols)]
-
-  row_vars <- c(by_data_vars, tv)
 
   for (ci_idx in seq_along(comparisons)) {
     comp <- comparisons[[ci_idx]]

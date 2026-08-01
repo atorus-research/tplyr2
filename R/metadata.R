@@ -304,12 +304,11 @@ translate_group_value <- function(value, col_var, total_groups, custom_groups) {
 #' @param layer A tplyr_layer object
 #' @param by_data_vars Character vector of by-variable data column names
 #' @param by_labels Character vector of by-variable label strings
-#' @param col_names Character vector of original data column names
 #'
 #' @return Named list where names are data variables and values are rowlabel
 #'   column names (e.g., \code{list(SEX = "rowlabel1")})
 #' @keywords internal
-build_var_to_rowlabel_map <- function(layer, by_data_vars, by_labels, col_names) {
+build_var_to_rowlabel_map <- function(layer, by_data_vars, by_labels) {
   var_to_rl <- list()
   rl_idx <- length(by_labels) + 1L
 
@@ -388,7 +387,6 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   row_ids <- generate_row_ids(output)
   output_names <- names(output)
 
-  # --- OPT 1: Pre-vectorize string operations ---
   # Pre-trim all rowlabel columns as character vectors (avoids per-row
   # str_trim + as.character + str_length calls)
   rl_col_names <- str_subset(output_names, "^rowlabel\\d+$")
@@ -406,8 +404,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     trimmed[[rl_col]] <- trimws(raw)
   }
 
-  # --- OPT 3: Pre-compute all cell keys with vectorized paste ---
-  # Build a matrix of keys: row_ids[i] || res_cols[j]
+  # Pre-compute all cell keys as a matrix: row_ids[i] || res_cols[j]
   # Stored as a vector in row-major order for fast indexing
   all_keys <- as.vector(outer(row_ids, res_cols, paste, sep = "||"))
   # all_keys[(row_idx - 1) * n_res + ri] gives the key for (row_idx, ri)
@@ -416,7 +413,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
   layer_cache <- vector("list", length(spec$layers))
   layer_idx_col <- output$ord_layer_index
 
-  # OPT 2: Position-indexed row type vector (O(1) lookup, filled per-layer below)
+  # Position-indexed row type vector (O(1) lookup, filled per-layer below)
   all_row_types <- rep("normal", n_rows)
 
   # Set when a missing-subjects row had to be skipped for want of a subject key
@@ -426,7 +423,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     layer <- spec$layers[[li]]
     by_info <- classify_by(layer$by, col_names)
     var_to_rl <- build_var_to_rowlabel_map(
-      layer, by_info$data_vars, by_info$labels, col_names
+      layer, by_info$data_vars, by_info$labels
     )
 
     # Pre-compute where filters (same for every cell in this layer)
@@ -516,7 +513,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
         spec_col_names <- if (!is.null(names(pop_col_map))) names(pop_col_map) else cols
         pop_cf <- map(cf, function(f) {
           for (ci in seq_along(spec_col_names)) {
-            f <- do.call(substitute, list(f, stats::setNames(
+            f <- do.call(substitute, list(f, setNames(
               list(as.name(orig_pop_cols[ci])), spec_col_names[ci]
             )))
           }
@@ -547,7 +544,6 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
                           inherits(layer, "tplyr_analyze_layer")
     settings <- layer$settings
 
-    # --- OPT 2: Vectorize row type classification ---
     # Pre-classify all rows belonging to this layer at once.
     # Store in a position-indexed vector (NOT named) for O(1) lookup.
     layer_row_indices <- which(layer_idx_col == li)
@@ -585,7 +581,6 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
       }
     }
 
-    # --- OPT 4: Pre-compute per-column names unions for this layer ---
     # For each res_col, pre-compute the unique union of cc$names with
     # the layer's where_names and desc/analyze target_var names.
     # The row-specific names still need to be added per row, but we can
@@ -658,10 +653,10 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
     layer <- lc$layer
     settings <- lc$settings
 
-    # --- OPT 2: Look up pre-computed row type (O(1) vector index) ---
+    # Look up pre-computed row type (O(1) vector index)
     row_type <- all_row_types[row_idx]
 
-    # --- OPT 1: Use pre-trimmed values for by-variable filters ---
+    # Use pre-trimmed values for by-variable filters
     n_by <- length(lc$valid_by_vars)
     if (n_by > 0) {
       by_f <- vector("list", n_by)
@@ -690,7 +685,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
       by_n <- character(0)
     }
 
-    # --- OPT 1: Use pre-trimmed values for row-specific filters ---
+    # Use pre-trimmed values for row-specific filters
     row_filters <- list()
     row_names <- character(0)
 
@@ -777,7 +772,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
       cc <- lc$col_cache[[ri]]
 
       all_filters <- c(cc$filters, row_filters)
-      # OPT 4: Use pre-computed base names + row_names
+      # Use pre-computed base names + row_names
       all_names <- unique(c(lc$col_base_names[[ri]], row_names))
 
       # Build anti-join for missing_subjects rows
@@ -796,7 +791,7 @@ build_cell_metadata <- function(output, spec, col_names, pop_col_map = NULL) {
       }
 
       cell_idx <- cell_idx + 1L
-      # OPT 3: Index into pre-computed keys (column-major from outer())
+      # Index into pre-computed keys (column-major from outer())
       keys[cell_idx] <- all_keys[(ri - 1L) * n_rows + row_idx]
       vals[[cell_idx]] <- tplyr_meta(
         names = all_names,

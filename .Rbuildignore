@@ -7,9 +7,6 @@
 ^_pkgdown\.yml$
 ^archive$
 ^docs$
-^pseudo_code\.R$
 ^scratch$
-^scratch\.R$
-^data-raw$
 ^pkgdown$
 ^benchmark_comparison\.R$

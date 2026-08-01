@@ -50,7 +50,7 @@ tplyr2_options <- function(...) {
   old_vals <- map(opt_names, getOption)
   names(old_vals) <- opt_names
 
-  new_opts <- stats::setNames(args, opt_names)
+  new_opts <- setNames(args, opt_names)
   do.call(options, new_opts)
 
   invisible(old_vals)

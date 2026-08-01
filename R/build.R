@@ -137,12 +137,10 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   result <- harmonize_and_bind(layer_results)
 
   # Sort by layer index first, then within-layer ordering columns
-  all_ord <- str_subset(names(result), "^ord")
-  other_ord <- sort(setdiff(all_ord, "ordindx"))
-  ord_cols <- c("ordindx", other_ord)
-  data.table::setorderv(result, ord_cols)
+  sort_by_ord_columns(result)
 
-  # Rename ordering columns to match DESIGN.md convention
+  # Rename ordering columns to the public output names
+  # (ordindx -> ord_layer_index, ord<n> -> ord_layer_<n>)
   rename_ord_columns(result)
 
   # Convert to data.frame for output
@@ -207,53 +205,6 @@ apply_overrides <- function(spec, overrides) {
   }
 
   spec
-}
-
-#' Sort column names by their numeric suffix
-#'
-#' Lexicographic sorting places "res10" before "res2"; ordering by the
-#' numeric suffix keeps columns in build order once a family has more
-#' than 9 members.
-#' @keywords internal
-sort_by_numeric_suffix <- function(x) {
-  x[order(as.integer(str_extract(x, "\\d+")))]
-}
-
-#' Harmonize column sets across layers and row-bind
-#' @keywords internal
-harmonize_and_bind <- function(layer_results) {
-  if (length(layer_results) == 0) {
-    return(data.table::data.table())
-  }
-
-  # Collect all column names across layers
-  all_names <- unique(unlist(map(layer_results, names)))
-
-  # Separate by type: rowlabel*, res*, rdiff*, ord*
-  label_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rowlabel"))
-  res_cols <- sort_by_numeric_suffix(str_subset(all_names, "^res\\d"))
-  rdiff_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rdiff"))
-  ord_cols <- sort(str_subset(all_names, "^ord"))
-
-  target_cols <- c(label_cols, res_cols, rdiff_cols, ord_cols)
-
-  # Pad each layer result with missing columns
-  for (i in seq_along(layer_results)) {
-    dt <- layer_results[[i]]
-    missing_cols <- setdiff(target_cols, names(dt))
-    for (col in missing_cols) {
-      if (str_detect(col, "^ord")) {
-        dt[, (col) := NA_real_]
-      } else {
-        dt[, (col) := ""]
-      }
-    }
-    # Reorder columns
-    data.table::setcolorder(dt, intersect(target_cols, names(dt)))
-    layer_results[[i]] <- dt
-  }
-
-  data.table::rbindlist(layer_results, use.names = TRUE, fill = TRUE)
 }
 
 #' Name of the per-column-variable synthetic-row marker

@@ -52,3 +52,6 @@ rsconnect/
 scratch/
 /.quarto/
 **/*.quarto_ipynb
+
+# Claude Code local state
+.claude/

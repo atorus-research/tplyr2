@@ -303,7 +303,7 @@ merge_assoc_column <- function(wide, assoc, by_rl_cols, by_data_vars, config) {
   # the display order here from the ord* columns (#54).
   ord_cols <- sort_by_numeric_suffix(str_subset(names(wide), "^ord\\d+$"))
   disp_rank <- if (length(ord_cols) > 0 && nrow(wide) > 0) {
-    do.call(order, lapply(ord_cols, function(oc) wide[[oc]]))
+    do.call(order, map(ord_cols, function(oc) wide[[oc]]))
   } else {
     seq_len(nrow(wide))
   }
@@ -312,9 +312,9 @@ merge_assoc_column <- function(wide, assoc, by_rl_cols, by_data_vars, config) {
     # Key each wide row by its by-group (trimmed rowlabel values) and match to
     # the computed results; place the value on the first row of each group in
     # display order.
-    wide_key <- do.call(paste, c(lapply(by_rl_cols, function(c) trimws(wide[[c]])),
+    wide_key <- do.call(paste, c(map(by_rl_cols, function(c) trimws(wide[[c]])),
                                  sep = "\r"))
-    assoc_key <- do.call(paste, c(lapply(by_data_vars, function(c) trimws(assoc[[c]])),
+    assoc_key <- do.call(paste, c(map(by_data_vars, function(c) trimws(assoc[[c]])),
                                   sep = "\r"))
     lookup <- setNames(assoc$.assoc_p, assoc_key)
     # First appearance of each by-group key when rows are walked in display order
@@ -447,6 +447,22 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
   data.table::rbindlist(results, fill = TRUE)
 }
 
+#' Resolve per-comparison p-value column labels
+#'
+#' Default is "<reference> vs <comparison>"; a single configured label recycles
+#' across comparisons; a vector is used as-is.
+#' @keywords internal
+resolve_pairwise_labels <- function(config, reference) {
+  comparisons <- config$comparisons
+  if (is.null(config$label)) {
+    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
+  } else if (length(config$label) == 1) {
+    rep(config$label, length(comparisons))
+  } else {
+    config$label
+  }
+}
+
 #' Attach pairwise per-level association-test columns to a wide layer result
 #'
 #' Appends one \code{pval<k>} column per comparison to the wide-format output,
@@ -466,14 +482,7 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
                                  by_labels, reference) {
   comparisons <- config$comparisons
 
-  # Resolve per-comparison labels
-  labels <- if (is.null(config$label)) {
-    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
-  } else if (length(config$label) == 1) {
-    rep(config$label, length(comparisons))
-  } else {
-    config$label
-  }
+  labels <- resolve_pairwise_labels(config, reference)
 
   if (is.null(assoc_data) || nrow(assoc_data) == 0) {
     # Still emit blank columns for a consistent shape
@@ -644,13 +653,7 @@ merge_pairwise_assoc_nested <- function(wide, assoc_data, config, row_label_cols
                                         reference) {
   comparisons <- config$comparisons
 
-  labels <- if (is.null(config$label)) {
-    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
-  } else if (length(config$label) == 1) {
-    rep(config$label, length(comparisons))
-  } else {
-    config$label
-  }
+  labels <- resolve_pairwise_labels(config, reference)
 
   join_cols <- intersect(row_label_cols, names(wide))
 

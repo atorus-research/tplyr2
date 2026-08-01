@@ -130,7 +130,19 @@ compute_count_sort_keys <- function(counts, dt, cols, by_data_vars, tv, settings
   counts
 }
 
-#' Rename ordering columns to match DESIGN.md convention
+#' Sort bound layer results by layer index, then within-layer ord columns
+#'
+#' Sorts by reference. `other_ord` sorts lexicographically, which is stable
+#' for the single-digit ord counts layers produce today.
+#' @keywords internal
+sort_by_ord_columns <- function(result) {
+  all_ord <- str_subset(names(result), "^ord")
+  other_ord <- sort(setdiff(all_ord, "ordindx"))
+  data.table::setorderv(result, c("ordindx", other_ord))
+  invisible(result)
+}
+
+#' Rename ordering columns to the public output names
 #'
 #' Renames `ordindx` to `ord_layer_index` and `ord1`/`ord2`/... to
 #' `ord_layer_1`/`ord_layer_2`/...

@@ -126,17 +126,14 @@ tplyr_from_ard <- function(ard, spec) {
   }
 
   # Remove NULL entries
-  layer_results <- Filter(Negate(is.null), layer_results)
+  layer_results <- discard(layer_results, is.null)
   if (length(layer_results) == 0) {
     return(as.data.frame(data.table::data.table()))
   }
 
   result <- harmonize_and_bind(layer_results)
 
-  all_ord <- str_subset(names(result), "^ord")
-  other_ord <- sort(setdiff(all_ord, "ordindx"))
-  ord_cols <- c("ordindx", other_ord)
-  data.table::setorderv(result, ord_cols)
+  sort_by_ord_columns(result)
   rename_ord_columns(result)
 
   as.data.frame(result)
@@ -206,27 +203,7 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
       tv <- layer$target_var[1]
     }
 
-    # Build row labels
-    row_label_cols <- character(0)
-    col_idx <- 1L
-
-    for (lbl in by_labels) {
-      col_name <- str_c("rowlabel", col_idx)
-      wide_stats[, (col_name) := lbl]
-      row_label_cols <- c(row_label_cols, col_name)
-      col_idx <- col_idx + 1L
-    }
-    for (bv in by_data_vars) {
-      col_name <- str_c("rowlabel", col_idx)
-      wide_stats[, (col_name) := as.character(get(bv))]
-      row_label_cols <- c(row_label_cols, col_name)
-      col_idx <- col_idx + 1L
-    }
-    col_name <- paste0("rowlabel", col_idx)
-    if (tv %in% names(wide_stats)) {
-      wide_stats[, (col_name) := as.character(get(tv))]
-    }
-    row_label_cols <- c(row_label_cols, col_name)
+    row_label_cols <- build_row_labels_long(wide_stats, by_labels, by_data_vars, tv)
 
     # For shift, include the shift column variable in cols for casting
     if (inherits(layer, "tplyr_shift_layer")) {
@@ -244,27 +221,10 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
     }
 
     desc_group <- intersect(c(cols, by_data_vars), names(wide_stats))
-    wide_stats <- create_desc_rows_from_ard(wide_stats, fmt_list, desc_group)
+    wide_stats <- format_analyze_results(wide_stats, fmt_list, desc_group)
 
-    # Build row labels
-    row_label_cols <- character(0)
-    col_idx <- 1L
-
-    for (lbl in by_labels) {
-      col_name <- str_c("rowlabel", col_idx)
-      wide_stats[, (col_name) := lbl]
-      row_label_cols <- c(row_label_cols, col_name)
-      col_idx <- col_idx + 1L
-    }
-    for (bv in by_data_vars) {
-      col_name <- str_c("rowlabel", col_idx)
-      wide_stats[, (col_name) := as.character(get(bv))]
-      row_label_cols <- c(row_label_cols, col_name)
-      col_idx <- col_idx + 1L
-    }
-    col_name <- paste0("rowlabel", col_idx)
-    wide_stats[, (col_name) := as.character(row_label)]
-    row_label_cols <- c(row_label_cols, col_name)
+    row_label_cols <- build_row_labels_long(wide_stats, by_labels, by_data_vars,
+                                            "row_label")
 
     cast_cols <- cols
   } else {
@@ -275,51 +235,3 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
                stat_labels = stat_labels)
 }
 
-#' Create formatted rows for desc layer from pivoted ARD stats
-#' @keywords internal
-create_desc_rows_from_ard <- function(wide_stats, fmt_list, desc_group) {
-  if (length(desc_group) > 0) {
-    groups_unique <- unique(wide_stats[, desc_group, with = FALSE])
-  } else {
-    groups_unique <- data.table::data.table(.dummy = 1L)
-  }
-
-  output_rows <- vector("list", nrow(groups_unique) * length(fmt_list))
-  idx <- 1L
-
-  for (g in seq_len(nrow(groups_unique))) {
-    if (length(desc_group) > 0) {
-      mask <- rep(TRUE, nrow(wide_stats))
-      for (gv in desc_group) {
-        mask <- mask & wide_stats[[gv]] == groups_unique[[gv]][g]
-      }
-      stat_row <- wide_stats[mask][1]
-    } else {
-      stat_row <- wide_stats[1]
-    }
-
-    for (fname in names(fmt_list)) {
-      fmt <- fmt_list[[fname]]
-      fmt_args <- map(fmt$vars, function(v) {
-        if (v %in% names(stat_row)) stat_row[[v]] else NA_real_
-      })
-      formatted_val <- do.call(apply_formats, c(list(fmt), fmt_args))
-
-      row_dt <- data.table::data.table(
-        row_label = fname,
-        formatted = formatted_val
-      )
-
-      if (length(desc_group) > 0) {
-        for (gv in desc_group) {
-          row_dt[[gv]] <- groups_unique[[gv]][g]
-        }
-      }
-
-      output_rows[[idx]] <- row_dt
-      idx <- idx + 1L
-    }
-  }
-
-  data.table::rbindlist(output_rows, use.names = TRUE, fill = TRUE)
-}

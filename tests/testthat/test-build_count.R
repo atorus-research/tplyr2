@@ -139,7 +139,7 @@ test_that("classify_by handles NULL", {
   expect_length(by_info$labels, 0)
 })
 
-# === Phase 2 Tests ===
+# === Distinct counting, denominators, missing/total rows ===
 
 test_that("distinct_by counts unique subjects", {
   data(tplyr_adae, package = "tplyr2")
@@ -365,7 +365,7 @@ test_that("missing_count adds missing row", {
   expect_equal(as.numeric(trimws(missing_row$res2)), 1)  # 1 NA in TRT B
 })
 
-test_that("Phase 2 checkpoint: AE table with distinct counts", {
+test_that("AE table combines distinct counts, denoms_by, and total row", {
   data(tplyr_adae, package = "tplyr2")
   spec <- tplyr_spec(
     cols = "TRTA",
