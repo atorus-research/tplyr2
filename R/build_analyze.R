@@ -63,7 +63,7 @@ build_analyze_layer <- function(dt, layer, cols, layer_index,
 
   # Cast to wide
   wide <- cast_to_wide(combined, row_label_cols, cols, layer_index,
-                        col_n = col_n)
+                        col_n = col_n, row_order_col = ".stat_order")
 
   # Attach numeric data snapshot
   data.table::setattr(wide, "numeric_data", as.data.frame(numeric_snapshot))
@@ -161,7 +161,10 @@ format_analyze_results <- function(fn_combined, format_strings, group_vars) {
 
       row_dt <- data.table::data.table(
         row_label = fname,
-        formatted = formatted_val
+        formatted = formatted_val,
+        # Format-string names are rarely alphabetical; cast_to_wide() needs
+        # this to keep dcast from reordering the rows.
+        .stat_order = fi
       )
 
       if (length(group_vars) > 0) {

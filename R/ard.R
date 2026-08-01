@@ -214,10 +214,16 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
 
   } else if (inherits(layer, "tplyr_desc_layer") ||
              inherits(layer, "tplyr_analyze_layer")) {
-    # Desc/analyze: each format_string becomes a row
-    fmt_list <- settings$format_strings
-    if (is.null(fmt_list) || length(fmt_list) == 0) {
-      fmt_list <- list("n" = f_str("xx", "n"))
+    # Desc/analyze: each format_string becomes a row. Desc layers share
+    # get_desc_formats() with the build path so a spec with no format_strings
+    # reconstructs the same rows, at the same widths, that it built.
+    if (inherits(layer, "tplyr_desc_layer")) {
+      fmt_list <- get_desc_formats(settings)
+    } else {
+      fmt_list <- settings$format_strings
+      if (is.null(fmt_list) || length(fmt_list) == 0) {
+        fmt_list <- list("n" = f_str("xx", "n"))
+      }
     }
 
     desc_group <- intersect(c(cols, by_data_vars), names(wide_stats))
@@ -232,6 +238,6 @@ reconstruct_layer_from_ard <- function(layer_ard, layer, cols, layer_index) {
   }
 
   cast_to_wide(wide_stats, row_label_cols, cast_cols, layer_index,
-               stat_labels = stat_labels)
+               stat_labels = stat_labels, row_order_col = ".stat_order")
 }
 

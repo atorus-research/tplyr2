@@ -183,13 +183,24 @@ prepare_cast_column <- function(dt, cols, col_levels = NULL) {
 #'   order (from `get_col_levels()`); orders the resulting `res*` columns by
 #'   factor levels instead of alphabetically. NULL leaves dcast's default
 #'   alphabetical column order.
+#' @param row_order_col Name of a numeric column in `dt` giving the intended
+#'   row order. dcast sorts its LHS alphabetically, so a caller whose row
+#'   labels are not alphabetical (e.g. format-string names) must carry the
+#'   order through the cast; the column joins the LHS, sorts the result, and is
+#'   then dropped.
 #' @keywords internal
 cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
-                         stat_labels = NULL, col_levels = NULL) {
+                         stat_labels = NULL, col_levels = NULL,
+                         row_order_col = NULL) {
   # Track column value labels for metadata
   col_labels <- NULL
   n_stats <- length(stat_labels)
   value_cols <- if (n_stats > 0) str_c("formatted_", seq_len(n_stats)) else "formatted"
+
+  if (!is.null(row_order_col) && !row_order_col %in% names(dt)) {
+    row_order_col <- NULL
+  }
+  lhs_cols <- c(row_label_cols, row_order_col)
 
   # Compute sort order before casting
   # Use .missing_sort and .total_sort for special rows, else row position
@@ -208,14 +219,14 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
   if (length(cols) == 0) {
     # No column variables - one result column per stat (no dcast, so the
     # pre-sorted row order is preserved)
-    wide <- dt[, c(row_label_cols, value_cols), with = FALSE]
+    wide <- dt[, c(lhs_cols, value_cols), with = FALSE]
     data.table::setnames(wide, value_cols, str_c("res", seq_along(value_cols)))
     if (n_stats > 0) {
       col_labels <- stat_labels
     }
   } else {
     # Build dcast formula: row_labels ~ cols
-    lhs <- str_c(row_label_cols, collapse = " + ")
+    lhs <- str_c(lhs_cols, collapse = " + ")
     rhs <- prepare_cast_column(dt, cols, col_levels)
     formula_str <- str_c(lhs, " ~ ", rhs)
     wide <- data.table::dcast(
@@ -235,10 +246,10 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
       val_cols <- unlist(map(combos, function(cmb) {
         str_c("formatted_", seq_len(n_stats), "_", cmb)
       }))
-      data.table::setcolorder(wide, c(row_label_cols, val_cols))
+      data.table::setcolorder(wide, c(lhs_cols, val_cols))
     } else {
       # Single value.var: dcast names columns by the group value alone
-      combos <- setdiff(names(wide), row_label_cols)
+      combos <- setdiff(names(wide), lhs_cols)
       val_cols <- combos
     }
 
@@ -259,6 +270,12 @@ cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
     if (".col_combo" %in% names(dt)) {
       dt[, .col_combo := NULL]
     }
+  }
+
+  # Restore the caller's row order, which dcast's alphabetical LHS sort lost
+  if (!is.null(row_order_col)) {
+    data.table::setorderv(wide, row_order_col)
+    wide[, (row_order_col) := NULL]
   }
 
   # Add ordering columns

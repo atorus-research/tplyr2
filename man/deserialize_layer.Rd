@@ -4,7 +4,12 @@
 \alias{deserialize_layer}
 \title{Deserialize a layer from raw list}
 \usage{
-deserialize_layer(raw_layer)
+deserialize_layer(raw_layer, layer_id = NULL)
+}
+\arguments{
+\item{raw_layer}{Named list of parsed layer fields}
+
+\item{layer_id}{Human-readable layer identifier used in warning messages}
 }
 \description{
 Deserialize a layer from raw list

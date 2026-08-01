@@ -11,7 +11,8 @@ cast_to_wide(
   layer_index,
   col_n = NULL,
   stat_labels = NULL,
-  col_levels = NULL
+  col_levels = NULL,
+  row_order_col = NULL
 )
 }
 \arguments{
@@ -22,6 +23,12 @@ the \code{stat_columns} setting), or NULL for the standard single-format cast}
 order (from \code{get_col_levels()}); orders the resulting \verb{res*} columns by
 factor levels instead of alphabetically. NULL leaves dcast's default
 alphabetical column order.}
+
+\item{row_order_col}{Name of a numeric column in \code{dt} giving the intended
+row order. dcast sorts its LHS alphabetically, so a caller whose row
+labels are not alphabetical (e.g. format-string names) must carry the
+order through the cast; the column joins the LHS, sorts the result, and is
+then dropped.}
 }
 \description{
 When \code{stat_labels} is provided (stat_columns mode), the long data carries

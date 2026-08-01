@@ -143,6 +143,14 @@ apply_precision_cap <- function(prec, precision_cap = NULL) {
   }
   if (is.null(cap)) return(prec)
 
+  # A cap with neither name applies to nothing. Silently ignoring it renders
+  # uncapped numbers that look plausible, so say so.
+  if (!any(c("int", "dec") %in% names(cap))) {
+    warning("precision_cap has no 'int' or 'dec' name and was ignored. ",
+            "Supply it as c(int = <n>, dec = <n>).", call. = FALSE)
+    return(prec)
+  }
+
   if ("int" %in% names(cap)) {
     prec[max_int > cap[["int"]], max_int := as.integer(cap[["int"]])]
   }
