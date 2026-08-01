@@ -69,6 +69,18 @@ tplyr_build_impl <- function(spec, data, pop_data = NULL, metadata = FALSE, ...)
         !identical(pop_config$where, TRUE)) {
       pop_dt <- pop_dt[eval(pop_config$where)]
     }
+
+    # Rename pop_dt columns to match the spec's before anything keyed on those
+    # names runs. apply_custom_groups()/apply_total_groups() look up the spec's
+    # column variable, so a renamed pop_data — pop_data(c(TRTA = "TRT01P")) —
+    # used to skip them both, leaving the Total column with no denominator.
+    if (length(cols) > 0) {
+      pop_cols <- resolve_pop_cols(pop_config, cols)
+      if (!identical(unname(pop_cols), cols)) {
+        new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
+        data.table::setnames(pop_dt, unname(pop_cols), new_names)
+      }
+    }
   }
 
   # --- Apply custom groups and total groups ---
@@ -93,12 +105,6 @@ tplyr_build_impl <- function(spec, data, pop_data = NULL, metadata = FALSE, ...)
   # --- Compute header N per column group ---
   if (length(cols) > 0) {
     if (!is.null(pop_dt)) {
-      pop_cols <- resolve_pop_cols(pop_config, cols)
-      # Rename pop_dt columns to match spec cols so all downstream code works
-      if (!identical(unname(pop_cols), cols)) {
-        new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
-        data.table::setnames(pop_dt, unname(pop_cols), new_names)
-      }
       validate_pop_data_coverage(dt, pop_dt, cols)
       col_n <- pop_dt[, list(.n = .N), by = cols]
       header_n <- data.table::copy(col_n)

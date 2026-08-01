@@ -108,3 +108,44 @@ test_that("the plain difference survives a CI failure (#76)", {
   expect_equal(rd$rdiff[1], (5 / 10 - 3 / 30) * 100)
   expect_false(is.na(rd$lower[1]))
 })
+
+test_that("total_group gets a denominator when pop_data renames the col var", {
+  # apply_total_groups() looks up the spec's column variable, but pop_dt was
+  # still carrying its own column name at that point, so a renamed pop_data
+  # skipped the total group entirely and the Total column showed 0.0% for every
+  # nonzero count. Found by the #76 coverage guard.
+  spec <- tplyr_spec(
+    cols = "TRTA",
+    pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+    total_groups = list(total_group("TRTA", label = "Total")),
+    layers = tplyr_layers(
+      group_count("AEBODSYS", settings = layer_settings(
+        distinct_by = "USUBJID",
+        format_strings = list(
+          n_counts = f_str("xx (xx.x%)", "distinct_n", "distinct_pct")))))
+  )
+
+  expect_silent(out <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl))
+
+  total_col <- which(map_chr(out[grepl("^res", names(out))],
+                             function(x) attr(x, "label") %||% "") == "Total (N=254)")
+  expect_length(total_col, 1)
+  vals <- out[[names(out)[grepl("^res", names(out))][total_col]]]
+  expect_false(any(str_detect(vals, "\\(\\s+%\\)")))
+  # 254 subjects across all arms, so a nonzero count is a nonzero percent
+  expect_true(any(str_detect(vals, "[1-9]\\.[0-9]%")))
+})
+
+test_that("custom_group also reaches renamed pop_data", {
+  spec <- tplyr_spec(
+    cols = "TRTA",
+    pop_data = pop_data(cols = c("TRTA" = "TRT01P")),
+    custom_groups = list(custom_group(
+      "TRTA", "Active" = c("Xanomeline High Dose", "Xanomeline Low Dose"))),
+    layers = tplyr_layers(group_count("AEBODSYS"))
+  )
+  expect_silent(out <- tplyr_build(spec, tplyr_adae, pop_data = tplyr_adsl))
+  labels <- map_chr(out[grepl("^res", names(out))],
+                    function(x) attr(x, "label") %||% "")
+  expect_true(any(str_detect(labels, "^Active \\(N=168\\)$")))
+})
