@@ -22,7 +22,6 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
     return(NULL)
   }
 
-  # We need the column variable (first element of cols)
   if (length(cols) == 0) {
     stop("Risk difference requires at least one column variable (cols)")
   }
@@ -54,14 +53,6 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
       )
     }
 
-    # Rename merge-suffixed columns for clarity
-    if (length(row_vars) > 0) {
-      setnames(paired,
-               c("n_trt", "total_trt", "n_ref", "total_ref"),
-               c("n_trt", "total_trt", "n_ref", "total_ref"),
-               skip_absent = TRUE)
-    }
-
     # Apply prop.test per row (inherently scalar)
     rd_rows <- map(seq_len(nrow(paired)), function(r) {
       n_trt <- paired$n_trt[r]
@@ -78,32 +69,51 @@ compute_risk_diff <- function(counts_long, cols, tv, by_data_vars,
         ))
       }
 
-      rd_result <- tryCatch({
+      # x > n is only reachable through an upstream denominator bug. prop.test
+      # errors on it, and the surrounding tryCatch would turn that into a
+      # silently blank rdiff row.
+      if (n_trt > total_trt || n_ref > total_ref) {
+        warning("Risk difference skipped for ", trt_level, " vs ", ref_level,
+                ": count exceeds denominator (",
+                str_c(str_c(c(trt_level, ref_level), ": ",
+                            c(n_trt, n_ref), "/", c(total_trt, total_ref)),
+                      collapse = ", "),
+                "). Check denoms_by and pop_data.", call. = FALSE)
+        return(data.table::data.table(
+          .comp_idx = ci_idx,
+          rdiff = NA_real_, lower = NA_real_,
+          upper = NA_real_, p_value = NA_real_
+        ))
+      }
+
+      # The plain difference needs no test, so it is computed outside the
+      # tryCatch — a CI failure blanks the interval, not the difference itself.
+      rdiff <- (n_trt / total_trt - n_ref / total_ref) * 100
+
+      ci_result <- tryCatch({
         pt <- suppressWarnings(stats::prop.test(
           x = c(n_trt, n_ref),
           n = c(total_trt, total_ref),
           conf.level = ci_level,
           correct = FALSE
         ))
-        p1 <- n_trt / total_trt
-        p2 <- n_ref / total_ref
         list(
-          rdiff = (p1 - p2) * 100,
           lower = pt$conf.int[1] * 100,
           upper = pt$conf.int[2] * 100,
           p_value = pt$p.value
         )
       }, error = function(e) {
-        list(rdiff = NA_real_, lower = NA_real_,
-             upper = NA_real_, p_value = NA_real_)
+        record_user_fn_error("risk_diff confidence interval", e,
+                             str_c(trt_level, " vs ", ref_level))
+        list(lower = NA_real_, upper = NA_real_, p_value = NA_real_)
       })
 
       data.table::data.table(
         .comp_idx = ci_idx,
-        rdiff = rd_result$rdiff,
-        lower = rd_result$lower,
-        upper = rd_result$upper,
-        p_value = rd_result$p_value
+        rdiff = rdiff,
+        lower = ci_result$lower,
+        upper = ci_result$upper,
+        p_value = ci_result$p_value
       )
     })
 
@@ -145,11 +155,15 @@ format_risk_diff <- function(rd_data, fmt) {
 #' @param row_label_cols Character vector of row label column names
 #' @param tv Character string naming the target variable
 #' @param by_data_vars Character vector of by-variable names
+#' @param by_labels Character vector of constant `by` labels. Needed to find
+#'   where the by data variables sit among the rowlabel columns — they follow
+#'   the label columns, not `rowlabel1`.
 #'
 #' @return Modified wide data.table with rdiff columns appended
 #' @keywords internal
 merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
-                                     row_label_cols, tv, by_data_vars) {
+                                     row_label_cols, tv, by_data_vars,
+                                     by_labels = character(0)) {
   if (is.null(rd_data) || nrow(rd_data) == 0) return(wide)
 
   comparisons <- risk_diff_config$comparisons
@@ -159,16 +173,9 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
     fmt <- f_str("xx.x (xx.x, xx.x)", "rdiff", "lower", "upper")
   }
 
-  # Determine which rowlabel column holds the target variable
-  # (It's the last rowlabel column if no by_data_vars, or after them)
-  tv_label_idx <- length(by_data_vars) + 1L
-  # Account for by_labels (string labels in `by` that aren't data vars)
-  # The TV is in the last rowlabel position
-  all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
-  if (length(all_label_cols) == 0) return(wide)
-  tv_label_col <- all_label_cols[length(all_label_cols)]
-
-  row_vars <- c(by_data_vars, tv)
+  join_cols <- resolve_rowlabel_join_cols(wide, by_labels, by_data_vars)
+  if (is.null(join_cols)) return(wide)
+  tv_label_col <- join_cols$tv_col
 
   for (ci_idx in seq_along(comparisons)) {
     comp <- comparisons[[ci_idx]]
@@ -187,9 +194,9 @@ merge_risk_diff_columns <- function(wide, rd_data, risk_diff_config,
       wide_join_cols <- tv_label_col
       rd_join_cols <- tv
       if (length(by_data_vars) > 0) {
-        bv_wide_cols <- head(all_label_cols, length(by_data_vars))
         bv_rd_cols <- intersect(by_data_vars, names(rd_subset))
-        wide_join_cols <- c(bv_wide_cols[seq_along(bv_rd_cols)], wide_join_cols)
+        bv_wide_cols <- join_cols$by_cols[match(bv_rd_cols, by_data_vars)]
+        wide_join_cols <- c(bv_wide_cols, wide_join_cols)
         rd_join_cols <- c(bv_rd_cols, rd_join_cols)
       }
 

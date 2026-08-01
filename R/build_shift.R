@@ -89,7 +89,9 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
-    counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
+    # validate_denoms_by() guarantees denom_group is a subset of this layer's
+    # grouping columns, so joining on it directly cannot narrow the key set.
+    counts <- merge(counts, denoms, by = denom_group, all.x = TRUE)
     if (col_var %in% denom_group && length(by_data_vars) == 0 && !is.null(col_n)) {
       hn_vars <- intersect(all_cols, denom_group)
       header_col_n <- unique(denoms[, c(hn_vars, "total"), with = FALSE])
@@ -98,17 +100,20 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   } else {
     counts[, total := nrow(denom_dt)]
   }
-  counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+  check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+  counts[, pct := safe_pct(n, total)]
 
   # --- Distinct denominators ---
   if (!is.null(distinct_by)) {
     if (length(denom_group) > 0) {
       distinct_denoms <- denom_dt[, list(distinct_total = uniqueN(get(distinct_by))), by = denom_group]
-      counts <- merge(counts, distinct_denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
+      counts <- merge(counts, distinct_denoms, by = denom_group, all.x = TRUE)
     } else {
       counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                group_vars, layer_index)
+    counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   # --- Data completion ---
@@ -125,6 +130,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # --- Format ---
   # Route through apply_count_formats() (same as group_count) so shift layers
@@ -135,7 +141,7 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
                       zero_count_display = settings$zero_count_display %||% "full")
 
   # --- Build row labels ---
-  row_label_cols <- build_shift_row_labels(counts, by_labels, by_data_vars, row_var)
+  row_label_cols <- build_row_labels_long(counts, by_labels, by_data_vars, row_var)
 
   # --- Preserve factor-level ordering for row variable ---
   # dcast sorts LHS alphabetically; add a numeric sort key to the LHS
@@ -172,11 +178,11 @@ build_shift_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
       # row's width is independent of the n_counts cells (#55).
       dr[, formatted := apply_formats(denom_fmt, total)]
     } else {
-      # Legacy behavior: right-align the integer to the shift-cell width.
-      fmt_w <- max(nchar(counts[["formatted"]]), na.rm = TRUE)
+      # Default: right-align the integer to the shift-cell width.
+      fmt_w <- max(str_length(counts[["formatted"]]), na.rm = TRUE)
       dr[, formatted := formatC(total, format = "d", width = fmt_w)]
     }
-    build_shift_row_labels(dr, by_labels, by_data_vars, row_var)
+    build_row_labels_long(dr, by_labels, by_data_vars, row_var)
     dr[, .row_order := 0L]
     for (bv in by_data_vars) {
       if (is.factor(dt[[bv]])) {
@@ -250,56 +256,11 @@ complete_shift_counts <- function(counts, dt, all_cols, by_data_vars, row_var,
   grid <- do.call(data.table::CJ, grid_vars)
   result <- merge(grid, counts, by = names(grid_vars), all.x = TRUE)
 
-  # Fill NAs with 0
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
-    if (v %in% names(result)) {
-      data.table::set(result, which(is.na(result[[v]])), v, 0)
-    }
-  }
-
-  # Fill total and distinct_total from existing data
-  denom_vars <- if (!is.null(denom_group) && length(denom_group) > 0) {
-    intersect(denom_group, names(result))
-  } else {
-    character(0)
-  }
-  if ("total" %in% names(result) && length(denom_vars) > 0) {
-    denom_dt <- unique(counts[!is.na(total), .SD, .SDcols = c(denom_vars, "total")])
-    result[, total := NULL]
-    result <- merge(result, denom_dt, by = denom_vars, all.x = TRUE)
-  }
-  if ("distinct_total" %in% names(result) && length(denom_vars) > 0) {
-    dist_denom_dt <- unique(counts[!is.na(distinct_total), .SD, .SDcols = c(denom_vars, "distinct_total")])
-    result[, distinct_total := NULL]
-    result <- merge(result, dist_denom_dt, by = denom_vars, all.x = TRUE)
-  }
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
+  result <- refill_denom_totals(result, counts, denom_group, character(0))
+  zero_fill_stats(result)
 
   result
-}
-
-#' Build row labels for shift layer
-#' @keywords internal
-build_shift_row_labels <- function(counts, by_labels, by_data_vars, row_var) {
-  label_cols <- list()
-  col_idx <- 1L
-
-  for (lbl in by_labels) {
-    col_name <- str_c("rowlabel", col_idx)
-    counts[, (col_name) := lbl]
-    label_cols[[col_name]] <- col_name
-    col_idx <- col_idx + 1L
-  }
-
-  for (bv in by_data_vars) {
-    col_name <- str_c("rowlabel", col_idx)
-    counts[, (col_name) := as.character(get(bv))]
-    label_cols[[col_name]] <- col_name
-    col_idx <- col_idx + 1L
-  }
-
-  col_name <- paste0("rowlabel", col_idx)
-  counts[, (col_name) := as.character(get(row_var))]
-  label_cols[[col_name]] <- col_name
-
-  names(label_cols)
 }

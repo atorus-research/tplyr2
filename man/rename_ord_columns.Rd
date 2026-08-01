@@ -2,7 +2,7 @@
 % Please edit documentation in R/ordering.R
 \name{rename_ord_columns}
 \alias{rename_ord_columns}
-\title{Rename ordering columns to match DESIGN.md convention}
+\title{Rename ordering columns to the public output names}
 \usage{
 rename_ord_columns(result)
 }

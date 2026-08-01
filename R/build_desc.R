@@ -94,16 +94,19 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
   # --- Custom summaries ---
   all_custom <- getOption("tplyr2.custom_summaries", list())
   if (!is.null(settings$custom_summaries)) {
-    for (nm in names(settings$custom_summaries)) {
-      all_custom[[nm]] <- settings$custom_summaries[[nm]]
-    }
+    all_custom[names(settings$custom_summaries)] <- settings$custom_summaries
   }
 
   if (length(all_custom) > 0) {
     custom_stats <- dt[, {
       .var <- get(tv)
-      result <- map(all_custom, function(expr) {
-        tryCatch(eval(expr), error = function(e) NA_real_)
+      grp <- format_group_label(.BY)
+      result <- imap(all_custom, function(expr, nm) {
+        tryCatch(eval(expr), error = function(e) {
+          # Still NA (blank cell), but the reason is reported once per build.
+          record_user_fn_error(str_c("custom summary '", nm, "'"), e, grp)
+          NA_real_
+        })
       })
       result
     }, by = group_vars]
@@ -132,16 +135,19 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
       denom_base <- denom_base[eval(settings$denom_where)]
     }
     denoms <- denom_base[, list(total = .N), by = denom_group]
-    stats <- merge(stats, denoms,
-                   by = intersect(denom_group, names(stats)), all.x = TRUE)
+    # validate_denoms_by() guarantees denom_group is a subset of this layer's
+    # grouping columns, so joining on it directly cannot narrow the key set.
+    stats <- merge(stats, denoms, by = denom_group, all.x = TRUE)
   } else {
     denom_base <- pop_dt %||% dt
     stats[, total := nrow(denom_base)]
   }
-  stats[, pct := ifelse(!is.na(total) & total > 0, n / total * 100, NA_real_)]
+  check_denominator_integrity(stats, "n", "total", group_vars, layer_index)
+  stats[, pct := safe_pct(n, total)]
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(stats)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # Get format strings
   format_strings <- get_desc_formats(settings)
@@ -202,7 +208,7 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
       if (is.factor(v)) as.integer(v)
       else compute_var_order(as.character(v), var_name = bv, data_dt = dt)
     })
-    key_df <- stats::setNames(as.data.frame(ord_codes, stringsAsFactors = FALSE),
+    key_df <- setNames(as.data.frame(ord_codes, stringsAsFactors = FALSE),
                               str_c("k", seq_along(ord_codes)))
     long[, .by_ord := data.table::frankv(key_df, ties.method = "dense")]
   }
@@ -249,9 +255,9 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
     wide <- long[, c(all_label_cols, "formatted", "stat_order", extra_lhs), with = FALSE]
     data.table::setnames(wide, "formatted", "res1")
   } else {
-    lhs <- paste(c(all_label_cols, "stat_order", extra_lhs), collapse = " + ")
+    lhs <- str_c(c(all_label_cols, "stat_order", extra_lhs), collapse = " + ")
     rhs <- prepare_cast_column(long, cols, col_levels %||% get_col_levels(dt, cols))
-    formula_str <- paste(lhs, "~", rhs)
+    formula_str <- str_c(lhs, " ~ ", rhs)
     wide <- data.table::dcast(
       long,
       as.formula(formula_str),
@@ -304,16 +310,14 @@ build_desc_single <- function(dt, tv, cols, by_data_vars, by_labels,
 build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
                               settings, layer_index, col_n, pop_dt = NULL,
                               col_levels = NULL) {
-  var_results <- vector("list", length(target_vars))
-
-  for (vi in seq_along(target_vars)) {
-    var_results[[vi]] <- build_desc_single(
+  var_results <- map(seq_along(target_vars), function(vi) {
+    build_desc_single(
       dt, target_vars[vi], cols, by_data_vars, by_labels,
       settings, layer_index, col_n,
       var_label = target_vars[vi], var_index = vi,
       pop_dt = pop_dt, col_levels = col_levels
     )
-  }
+  })
 
   # Collect numeric data from sub-results
   multi_numeric <- map(seq_along(var_results), function(vi) {
@@ -329,9 +333,7 @@ build_desc_multi <- function(dt, target_vars, cols, by_data_vars, by_labels,
   result <- harmonize_and_bind(var_results)
 
   # Re-sort by ordering columns
-  all_ord <- str_subset(names(result), "^ord")
-  other_ord <- sort(setdiff(all_ord, "ordindx"))
-  data.table::setorderv(result, c("ordindx", other_ord))
+  sort_by_ord_columns(result)
 
   # Attach collected numeric data
   if (!is.null(multi_numeric)) {
@@ -359,8 +361,7 @@ transpose_stats_to_columns <- function(wide) {
 
   # Treatment (cols) group labels, one per res column
   trt_labels <- map_chr(res_cols, function(col) {
-    lbl <- attr(wide[[col]], "label")
-    if (is.null(lbl)) col else lbl
+    attr(wide[[col]], "label") %||% col
   })
 
   # Identify rowlabel columns; the last one holds the stat names
@@ -410,8 +411,8 @@ transpose_stats_to_columns <- function(wide) {
     for (lbl_col in non_stat_labels) {
       vals <- unique(wide[[lbl_col]])
       if (length(vals) == 1) {
-        # Shift existing rowlabel columns to make room
-        # Actually, rename rowlabel1 and prepend the constant label
+        # Prepend the constant label as rowlabel1, shifting the transposed
+        # labels to rowlabel2
         old_rl1 <- transposed$rowlabel1
         transposed[, rowlabel1 := vals]
         transposed[, rowlabel2 := old_rl1]

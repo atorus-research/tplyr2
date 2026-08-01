@@ -72,7 +72,48 @@ test_that("tplyr_stats_data filters by statistic", {
 
   sd <- tplyr_stats_data(result, layer = 1, statistic = "mean")
   expect_true(is.data.frame(sd))
-  expect_true("mean" %in% names(sd))
+  # Pins the documented contract: grouping columns plus the one statistic.
+  # The old assertion ("mean" %in% names) also passed on the whole frame (#79).
+  expect_equal(names(sd), c("TRT", "mean"))
+  expect_equal(sd$mean, c(35, 55))
+  # Every statistic remains reachable through tplyr_numeric_data()
+  expect_true(length(names(tplyr_numeric_data(result, 1))) > 2)
+})
+
+test_that("tplyr_stats_data keeps grouping columns for every layer type (#79)", {
+  spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("AGEGR1", by = "SEX"),
+    group_desc("AGE", by = "SEX")))
+  built <- tplyr_build(spec, tplyr_adsl)
+
+  cnt <- tplyr_stats_data(built, 1, "pct")
+  expect_equal(names(cnt), c("TRT01P", "SEX", "AGEGR1", "pct"))
+
+  dsc <- tplyr_stats_data(built, 2, "median")
+  expect_equal(names(dsc), c("TRT01P", "SEX", "median"))
+})
+
+test_that("tplyr_stats_data does not duplicate a numeric grouping column (#79)", {
+  # "n" is both a statistic name and, for the count layer, adjacent to the
+  # grouping columns — requesting it must not emit it twice.
+  spec <- tplyr_spec(cols = "TRT01P",
+                     layers = tplyr_layers(group_count("AGEGR1")))
+  built <- tplyr_build(spec, tplyr_adsl)
+  out <- tplyr_stats_data(built, 1, "n")
+  expect_equal(names(out), c("TRT01P", "AGEGR1", "n"))
+  expect_false(anyDuplicated(names(out)) > 0)
+})
+
+test_that("a numeric grouping variable is not mistaken for a statistic (#79)", {
+  # Type-based inference would drop VISITNUM from the grouping columns; the
+  # builders tag them explicitly instead.
+  d <- data.frame(TRT = rep(c("A", "B"), each = 4),
+                  VISITNUM = rep(c(1, 2), 4),
+                  AGE = c(30, 40, 50, 60, 35, 45, 55, 65))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(
+    group_desc("AGE", by = "VISITNUM")))
+  out <- tplyr_stats_data(tplyr_build(spec, d), 1, "mean")
+  expect_equal(names(out), c("TRT", "VISITNUM", "mean"))
 })
 
 test_that("tplyr_stats_data returns NULL for missing statistic", {

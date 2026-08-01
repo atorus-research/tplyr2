@@ -4,7 +4,7 @@
 \alias{pairwise_cell_disp}
 \title{Build one pairwise 2x2 and render its display string}
 \usage{
-pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
+pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config, group = NULL)
 }
 \arguments{
 \item{n_ref, n_cmp}{Event counts for the reference and comparison arm.}
@@ -12,6 +12,9 @@ pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
 \item{N_ref, N_cmp}{Population denominators for the reference and comparison arm.}
 
 \item{config}{A \code{tplyr_assoc_test} object (pairwise mode).}
+
+\item{group}{Optional group identifier used when reporting a failure of
+\code{config$fn}.}
 }
 \value{
 A length-1 character display string.

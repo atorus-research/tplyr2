@@ -14,6 +14,17 @@
 #' @return A data.frame with rowlabel, res, and ord columns
 #' @export
 tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
+  # Custom summaries and assoc_test functions render failures as blank cells;
+  # collect_user_fn_errors() reports the reasons as one deduplicated warning
+  # when the build finishes.
+  collect_user_fn_errors(
+    tplyr_build_impl(spec, data, pop_data = pop_data, metadata = metadata, ...)
+  )
+}
+
+#' @keywords internal
+#' @noRd
+tplyr_build_impl <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   # If spec is a file path, read it
   if (is.character(spec) && length(spec) == 1 && file.exists(spec)) {
     spec <- tplyr_read_spec(spec)
@@ -58,6 +69,18 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
         !identical(pop_config$where, TRUE)) {
       pop_dt <- pop_dt[eval(pop_config$where)]
     }
+
+    # Rename pop_dt columns to match the spec's before anything keyed on those
+    # names runs. apply_custom_groups()/apply_total_groups() look up the spec's
+    # column variable, so a renamed pop_data — pop_data(c(TRTA = "TRT01P")) —
+    # used to skip them both, leaving the Total column with no denominator.
+    if (length(cols) > 0) {
+      pop_cols <- resolve_pop_cols(pop_config, cols)
+      if (!identical(unname(pop_cols), cols)) {
+        new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
+        data.table::setnames(pop_dt, unname(pop_cols), new_names)
+      }
+    }
   }
 
   # --- Apply custom groups and total groups ---
@@ -82,12 +105,7 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   # --- Compute header N per column group ---
   if (length(cols) > 0) {
     if (!is.null(pop_dt)) {
-      pop_cols <- resolve_pop_cols(pop_config, cols)
-      # Rename pop_dt columns to match spec cols so all downstream code works
-      if (!identical(unname(pop_cols), cols)) {
-        new_names <- if (!is.null(names(pop_cols))) names(pop_cols) else cols
-        data.table::setnames(pop_dt, unname(pop_cols), new_names)
-      }
+      validate_pop_data_coverage(dt, pop_dt, cols)
       col_n <- pop_dt[, list(.n = .N), by = cols]
       header_n <- data.table::copy(col_n)
     } else {
@@ -137,12 +155,10 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
   result <- harmonize_and_bind(layer_results)
 
   # Sort by layer index first, then within-layer ordering columns
-  all_ord <- str_subset(names(result), "^ord")
-  other_ord <- sort(setdiff(all_ord, "ordindx"))
-  ord_cols <- c("ordindx", other_ord)
-  data.table::setorderv(result, ord_cols)
+  sort_by_ord_columns(result)
 
-  # Rename ordering columns to match DESIGN.md convention
+  # Rename ordering columns to the public output names
+  # (ordindx -> ord_layer_index, ord<n> -> ord_layer_<n>)
   rename_ord_columns(result)
 
   # Convert to data.frame for output
@@ -186,6 +202,23 @@ tplyr_build <- function(spec, data, pop_data = NULL, metadata = FALSE, ...) {
 apply_overrides <- function(spec, overrides) {
   if (length(overrides) == 0) return(spec)
 
+  # `...` disables R's own argument matching, so a typo'd override used to
+  # build a plausible-looking table off the wrong settings — e.g.
+  # tplyr_build(spec, adsl, wher = "SAFFL == 'Y'") silently ran unfiltered.
+  valid <- union(names(spec), c("where", "pop_data"))
+  supplied <- names(overrides) %||% rep("", length(overrides))
+  if (any(supplied == "")) {
+    stop("All arguments passed to tplyr_build() via ... must be named.",
+         call. = FALSE)
+  }
+  unknown <- setdiff(supplied, valid)
+  if (length(unknown) > 0) {
+    stop("Unknown override", if (length(unknown) > 1) "s" else "", " passed to ",
+         "tplyr_build(): ", str_c(unknown, collapse = ", "),
+         "\nValid overrides: ", str_c(sort(valid), collapse = ", "),
+         call. = FALSE)
+  }
+
   for (name in names(overrides)) {
     value <- overrides[[name]]
 
@@ -207,53 +240,6 @@ apply_overrides <- function(spec, overrides) {
   }
 
   spec
-}
-
-#' Sort column names by their numeric suffix
-#'
-#' Lexicographic sorting places "res10" before "res2"; ordering by the
-#' numeric suffix keeps columns in build order once a family has more
-#' than 9 members.
-#' @keywords internal
-sort_by_numeric_suffix <- function(x) {
-  x[order(as.integer(str_extract(x, "\\d+")))]
-}
-
-#' Harmonize column sets across layers and row-bind
-#' @keywords internal
-harmonize_and_bind <- function(layer_results) {
-  if (length(layer_results) == 0) {
-    return(data.table::data.table())
-  }
-
-  # Collect all column names across layers
-  all_names <- unique(unlist(map(layer_results, names)))
-
-  # Separate by type: rowlabel*, res*, rdiff*, ord*
-  label_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rowlabel"))
-  res_cols <- sort_by_numeric_suffix(str_subset(all_names, "^res\\d"))
-  rdiff_cols <- sort_by_numeric_suffix(str_subset(all_names, "^rdiff"))
-  ord_cols <- sort(str_subset(all_names, "^ord"))
-
-  target_cols <- c(label_cols, res_cols, rdiff_cols, ord_cols)
-
-  # Pad each layer result with missing columns
-  for (i in seq_along(layer_results)) {
-    dt <- layer_results[[i]]
-    missing_cols <- setdiff(target_cols, names(dt))
-    for (col in missing_cols) {
-      if (str_detect(col, "^ord")) {
-        dt[, (col) := NA_real_]
-      } else {
-        dt[, (col) := ""]
-      }
-    }
-    # Reorder columns
-    data.table::setcolorder(dt, intersect(target_cols, names(dt)))
-    layer_results[[i]] <- dt
-  }
-
-  data.table::rbindlist(layer_results, use.names = TRUE, fill = TRUE)
 }
 
 #' Name of the per-column-variable synthetic-row marker

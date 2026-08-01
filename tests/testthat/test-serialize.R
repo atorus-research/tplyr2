@@ -580,3 +580,160 @@ test_that("JSON roundtrip preserves ci_method / ci_level and CI keywords", {
                c("distinct_n", "distinct_pct", "distinct_ci_lower",
                  "distinct_ci_upper"))
 })
+
+# --- Round-trip fidelity across both formats (#68, #69, #70, #81) ---
+
+# Each of these ran green through YAML but broke through JSON (or vice versa),
+# so every case is exercised through both writers.
+formats <- c("json", "yaml")
+
+test_that("multi-element character settings survive both formats (#68)", {
+  skip_if_not_installed("yaml")
+  spec <- tplyr_spec(
+    cols = "TRT01P",
+    layers = tplyr_layers(
+      group_count("AGEGR1", by = "SEX", settings = layer_settings(
+        denoms_by = c("TRT01P", "SEX"),
+        keep_levels = c("65-80", ">80"),
+        precision_by = c("TRT01P", "SEX")))
+    )
+  )
+  expected <- tplyr_build(spec, tplyr_adsl)
+
+  for (ext in formats) {
+    path <- file.path(scratch_dir, paste0("multichar.", ext))
+    tplyr_write_spec(spec, path)
+    st <- tplyr_read_spec(path)$layers[[1]]$settings
+
+    expect_type(st$denoms_by, "character")
+    expect_equal(st$denoms_by, c("TRT01P", "SEX"), info = ext)
+    expect_equal(st$keep_levels, c("65-80", ">80"), info = ext)
+    expect_equal(st$precision_by, c("TRT01P", "SEX"), info = ext)
+    # The list-shaped denoms_by used to blow up data.table's `by=`
+    expect_equal(tplyr_build(tplyr_read_spec(path), tplyr_adsl), expected,
+                 info = ext)
+  }
+})
+
+test_that("length-1 character settings do not become lists (#68)", {
+  skip_if_not_installed("yaml")
+  spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_count("AGEGR1", settings = layer_settings(
+      denoms_by = "TRT01P", total_row = TRUE, ci_level = 0.9))
+  ))
+  for (ext in formats) {
+    path <- file.path(scratch_dir, paste0("single.", ext))
+    tplyr_write_spec(spec, path)
+    st <- tplyr_read_spec(path)$layers[[1]]$settings
+    expect_type(st$denoms_by, "character")
+    expect_type(st$total_row, "logical")
+    expect_type(st$ci_level, "double")
+  }
+})
+
+test_that("every layer_settings() formal has a declared serialization type", {
+  # Guards against a new setting silently round-tripping as a list.
+  covered <- c(serialize_special_fields,
+               unlist(settings_field_types(), use.names = FALSE))
+  expect_equal(setdiff(names(formals(layer_settings)), covered), character(0))
+})
+
+test_that("precision_cap keeps its names and its effect on output (#69)", {
+  skip_if_not_installed("yaml")
+  adsl <- tplyr_adsl
+  adsl$AGEX <- adsl$AGE + 0.123456
+  spec <- tplyr_spec(
+    cols = "TRT01P",
+    layers = tplyr_layers(
+      group_desc("AGEX", settings = layer_settings(
+        format_strings = list("Mean" = f_str("a.a", "mean")),
+        precision_cap = c(int = 3, dec = 1)))
+    )
+  )
+  expected <- tplyr_build(spec, adsl)$res1[1]
+
+  for (ext in formats) {
+    path <- file.path(scratch_dir, paste0("cap.", ext))
+    tplyr_write_spec(spec, path)
+    st <- tplyr_read_spec(path)$layers[[1]]$settings
+    expect_equal(st$precision_cap, c(int = 3, dec = 1), info = ext)
+    # Assert on rendered output: an unnamed cap round-trips as a valid spec
+    # but silently stops capping.
+    expect_equal(tplyr_build(tplyr_read_spec(path), adsl)$res1[1], expected,
+                 info = ext)
+  }
+})
+
+test_that("apply_precision_cap warns on a cap with neither int nor dec (#69)", {
+  prec <- data.table::data.table(max_int = 5L, max_dec = 5L)
+  expect_warning(out <- apply_precision_cap(prec, c(3, 1)), "int.*dec")
+  expect_equal(out$max_int, 5L)
+})
+
+test_that("a where clause longer than the deparse width round-trips (#70)", {
+  skip_if_not_installed("yaml")
+  spec <- tplyr_spec(
+    cols = "TRT01P",
+    where = SAFFL == "Y" & TRT01P %in% c("Placebo", "Xanomeline High Dose") &
+      !is.na(AGE) & AGE > 40,
+    layers = tplyr_layers(
+      group_count("AGEGR1", where = AGEGR1 != "<65" & !is.na(SEX) & SEX %in% c("F", "M"),
+                  settings = layer_settings(
+                    denom_where = quote(SAFFL == "Y" & !is.na(AGE) & AGE > 40 &
+                                          SEX %in% c("F", "M"))))
+    )
+  )
+  expected <- tplyr_build(spec, tplyr_adsl)
+
+  for (ext in formats) {
+    path <- file.path(scratch_dir, paste0("longwhere.", ext))
+    tplyr_write_spec(spec, path)
+    spec2 <- tplyr_read_spec(path)
+    expect_equal(deparse1(spec2$where), deparse1(spec$where), info = ext)
+    expect_equal(deparse1(spec2$layers[[1]]$where),
+                 deparse1(spec$layers[[1]]$where), info = ext)
+    expect_equal(deparse1(spec2$layers[[1]]$settings$denom_where),
+                 deparse1(spec$layers[[1]]$settings$denom_where), info = ext)
+    expect_equal(tplyr_build(spec2, tplyr_adsl), expected, info = ext)
+  }
+})
+
+test_that("a multi-element _expr from an older spec file still reads (#70)", {
+  long <- quote(SAFFL == "Y" & TRT01P %in% c("Placebo", "Xanomeline High Dose") &
+                  !is.na(AGE) & AGE > 40)
+  # How serialize_expr() used to write it: expr_deparse wraps at ~60 chars.
+  old <- list(`_expr` = rlang::expr_deparse(long))
+  expect_gt(length(old[["_expr"]]), 1)
+  expect_equal(deparse1(deserialize_expr(old)), deparse1(long))
+})
+
+test_that("unknown settings keys warn instead of vanishing (#81)", {
+  skip_if_not_installed("yaml")
+  path <- file.path(scratch_dir, "unknown_settings.yaml")
+  tplyr_write_spec(
+    tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("AGEGR1"))),
+    path)
+  raw <- yaml::read_yaml(path)
+  raw$layers[[1]]$settings$total_rows <- TRUE
+  raw$layers[[1]]$settings$distinct__by <- "USUBJID"
+  yaml::write_yaml(raw, path)
+
+  expect_warning(spec <- tplyr_read_spec(path),
+                 "total_rows.*distinct__by|distinct__by.*total_rows")
+  expect_warning(tplyr_read_spec(path), "layer 1")
+  # Still builds — unknown keys are dropped, just no longer silently.
+  expect_s3_class(suppressWarnings(spec), "tplyr_spec")
+})
+
+test_that("unknown top-level spec keys warn (#81)", {
+  skip_if_not_installed("yaml")
+  path <- file.path(scratch_dir, "unknown_top.yaml")
+  tplyr_write_spec(
+    tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_count("AGEGR1"))),
+    path)
+  raw <- yaml::read_yaml(path)
+  raw$colls <- "TRT01P"
+  yaml::write_yaml(raw, path)
+
+  expect_warning(tplyr_read_spec(path), "colls")
+})

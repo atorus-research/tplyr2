@@ -15,9 +15,20 @@ tplyr_stats_data(result, layer, statistic)
 (e.g., "n", "pct", "mean", "sd")}
 }
 \value{
-A data.frame with the grouping columns and the requested statistic.
-Returns NULL if not available.
+A data.frame with the layer's grouping columns and the requested
+statistic. Returns NULL if the layer has no numeric data or does not
+compute the statistic.
 }
 \description{
-Filters the raw numeric data for a specific layer and statistic.
+Filters the raw numeric data for a specific layer and statistic. Use
+\code{\link{tplyr_numeric_data}()} to get every statistic for the layer.
+}
+\examples{
+spec <- tplyr_spec(
+  cols = "TRT01P",
+  layers = tplyr_layers(group_desc("AGE"))
+)
+built <- tplyr_build(spec, tplyr_adsl)
+tplyr_stats_data(built, 1, "mean")
+
 }

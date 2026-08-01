@@ -84,16 +84,30 @@
 #'   its own width independent of the \code{n_counts} format (e.g.
 #'   \code{f_str("xx", "n")} for a plain narrow integer). The f_str must
 #'   reference a single variable (the denominator count is passed positionally).
-#'   \code{NULL} (default) keeps the legacy behavior of padding the integer to
-#'   the width of the shift cells. An absent baseline group renders as \code{0}
-#'   either way.
+#'   \code{NULL} (default) pads the integer to the width of the shift cells.
+#'   An absent baseline group renders as \code{0} either way.
 #' @param denom_where Expression for separate denominator filter
 #' @param denom_ignore Character vector of values to exclude from denominators
 #' @param distinct_by Character string naming the variable for distinct counting
 #' @param total_row Logical, whether to add a total row
 #' @param total_row_label Character string for total row label
 #' @param total_row_count_missings Logical, include missing in total
-#' @param missing_count List with missing count configuration
+#' @param missing_count List configuring the Missing row. Recognized keys:
+#'   \describe{
+#'     \item{`missing_values`}{Character vector of target values to fold into
+#'       the Missing row alongside `NA`.}
+#'     \item{`label`}{Row label; defaults to `"Missing"`.}
+#'     \item{`sort_value`}{Numeric sort key placing the row; defaults to `Inf`
+#'       (last).}
+#'     \item{`format`}{An [f_str()] overriding the layer's count format for
+#'       this row.}
+#'     \item{`denom_exclude`}{Logical. When `TRUE`, the rows counted as missing
+#'       leave the layer's percentage denominator, so percentages are of the
+#'       non-missing population. This applies to every row in the layer,
+#'       including the Missing row itself and any total row. Defaults to
+#'       `FALSE`.}
+#'   }
+#'   Any other key is an error.
 #' @param missing_subjects Logical, add missing subjects row
 #' @param missing_subjects_label Character string for missing subjects label
 #' @param keep_levels Character vector of levels to keep

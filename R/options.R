@@ -45,12 +45,24 @@ tplyr2_options <- function(...) {
     return(result)
   }
 
+  # A misspelled option sets a key nothing reads — e.g. IBMrounding for
+  # IBMRounding leaves the whole output package on banker's rounding with no
+  # signal — so reject names that are not real options.
+  supplied <- names(args) %||% rep("", length(args))
+  valid <- str_replace(names(defaults), "^tplyr2\\.", "")
+  unknown <- setdiff(supplied, valid)
+  if (length(unknown) > 0) {
+    stop("Unknown option", if (length(unknown) > 1) "s" else "", ": ",
+         str_c(ifelse(unknown == "", "<unnamed>", unknown), collapse = ", "),
+         "\nValid options: ", str_c(valid, collapse = ", "), call. = FALSE)
+  }
+
   # Set options
   opt_names <- str_c("tplyr2.", names(args))
   old_vals <- map(opt_names, getOption)
   names(old_vals) <- opt_names
 
-  new_opts <- stats::setNames(args, opt_names)
+  new_opts <- setNames(args, opt_names)
   do.call(options, new_opts)
 
   invisible(old_vals)

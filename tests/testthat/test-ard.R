@@ -326,3 +326,49 @@ test_that("tplyr_to_ard handles a layer with no column variables", {
   recon <- tplyr_from_ard(ard, spec)
   expect_true(is.data.frame(recon))
 })
+
+# --- Reconstruction agrees with the build path (#71) ---
+
+test_that("a default desc layer reconstructs the rows the build produced (#71)", {
+  spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(group_desc("AGE")))
+  built <- tplyr_build(spec, tplyr_adsl)
+  recon <- tplyr_from_ard(tplyr_to_ard(built), spec)
+
+  # Used to reconstruct a single "n" row at f_str("xx") width because the ARD
+  # path re-defaulted the formats instead of sharing get_desc_formats().
+  expect_equal(nrow(recon), nrow(built))
+  expect_equal(recon$rowlabel1, built$rowlabel1)
+  expect_equal(recon$rowlabel1[1], "n")
+  expect_equal(as.vector(recon$res1), as.vector(built$res1))
+  expect_equal(as.vector(recon$res2), as.vector(built$res2))
+})
+
+test_that("desc reconstruction honors explicit format_strings (#71)", {
+  spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_desc("AGE", settings = layer_settings(format_strings = list(
+      "Mean (SD)" = f_str("xx.xx (xx.xxx)", "mean", "sd"),
+      "n"         = f_str("xxxx", "n"))))
+  ))
+  built <- tplyr_build(spec, tplyr_adsl)
+  recon <- tplyr_from_ard(tplyr_to_ard(built), spec)
+
+  # Also pins row order: "Mean (SD)" before "n" is the format-string order,
+  # not the alphabetical order dcast would impose.
+  expect_equal(recon$rowlabel1, c("Mean (SD)", "n"))
+  expect_equal(as.vector(recon$res1), as.vector(built$res1))
+})
+
+test_that("analyze layer rows follow format_strings order, not alphabetical", {
+  spec <- tplyr_spec(cols = "TRT01P", layers = tplyr_layers(
+    group_analyze("AGE",
+      analyze_fn = function(df, tv) {
+        data.frame(mn = mean(df$AGE), num = nrow(df), sdv = sd(df$AGE))
+      },
+      settings = layer_settings(format_strings = list(
+        "N"    = f_str("xxx", "num"),
+        "Mean" = f_str("xx.x", "mn"),
+        "SD"   = f_str("xx.xx", "sdv"))))
+  ))
+  built <- tplyr_build(spec, tplyr_adsl)
+  expect_equal(built$rowlabel1, c("N", "Mean", "SD"))
+})

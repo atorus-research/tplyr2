@@ -262,6 +262,132 @@ validate_layer <- function(layer, index, cols = NULL) {
     }
   }
 
+  validate_missing_count(layer$settings$missing_count, index)
+
+  invisible(TRUE)
+}
+
+#' Warn when a nonzero count has a missing or zero denominator
+#'
+#' Denominators are attached with a left join, so a group present in the
+#' analysis data but absent from the denominator source comes back with
+#' \code{total = NA} and renders a blank-width percent (\code{" 5 (     )"}) —
+#' and \code{total == 0} with \code{n > 0} used to display an affirmatively
+#' wrong \code{0.0\%}. Both mean the denominator setup is wrong, so say so.
+#'
+#' @param counts data.table holding the counts and their denominators
+#' @param n_col Name of the count column (\code{"n"} or \code{"distinct_n"})
+#' @param total_col Name of the denominator column
+#' @param group_cols Columns identifying a row, used to name offending groups
+#' @param layer_index Integer layer index
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+check_denominator_integrity <- function(counts, n_col, total_col, group_cols,
+                                        layer_index) {
+  if (is.null(counts) || nrow(counts) == 0) return(invisible(TRUE))
+  if (!all(c(n_col, total_col) %in% names(counts))) return(invisible(TRUE))
+
+  bad <- counts[get(n_col) > 0 & (is.na(get(total_col)) | get(total_col) == 0)]
+  if (nrow(bad) == 0) return(invisible(TRUE))
+
+  keys <- intersect(group_cols, names(bad))
+  labels <- if (length(keys) > 0) {
+    unique(map_chr(seq_len(nrow(bad)), function(r) {
+      format_group_label(as.list(bad[r, keys, with = FALSE]))
+    }))
+  } else {
+    character(0)
+  }
+  shown <- utils::head(labels, 5)
+  more <- if (length(labels) > length(shown)) {
+    str_c(" (and ", length(labels) - length(shown), " more)")
+  } else {
+    ""
+  }
+
+  warning("Layer ", layer_index, ": ", nrow(bad), " row",
+          if (nrow(bad) > 1) "s" else "", " have ", n_col,
+          " > 0 with a missing or zero ", total_col,
+          "; those percentages are blank.",
+          if (length(shown) > 0) {
+            str_c("\nAffected: ", str_c(shown, collapse = "; "), more)
+          } else {
+            ""
+          },
+          "\nCheck that pop_data and denoms_by cover the analysis data.",
+          call. = FALSE)
+
+  invisible(TRUE)
+}
+
+#' Warn when pop_data does not cover the analysis data's column levels
+#'
+#' A column level present in the analysis data but absent from the population
+#' (an arm recoded \code{"Xanomeline High Dose"} vs \code{"High Dose"}) yields
+#' an NA denominator for every one of its cells.
+#'
+#' @param dt Analysis data.table
+#' @param pop_dt Population data.table, or NULL
+#' @param cols Character vector of column variables
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+validate_pop_data_coverage <- function(dt, pop_dt, cols) {
+  if (is.null(pop_dt) || length(cols) == 0) return(invisible(TRUE))
+
+  walk(cols, function(cv) {
+    if (!cv %in% names(dt) || !cv %in% names(pop_dt)) return()
+    observed <- unique(as.character(stats::na.omit(dt[[cv]])))
+    covered <- unique(as.character(stats::na.omit(pop_dt[[cv]])))
+    missing_levels <- setdiff(observed, covered)
+    if (length(missing_levels) > 0) {
+      warning("pop_data has no rows for '", cv, "' level",
+              if (length(missing_levels) > 1) "s" else "", ": ",
+              str_c(missing_levels, collapse = ", "),
+              "\nCells in those columns will have no denominator. ",
+              "pop_data levels: ", str_c(sort(covered), collapse = ", "),
+              call. = FALSE)
+    }
+  })
+
+  invisible(TRUE)
+}
+
+#' Validate the keys of a missing_count configuration
+#'
+#' \code{missing_count} is a free-form list, so an unrecognized key used to be
+#' accepted and then never read — the table built without the requested
+#' behavior and nothing pointed at the mistake.
+#'
+#' @param missing_count The layer's \code{missing_count} setting
+#' @param index Integer layer index
+#' @return Invisible TRUE
+#' @keywords internal
+validate_missing_count <- function(missing_count, index) {
+  if (is.null(missing_count)) return(invisible(TRUE))
+
+  if (!is.list(missing_count)) {
+    stop(str_glue("Layer {index}: missing_count must be a list"), call. = FALSE)
+  }
+
+  nms <- names(missing_count) %||% rep("", length(missing_count))
+  unknown <- setdiff(nms, missing_count_keys)
+  if (length(unknown) > 0) {
+    stop(str_glue(
+      "Layer {index}: unknown missing_count key(s): ",
+      "{str_c(ifelse(unknown == '', '<unnamed>', unknown), collapse = ', ')}",
+      "\nValid keys: {str_c(missing_count_keys, collapse = ', ')}"
+    ), call. = FALSE)
+  }
+
+  if (!is.null(missing_count$denom_exclude) &&
+      !(is.logical(missing_count$denom_exclude) &&
+        length(missing_count$denom_exclude) == 1)) {
+    stop(str_glue("Layer {index}: missing_count$denom_exclude must be TRUE or FALSE"),
+         call. = FALSE)
+  }
+
   invisible(TRUE)
 }
 
@@ -371,8 +497,58 @@ validate_build_data <- function(spec, dt) {
       })
     }
 
+    validate_denoms_by(layer, i, spec$cols, dt_names)
+
     # Warn about unknown stat names in format strings
     validate_layer_stats(layer, i)
+  })
+
+  invisible(TRUE)
+}
+
+#' Validate denoms_by against the layer's grouping variables
+#'
+#' Most denominator merges join on \code{intersect(denom_group, names(x))}. A
+#' \code{denoms_by} naming a variable that is not one of the layer's grouping
+#' columns silently shrinks the join-key set, leaving the denominator table with
+#' several rows per remaining key — so the merge either multiplies table rows or
+#' attaches another group's denominator, with no error. Pinning the invariant
+#' here makes every one of those intersects provably a no-op.
+#'
+#' @param layer A tplyr_layer object
+#' @param index Integer layer index
+#' @param cols Character vector of spec-level column variables
+#' @param dt_names Column names of the build data
+#'
+#' @return Invisible TRUE
+#' @keywords internal
+validate_denoms_by <- function(layer, index, cols, dt_names) {
+  denoms_by <- layer$settings$denoms_by
+  if (is.null(denoms_by)) return(invisible(TRUE))
+
+  by_info <- classify_by(layer$by, dt_names)
+
+  # Count and shift layers group by their target variable(s), so those are
+  # legitimate denominator keys. Desc and analyze layers summarize the target
+  # rather than grouping by it, so naming it would be narrowed away.
+  groups_by_target <- inherits(layer, "tplyr_count_layer") ||
+    inherits(layer, "tplyr_shift_layer")
+  valid <- unique(c(cols, by_info$data_vars,
+                    if (groups_by_target) layer$target_var))
+
+  # Nested count layers accept a per-level list; every level draws from the
+  # same universe of grouping variables.
+  levels_to_check <- if (is.list(denoms_by)) denoms_by else list(denoms_by)
+
+  walk(levels_to_check, function(level_vars) {
+    unknown <- setdiff(as.character(level_vars), valid)
+    if (length(unknown) > 0) {
+      stop(str_glue(
+        "Layer {index}: denoms_by names variable(s) the layer does not group ",
+        "by: {str_c(unknown, collapse = ', ')}",
+        "\nValid values: {str_c(valid, collapse = ', ')}"
+      ), call. = FALSE)
+    }
   })
 
   invisible(TRUE)

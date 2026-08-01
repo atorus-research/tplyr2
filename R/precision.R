@@ -39,7 +39,7 @@ collect_precision <- function(dt, precision_on, precision_by = character(0),
         }
         uncovered <- in_data[!supplied, on = have]
         if (nrow(uncovered) > 0) {
-          labs <- apply(uncovered, 1, function(r) str_c(r, collapse = " / "))
+          labs <- pmap_chr(uncovered, function(...) str_c(c(...), collapse = " / "))
           warning(str_glue(
             "precision_data does not cover {nrow(uncovered)} precision_by ",
             "group(s): {str_c(head(labs, 5), collapse = '; ')}",
@@ -142,6 +142,14 @@ apply_precision_cap <- function(prec, precision_cap = NULL) {
     cap <- getOption("tplyr2.precision_cap", NULL)
   }
   if (is.null(cap)) return(prec)
+
+  # A cap with neither name applies to nothing. Silently ignoring it renders
+  # uncapped numbers that look plausible, so say so.
+  if (!any(c("int", "dec") %in% names(cap))) {
+    warning("precision_cap has no 'int' or 'dec' name and was ignored. ",
+            "Supply it as c(int = <n>, dec = <n>).", call. = FALSE)
+    return(prec)
+  }
 
   if ("int" %in% names(cap)) {
     prec[max_int > cap[["int"]], max_int := as.integer(cap[["int"]])]

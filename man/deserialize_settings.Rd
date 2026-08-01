@@ -4,7 +4,12 @@
 \alias{deserialize_settings}
 \title{Deserialize layer settings}
 \usage{
-deserialize_settings(raw)
+deserialize_settings(raw, layer_id = NULL)
+}
+\arguments{
+\item{raw}{Named list of parsed settings}
+
+\item{layer_id}{Human-readable layer identifier used in warning messages}
 }
 \description{
 Deserialize layer settings

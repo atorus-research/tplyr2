@@ -23,8 +23,6 @@ build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
   by_data_vars <- by_info$data_vars
   by_labels <- by_info$labels
 
-  # Dispatch: single vs nested
-
   if (length(target_var) == 1) {
     build_count_layer_single(dt, target_var[1], cols, by_data_vars, by_labels,
                               settings, layer_index, col_n = col_n, pop_dt = pop_dt,
@@ -37,7 +35,7 @@ build_count_layer <- function(dt, layer, cols, layer_index, col_n = NULL, pop_dt
 }
 
 # =============================================================================
-# Single-variable count layer (Phase 1/2 path)
+# Single-variable count layer
 # =============================================================================
 
 #' Process a single-variable count layer
@@ -77,6 +75,9 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (!is.null(denom_ignore)) {
     denom_dt <- denom_dt[!get(tv) %in% denom_ignore]
   }
+  if (!is.null(missing_count)) {
+    denom_dt <- apply_denom_exclude(denom_dt, tv, missing_count, layer_index)
+  }
 
   # --- Compute denominators ---
   denom_group <- if (!is.null(denoms_by)) denoms_by else {
@@ -89,7 +90,8 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   } else {
     counts[, total := nrow(denom_dt)]
   }
-  counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+  check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+  counts[, pct := safe_pct(n, total)]
 
   # --- Distinct denominators ---
   if (!is.null(distinct_by)) {
@@ -99,7 +101,9 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
     } else {
       counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                group_vars, layer_index)
+    counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   # --- Data completion ---
@@ -157,6 +161,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 
   # --- Capture numeric data before formatting ---
   numeric_snapshot <- data.table::copy(counts)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   # --- Compute risk difference on main counts (before special rows) ---
   rd_data <- NULL
@@ -186,7 +191,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   apply_count_formats(total_result, fmts, pct_lt, pct_gt, zero_count_display)
 
   # --- Build row label columns ---
-  row_labels <- build_row_labels_count(counts, by_labels, by_data_vars, tv)
+  row_labels <- build_row_labels_long(counts, by_labels, by_data_vars, tv)
 
   if (!is.null(missing_row)) {
     build_row_labels_special(missing_row, by_labels, by_data_vars, tv, row_labels)
@@ -253,7 +258,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
   if (!is.null(rd_data)) {
     wide <- merge_risk_diff_columns(
       wide, rd_data, settings$risk_diff,
-      row_labels, tv, by_data_vars
+      row_labels, tv, by_data_vars, by_labels
     )
   }
 
@@ -281,7 +286,7 @@ build_count_layer_single <- function(dt, tv, cols, by_data_vars, by_labels,
 }
 
 # =============================================================================
-# Nested count layer (Phase 3)
+# Nested (multi-variable) count layer
 # =============================================================================
 
 #' Process a nested (multi-variable) count layer
@@ -314,6 +319,12 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
     # Ignore values in the outermost target variable
     denom_dt <- denom_dt[!get(target_vars[1]) %in% denom_ignore]
   }
+  if (!is.null(missing_count)) {
+    # The Missing row is computed on the outer level, so exclude on that
+    # variable too.
+    denom_dt <- apply_denom_exclude(denom_dt, target_vars[1], missing_count,
+                                    layer_index)
+  }
 
   # Total number of rowlabel columns needed
   n_label_cols <- length(by_labels) + length(by_data_vars) + n_levels
@@ -322,8 +333,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   level_results <- vector("list", n_levels)
 
   for (level in seq_len(n_levels)) {
-    level_tvs <- target_vars[1:level]
-    tv <- target_vars[level]
+    level_tvs <- target_vars[seq_len(level)]
 
     # Group by cols + by_data_vars + all target vars up to this level
     group_vars <- c(cols, by_data_vars, level_tvs)
@@ -342,11 +352,15 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
     if (length(denom_group) > 0) {
       denoms <- denom_dt[, list(total = .N), by = denom_group]
+      # Unlike the single-level path, the intersect here is load-bearing: a
+      # character denoms_by applies to every level, and the deeper levels'
+      # target variables are not columns of this level's counts.
       counts <- merge(counts, denoms, by = intersect(denom_group, names(counts)), all.x = TRUE)
     } else {
       counts[, total := nrow(denom_dt)]
     }
-    counts[, pct := ifelse(total > 0, n / total * 100, 0)]
+    check_denominator_integrity(counts, "n", "total", group_vars, layer_index)
+    counts[, pct := safe_pct(n, total)]
 
     # Distinct denominators
     if (!is.null(distinct_by)) {
@@ -356,7 +370,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
       } else {
         counts[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
       }
-      counts[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+      check_denominator_integrity(counts, "distinct_n", "distinct_total",
+                                  group_vars, layer_index)
+      counts[, distinct_pct := safe_pct(distinct_n, distinct_total)]
     }
 
     # Data completion
@@ -510,6 +526,9 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
 
   # --- Capture numeric data before casting ---
   numeric_snapshot <- data.table::copy(combined)
+  tag_numeric_group_cols(numeric_snapshot,
+                         c(cols, by_data_vars, target_vars,
+                           str_c("rowlabel", seq_len(n_label_cols))))
 
   # Cast to wide
   row_label_cols <- str_c("rowlabel", seq_len(n_label_cols))
@@ -546,7 +565,7 @@ build_count_layer_nested <- function(dt, target_vars, cols, by_data_vars, by_lab
   # --- Merge pairwise association-test p-value column(s) (#49) ---
   if (is_pairwise_assoc) {
     assoc_data <- data.table::rbindlist(
-      Filter(function(x) !is.null(x) && nrow(x) > 0, assoc_pieces),
+      keep(assoc_pieces, function(x) !is.null(x) && nrow(x) > 0),
       use.names = TRUE, fill = TRUE
     )
     merge_pairwise_assoc_nested(
@@ -778,20 +797,63 @@ complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
 
   result <- merge(grid, counts, by = names(grid), all.x = TRUE)
 
-  # Fill NAs with 0
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
-    if (v %in% names(result)) {
-      data.table::set(result, which(is.na(result[[v]])), v, 0)
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
+  result <- refill_denom_totals(result, counts, denom_group, cols)
+  zero_fill_stats(result)
+
+  result
+}
+
+# =============================================================================
+# Shared helpers (used by both single and nested paths)
+# =============================================================================
+
+#' Zero-fill count statistics left NA by grid completion or merges
+#'
+#' Counts left NA by grid completion are genuine zeros. Percentages are not:
+#' a percentage is only zero when a usable denominator says so, and filling one
+#' whose denominator is missing or zero would print a number that was never
+#' computed (#76). Those stay NA and render blank.
+#'
+#' @param dt data.table to modify by reference
+#' @return \code{dt}, invisibly
+#' @keywords internal
+zero_fill_stats <- function(dt) {
+  for (v in c("n", "distinct_n")) {
+    if (v %in% names(dt)) {
+      data.table::set(dt, which(is.na(dt[[v]])), v, 0)
     }
   }
 
-  # Fill total and distinct_total from existing data
+  for (pair in list(c("pct", "total"), c("distinct_pct", "distinct_total"))) {
+    pct_col <- pair[1]
+    total_col <- pair[2]
+    if (!pct_col %in% names(dt)) next
+
+    fillable <- if (total_col %in% names(dt)) {
+      which(is.na(dt[[pct_col]]) & !is.na(dt[[total_col]]) & dt[[total_col]] > 0)
+    } else {
+      which(is.na(dt[[pct_col]]))
+    }
+    data.table::set(dt, fillable, pct_col, 0)
+  }
+
+  invisible(dt)
+}
+
+#' Re-attach total/distinct_total denominators after grid completion
+#'
+#' Grid completion introduces rows whose denominators come out NA from the
+#' left join; refill them from the pre-completion counts, keyed by
+#' denom_group (or `fallback_cols` when no denom_group applies).
+#' @keywords internal
+refill_denom_totals <- function(result, counts, denom_group, fallback_cols) {
   denom_vars <- if (!is.null(denom_group) && length(denom_group) > 0) {
     intersect(denom_group, names(result))
-  } else if (length(cols) > 0) {
-    cols
   } else {
-    character(0)
+    fallback_cols
   }
   if ("total" %in% names(result) && length(denom_vars) > 0) {
     denom_dt <- unique(counts[!is.na(total), .SD, .SDcols = c(denom_vars, "total")])
@@ -803,13 +865,8 @@ complete_nested_level <- function(counts, dt, cols, by_data_vars, level_tvs,
     result[, distinct_total := NULL]
     result <- merge(result, dist_denom_dt, by = denom_vars, all.x = TRUE)
   }
-
   result
 }
-
-# =============================================================================
-# Shared helpers (used by both single and nested paths)
-# =============================================================================
 
 #' Drop target-variable levels that were folded into the Missing row
 #'
@@ -829,22 +886,80 @@ drop_missing_value_levels <- function(counts, tv, missing_count) {
   counts[is.na(get(tv)) | !as.character(get(tv)) %in% as.character(mv)]
 }
 
+# The keys a missing_count list may carry. Anything else is a typo that would
+# otherwise vanish without changing the table.
+missing_count_keys <- c("missing_values", "sort_value", "label", "format",
+                        "denom_exclude")
+
+#' Percentage of a count against its denominator
+#'
+#' The one 0-vs-NA convention for the whole package. Without a usable
+#' denominator the percentage is undefined, so it is NA and renders blank —
+#' count and shift layers used to render \code{0}, which for \code{n > 0} is an
+#' affirmatively wrong number, while desc layers already used NA.
+#'
+#' @param n Numeric vector of counts
+#' @param total Numeric vector of denominators
+#' @return Numeric vector of percentages, NA where the denominator is NA or 0
+#' @keywords internal
+safe_pct <- function(n, total) {
+  ifelse(!is.na(total) & total > 0, n / total * 100, NA_real_)
+}
+
+#' Which values a missing_count setting treats as missing
+#'
+#' \code{NA}, plus anything named in \code{missing_values}. Shared by the
+#' Missing-row computation and \code{denom_exclude} so the two cannot disagree
+#' about what "missing" means.
+#'
+#' @param x Vector of target-variable values
+#' @param missing_count The layer's \code{missing_count} setting
+#' @return Logical vector the same length as \code{x}
+#' @keywords internal
+is_missing_value <- function(x, missing_count) {
+  out <- is.na(x)
+  mv <- missing_count$missing_values %||% character(0)
+  if (length(mv) > 0) {
+    out <- out | as.character(x) %in% as.character(mv)
+  }
+  out
+}
+
+#' Drop missing-counted rows from the denominator source
+#'
+#' Implements \code{missing_count$denom_exclude}: the rows folded into the
+#' Missing row leave the denominator, so the layer's percentages are of the
+#' non-missing population rather than of everyone.
+#'
+#' @param denom_dt data.table used as the denominator source
+#' @param tv Character string, target variable name
+#' @param missing_count The layer's \code{missing_count} setting
+#' @param layer_index Integer layer index, used in the warning message
+#' @return \code{denom_dt}, filtered when \code{denom_exclude} is TRUE
+#' @keywords internal
+apply_denom_exclude <- function(denom_dt, tv, missing_count, layer_index = NULL) {
+  if (!isTRUE(missing_count$denom_exclude)) return(denom_dt)
+
+  if (!tv %in% names(denom_dt)) {
+    # Population data need not carry the target variable; say so rather than
+    # applying percentages that quietly ignore the setting.
+    warning("Layer ", layer_index %||% "?", ": missing_count$denom_exclude was ",
+            "requested but the denominator data has no '", tv, "' column, so ",
+            "no rows were excluded.", call. = FALSE)
+    return(denom_dt)
+  }
+
+  denom_dt[!is_missing_value(get(tv), missing_count)]
+}
+
 #' Compute missing count row
 #' @keywords internal
 compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_vars,
                                    denom_group, denom_dt, distinct_by, missing_count) {
-  missing_values <- missing_count$missing_values %||% character(0)
-  denom_exclude <- missing_count$denom_exclude %||% FALSE
   sort_value <- missing_count$sort_value %||% Inf
   missing_label <- missing_count$label %||% "Missing"
 
-  # Identify missing rows in the original data
-  is_missing <- is.na(dt[[tv]])
-  if (length(missing_values) > 0) {
-    is_missing <- is_missing | dt[[tv]] %in% missing_values
-  }
-
-  missing_dt <- dt[is_missing]
+  missing_dt <- dt[is_missing_value(get(tv), missing_count)]
   summary_group <- c(cols, by_data_vars)
 
   if (length(summary_group) > 0) {
@@ -864,14 +979,16 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
   # Add target var column with the missing label
   missing_n[, (tv) := missing_label]
 
-  # Merge in denominator totals
+  # Merge in denominator totals. The intersect is load-bearing on the special
+  # rows: they aggregate across the target variable, so a denom_group naming it
+  # legitimately has no counterpart column here.
   if (length(denom_group) > 0) {
     denoms <- denom_dt[, list(total = .N), by = denom_group]
     missing_n <- merge(missing_n, denoms, by = intersect(denom_group, names(missing_n)), all.x = TRUE)
   } else {
     missing_n[, total := nrow(denom_dt)]
   }
-  missing_n[, pct := ifelse(total > 0, n / total * 100, 0)]
+  missing_n[, pct := safe_pct(n, total)]
 
   # Distinct counting for missing
   if (!is.null(distinct_by)) {
@@ -889,15 +1006,10 @@ compute_missing_counts <- function(dt, counts, cols, by_data_vars, tv, group_var
     } else {
       missing_n[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
-    missing_n[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    missing_n[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
-  # Fill NAs with 0
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
-    if (v %in% names(missing_n)) {
-      data.table::set(missing_n, which(is.na(missing_n[[v]])), v, 0)
-    }
-  }
+  zero_fill_stats(missing_n)
 
   # Store sort value
   missing_n[, .missing_sort := sort_value]
@@ -983,7 +1095,7 @@ compute_missing_subjects <- function(dt, pop_dt, cols, by_data_vars, tv,
   } else {
     missing_n[, total := nrow(denom_dt)]
   }
-  missing_n[, pct := ifelse(!is.na(total) & total > 0, n / total * 100, 0)]
+  missing_n[, pct := safe_pct(n, total)]
 
   # Distinct denominators if applicable
   if (!is.null(subj_var)) {
@@ -995,16 +1107,10 @@ compute_missing_subjects <- function(dt, pop_dt, cols, by_data_vars, tv,
     } else {
       missing_n[, distinct_total := uniqueN(denom_dt[[subj_var]])]
     }
-    missing_n[, distinct_pct := ifelse(!is.na(distinct_total) & distinct_total > 0,
-                                        distinct_n / distinct_total * 100, 0)]
+    missing_n[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
-  # Fill NAs with 0
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
-    if (v %in% names(missing_n)) {
-      data.table::set(missing_n, which(is.na(missing_n[[v]])), v, 0)
-    }
-  }
+  zero_fill_stats(missing_n)
 
   # Sort value: after missing counts, before total
   missing_n[, .missing_sort := Inf - 1]
@@ -1079,11 +1185,11 @@ compute_total_row <- function(counts, dt, cols, by_data_vars, tv, total_label,
       total_dt[, distinct_total := uniqueN(denom_dt[[distinct_by]])]
     }
     total_dt[is.na(distinct_n), distinct_n := 0]
-    total_dt[, distinct_pct := ifelse(distinct_total > 0, distinct_n / distinct_total * 100, 0)]
+    total_dt[, distinct_pct := safe_pct(distinct_n, distinct_total)]
   }
 
   total_dt[, (tv) := total_label]
-  total_dt[, pct := ifelse(total > 0, n / total * 100, 0)]
+  total_dt[, pct := safe_pct(n, total)]
 
   total_dt[, .total_sort := Inf]
 
@@ -1183,32 +1289,11 @@ complete_counts <- function(counts, dt, cols, by_data_vars, tv, limit_data_by = 
 
   result <- merge(grid, counts, by = names(grid_vars), all.x = TRUE)
 
-  # Fill NAs with 0 for count variables
-  for (v in c("n", "pct", "distinct_n", "distinct_pct")) {
-    if (v %in% names(result)) {
-      data.table::set(result, which(is.na(result[[v]])), v, 0)
-    }
-  }
-
-  # Fill total and distinct_total from existing data
-  # Use denom_group if provided, otherwise fall back to cols
-  denom_vars <- if (!is.null(denom_group) && length(denom_group) > 0) {
-    intersect(denom_group, names(result))
-  } else if (length(cols) > 0) {
-    cols
-  } else {
-    character(0)
-  }
-  if ("total" %in% names(result) && length(denom_vars) > 0) {
-    denom_dt <- unique(counts[!is.na(total), .SD, .SDcols = c(denom_vars, "total")])
-    result[, total := NULL]
-    result <- merge(result, denom_dt, by = denom_vars, all.x = TRUE)
-  }
-  if ("distinct_total" %in% names(result) && length(denom_vars) > 0) {
-    dist_denom_dt <- unique(counts[!is.na(distinct_total), .SD, .SDcols = c(denom_vars, "distinct_total")])
-    result[, distinct_total := NULL]
-    result <- merge(result, dist_denom_dt, by = denom_vars, all.x = TRUE)
-  }
+  # Refill denominators before zero-filling: grid completion leaves both the
+  # count and its denominator NA, and a percentage is only fillable once the
+  # denominator is known to be usable (#76).
+  result <- refill_denom_totals(result, counts, denom_group, cols)
+  zero_fill_stats(result)
 
   result
 }
@@ -1232,8 +1317,8 @@ get_count_format <- function(settings) {
 #'
 #' Returns the `stat_columns` list when set (one result column per format
 #' per column group); otherwise a single-element unnamed list wrapping the
-#' legacy format so callers can treat both modes uniformly. The presence of
-#' names on the result signals stat-columns mode downstream.
+#' single default format so callers can treat both modes uniformly. The
+#' presence of names on the result signals stat-columns mode downstream.
 #' @keywords internal
 get_count_formats <- function(settings) {
   if (!is.null(settings$stat_columns)) {
@@ -1244,9 +1329,9 @@ get_count_formats <- function(settings) {
 
 #' Apply count format(s) to a long counts table
 #'
-#' Legacy mode (single unnamed format) writes a single `formatted` column,
-#' preserving pre-stat_columns behavior exactly. Stat-columns mode (named
-#' formats) writes one `formatted_<i>` column per format; `cast_to_wide()`
+#' Single-format mode (unnamed) writes a single `formatted` column.
+#' Stat-columns mode (named formats) writes one `formatted_<i>` column per
+#' format; `cast_to_wide()`
 #' spreads these into separate res columns per column group. All count
 #' statistics are already present on `dt` (including the special total and
 #' missing row tables), so every format can be applied to every row.
@@ -1306,304 +1391,4 @@ apply_count_formats <- function(dt, fmts, pct_lt = NULL, pct_gt = NULL,
   })
 
   invisible(dt)
-}
-
-#' Classify by values into data variables and labels
-#' @keywords internal
-classify_by <- function(by, col_names) {
-  if (is.null(by)) {
-    return(list(data_vars = character(0), labels = character(0)))
-  }
-
-  # If the whole vector is a label, treat all elements as labels
-  if (is_label(by)) {
-    return(list(data_vars = character(0), labels = as.character(by)))
-  }
-
-  # Coerce to list to preserve label() classes on individual elements
-  if (!is.list(by)) {
-    by <- as.list(by)
-  }
-
-  data_vars <- character(0)
-  labels <- character(0)
-
-  for (b in by) {
-    if (is_label(b)) {
-      labels <- c(labels, as.character(b))
-    } else if (b %in% col_names) {
-      data_vars <- c(data_vars, b)
-    } else {
-      # Not a column name, treat as label
-      labels <- c(labels, b)
-    }
-  }
-
-  list(data_vars = data_vars, labels = labels)
-}
-
-#' Build row label columns for count layers
-#' @keywords internal
-build_row_labels_count <- function(counts, by_labels, by_data_vars, tv) {
-  label_cols <- list()
-  col_idx <- 1L
-
-  # Add label columns
-  for (lbl in by_labels) {
-    col_name <- str_c("rowlabel", col_idx)
-    counts[, (col_name) := lbl]
-    label_cols[[col_name]] <- col_name
-    col_idx <- col_idx + 1L
-  }
-
-  # Add by data variable columns as row labels
-  for (bv in by_data_vars) {
-    col_name <- str_c("rowlabel", col_idx)
-    counts[, (col_name) := as.character(get(bv))]
-    label_cols[[col_name]] <- col_name
-    col_idx <- col_idx + 1L
-  }
-
-  # Add target variable as row label
-  col_name <- str_c("rowlabel", col_idx)
-  counts[, (col_name) := as.character(get(tv))]
-  label_cols[[col_name]] <- col_name
-
-  names(label_cols)
-}
-
-#' Ordered factor levels for the column variable(s)
-#'
-#' Returns a named list mapping each `cols` variable that is a factor in
-#' `source_dt` to its level order. Non-factor column variables are omitted.
-#' Used to preserve the column variable's factor-level order through the
-#' `dcast()` in `cast_to_wide()` (issue #13), so count/shift/desc layers all
-#' order their `res*` columns by factor levels rather than alphabetically.
-#'
-#' @param source_dt data.table with the original (factor-typed) input data
-#' @param cols Character vector of column variable names
-#' @keywords internal
-get_col_levels <- function(source_dt, cols, complete = FALSE) {
-  present <- keep(cols, function(col) col %in% names(source_dt))
-  wanted <- if (complete) {
-    # Every column variable, so the level set can be pinned for all layers even
-    # when a variable is a plain character vector.
-    present
-  } else {
-    keep(present, function(col) is.factor(source_dt[[col]]))
-  }
-  setNames(map(wanted, function(col) {
-    v <- source_dt[[col]]
-    if (is.factor(v)) levels(v) else sort(unique(as.character(v)))
-  }), wanted)
-}
-
-#' Combine pinned column levels with a layer's own
-#'
-#' The spec-level level set (every column-variable value in the table's data)
-#' takes precedence so a layer whose `where` empties a column group still emits
-#' that column. Any additional variable the layer knows about (a shift layer's
-#' own column variable) is carried through.
-#'
-#' @param pinned Named list of levels captured before layer filtering (or NULL)
-#' @param layer_levels Named list from `get_col_levels()` on the layer data
-#' @return Named list of levels
-#' @keywords internal
-merge_col_levels <- function(pinned, layer_levels) {
-  if (is.null(pinned) || length(pinned) == 0) return(layer_levels)
-  out <- layer_levels
-  for (nm in names(pinned)) out[[nm]] <- pinned[[nm]]
-  out
-}
-
-#' Prepare the dcast column variable, respecting factor-level order
-#'
-#' For a single column variable, converts it to a factor ordered by
-#' `col_levels` so `dcast()` spreads columns in level order. For multiple
-#' column variables, builds the `" | "`-joined interaction column and, when
-#' any component is a factor, orders it by the cross-product of each
-#' variable's level order (outermost variable varies slowest). When no
-#' component is a factor the interaction is left as a character vector, so
-#' `dcast()` falls back to alphabetical order exactly as before.
-#'
-#' @param dt Long data.table about to be cast (mutated in place)
-#' @param cols Character vector of column variable names
-#' @param col_levels Named list from `get_col_levels()` (may be NULL/empty)
-#' @return The name of the variable to use on the RHS of the dcast formula
-#' @keywords internal
-prepare_cast_column <- function(dt, cols, col_levels = NULL) {
-  if (length(cols) == 1) {
-    col <- cols[1]
-    lv <- col_levels[[col]]
-    if (!is.null(lv)) {
-      dt[, (col) := factor(as.character(get(col)), levels = lv)]
-    }
-    return(col)
-  }
-
-  # Multiple column variables: build the interaction column
-  dt[, .col_combo := do.call(str_c, c(.SD, sep = " | ")), .SDcols = cols]
-
-  has_levels <- length(intersect(cols, names(col_levels))) > 0
-  if (has_levels) {
-    # Order each component by factor levels (observed only), else alphabetically
-    per_col_order <- map(cols, function(col) {
-      observed <- unique(as.character(dt[[col]]))
-      lv <- col_levels[[col]]
-      if (!is.null(lv)) lv[lv %in% observed] else sort(observed)
-    })
-    # Cross-product with the first (outermost) variable varying slowest
-    grid <- expand.grid(rev(per_col_order), stringsAsFactors = FALSE,
-                        KEEP.OUT.ATTRS = FALSE)
-    grid <- grid[, rev(seq_along(grid)), drop = FALSE]
-    combo_levels <- do.call(str_c, c(grid, sep = " | "))
-    dt[, .col_combo := factor(.col_combo, levels = combo_levels)]
-  }
-
-  ".col_combo"
-}
-
-#' Cast long data to wide output format
-#'
-#' When `stat_labels` is provided (stat_columns mode), the long data carries
-#' one `formatted_<i>` column per statistic and each column group spreads
-#' into one res column per statistic, interleaved column-group-major. Column
-#' labels follow the pattern `"<column group> (N=n) | <stat label>"` so
-#' renderers can span the column group over its stat sub-columns.
-#'
-#' @param stat_labels Character vector of stat column labels (the names of
-#'   the `stat_columns` setting), or NULL for the standard single-format cast
-#' @param col_levels Named list mapping factor column variables to their level
-#'   order (from `get_col_levels()`); orders the resulting `res*` columns by
-#'   factor levels instead of alphabetically. NULL preserves legacy behavior.
-#' @keywords internal
-cast_to_wide <- function(dt, row_label_cols, cols, layer_index, col_n = NULL,
-                         stat_labels = NULL, col_levels = NULL) {
-  # Track column value labels for metadata
-  col_labels <- NULL
-  n_stats <- length(stat_labels)
-  value_cols <- if (n_stats > 0) str_c("formatted_", seq_len(n_stats)) else "formatted"
-
-  # Compute sort order before casting
-  # Use .missing_sort and .total_sort for special rows, else row position
-  if (".missing_sort" %in% names(dt) || ".total_sort" %in% names(dt)) {
-    dt[, .sort_key := seq_len(.N)]
-    if (".missing_sort" %in% names(dt)) {
-      dt[!is.na(.missing_sort), .sort_key := .N + .missing_sort]
-    }
-    if (".total_sort" %in% names(dt)) {
-      dt[!is.na(.total_sort), .sort_key := .N + .total_sort + 1000]
-    }
-    data.table::setorderv(dt, ".sort_key")
-    dt[, .sort_key := NULL]
-  }
-
-  if (length(cols) == 0) {
-    # No column variables - one result column per stat (no dcast, so the
-    # pre-sorted row order is preserved)
-    wide <- dt[, c(row_label_cols, value_cols), with = FALSE]
-    data.table::setnames(wide, value_cols, str_c("res", seq_along(value_cols)))
-    if (n_stats > 0) {
-      col_labels <- stat_labels
-    }
-  } else {
-    # Build dcast formula: row_labels ~ cols
-    lhs <- str_c(row_label_cols, collapse = " + ")
-    rhs <- prepare_cast_column(dt, cols, col_levels)
-    formula_str <- str_c(lhs, " ~ ", rhs)
-    wide <- data.table::dcast(
-      dt,
-      as.formula(formula_str),
-      value.var = value_cols,
-      fill = ""
-    )
-
-    if (n_stats > 1) {
-      # Multiple value.var columns come back named "formatted_<i>_<combo>",
-      # grouped stat-major. Reconstruct the expected names per column group
-      # (never parse dcast output) and reorder column-group-major so each
-      # group's stat columns sit adjacent.
-      combos <- str_replace(str_subset(names(wide), "^formatted_1_"),
-                            "^formatted_1_", "")
-      val_cols <- unlist(map(combos, function(cmb) {
-        str_c("formatted_", seq_len(n_stats), "_", cmb)
-      }))
-      data.table::setcolorder(wide, c(row_label_cols, val_cols))
-    } else {
-      # Single value.var: dcast names columns by the group value alone
-      combos <- setdiff(names(wide), row_label_cols)
-      val_cols <- combos
-    }
-
-    if (n_stats > 0) {
-      # "(N=n)" attaches to the column-group segment; the stat label follows
-      group_labels <- build_col_labels(combos, col_n)
-      col_labels <- unlist(map(group_labels, function(gl) {
-        str_c(gl, " | ", stat_labels)
-      }))
-    } else {
-      col_labels <- build_col_labels(val_cols, col_n)
-    }
-
-    # Rename value columns from dcast names to res1, res2, ...
-    data.table::setnames(wide, val_cols, str_c("res", seq_along(val_cols)))
-
-    # Clean up temp column
-    if (".col_combo" %in% names(dt)) {
-      dt[, .col_combo := NULL]
-    }
-  }
-
-  # Add ordering columns
-  wide[, ordindx := layer_index]
-  wide[, ord1 := seq_len(.N)]
-
-  # Attach label attributes to result columns
-  if (!is.null(col_labels)) {
-    res_cols <- str_c("res", seq_along(col_labels))
-    for (i in seq_along(res_cols)) {
-      data.table::setattr(wide[[res_cols[i]]], "label", col_labels[i])
-    }
-  }
-
-  wide
-}
-
-#' Build column labels with header N suffix
-#'
-#' Takes raw dcast column names and a col_n data.table, returns labels
-#' with "(N=<n>)" suffix. For shift layers where the label includes both
-#' spec-level cols and the shift column variable, only the spec-level portion
-#' is used for the N lookup.
-#'
-#' @param raw_labels Character vector of raw column labels from dcast
-#' @param col_n data.table with spec-level column variables and .n column,
-#'   or NULL (in which case labels are returned unchanged)
-#'
-#' @return Character vector of labels with N suffix
-#' @keywords internal
-build_col_labels <- function(raw_labels, col_n) {
-  if (is.null(col_n) || length(raw_labels) == 0) return(raw_labels)
-
-  col_n_vars <- setdiff(names(col_n), ".n")
-
-  # Build named lookup: combo_string -> N
-  if (length(col_n_vars) == 1) {
-    n_lookup <- setNames(col_n$.n, as.character(col_n[[col_n_vars[1]]]))
-  } else {
-    combo_strings <- do.call(str_c, c(col_n[, col_n_vars, with = FALSE], sep = " | "))
-    n_lookup <- setNames(col_n$.n, combo_strings)
-  }
-
-  map_chr(raw_labels, function(lbl) {
-    # Split label; use first length(col_n_vars) parts for N lookup
-    parts <- str_split(lbl, fixed(" | "))[[1]]
-    if (length(parts) > length(col_n_vars)) {
-      key <- str_c(parts[seq_len(length(col_n_vars))], collapse = " | ")
-    } else {
-      key <- lbl
-    }
-    n_val <- n_lookup[key]
-    if (!is.na(n_val)) str_c(lbl, " (N=", n_val, ")") else lbl
-  })
 }

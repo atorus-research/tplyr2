@@ -7,6 +7,8 @@
 serialize_expr(expr)
 }
 \description{
-Serialize an expression (or NULL)
+\code{rlang::expr_deparse()} wraps at 60 characters by default, which any
+realistic multi-condition filter exceeds. \code{parse_expr()} on read needs a
+single string, so the deparsed pieces are always collapsed to one.
 }
 \keyword{internal}

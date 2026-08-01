@@ -38,6 +38,7 @@ build_analyze_layer <- function(dt, layer, cols, layer_index,
 
   # Capture numeric snapshot before formatting
   numeric_snapshot <- data.table::copy(fn_combined)
+  tag_numeric_group_cols(numeric_snapshot, group_vars)
 
   has_format_strings <- !is.null(settings$format_strings) &&
     length(settings$format_strings) > 0
@@ -59,11 +60,11 @@ build_analyze_layer <- function(dt, layer, cols, layer_index,
   }
 
   # Build row label columns
-  row_label_cols <- build_analyze_row_labels(combined, by_labels, by_data_vars)
+  row_label_cols <- build_row_labels_long(combined, by_labels, by_data_vars, "row_label")
 
   # Cast to wide
   wide <- cast_to_wide(combined, row_label_cols, cols, layer_index,
-                        col_n = col_n)
+                        col_n = col_n, row_order_col = ".stat_order")
 
   # Attach numeric data snapshot
   data.table::setattr(wide, "numeric_data", as.data.frame(numeric_snapshot))
@@ -161,7 +162,10 @@ format_analyze_results <- function(fn_combined, format_strings, group_vars) {
 
       row_dt <- data.table::data.table(
         row_label = fname,
-        formatted = formatted_val
+        formatted = formatted_val,
+        # Format-string names are rarely alphabetical; cast_to_wide() needs
+        # this to keep dcast from reordering the rows.
+        .stat_order = fi
       )
 
       if (length(group_vars) > 0) {
@@ -176,32 +180,4 @@ format_analyze_results <- function(fn_combined, format_strings, group_vars) {
   }
 
   data.table::rbindlist(output_rows, use.names = TRUE, fill = TRUE)
-}
-
-#' Build row label columns for analyze layer
-#' @keywords internal
-build_analyze_row_labels <- function(combined, by_labels, by_data_vars) {
-  row_label_cols <- character(0)
-  col_idx <- 1L
-
-  for (lbl in by_labels) {
-    col_name <- str_c("rowlabel", col_idx)
-    combined[, (col_name) := lbl]
-    row_label_cols <- c(row_label_cols, col_name)
-    col_idx <- col_idx + 1L
-  }
-
-  for (bv in by_data_vars) {
-    col_name <- str_c("rowlabel", col_idx)
-    combined[, (col_name) := as.character(get(bv))]
-    row_label_cols <- c(row_label_cols, col_name)
-    col_idx <- col_idx + 1L
-  }
-
-  # row_label as final rowlabel column
-  col_name <- paste0("rowlabel", col_idx)
-  combined[, (col_name) := as.character(row_label)]
-  row_label_cols <- c(row_label_cols, col_name)
-
-  row_label_cols
 }

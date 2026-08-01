@@ -26,9 +26,9 @@ apply_count_formats(
 render as "")}
 }
 \description{
-Legacy mode (single unnamed format) writes a single \code{formatted} column,
-preserving pre-stat_columns behavior exactly. Stat-columns mode (named
-formats) writes one \verb{formatted_<i>} column per format; \code{cast_to_wide()}
+Single-format mode (unnamed) writes a single \code{formatted} column.
+Stat-columns mode (named formats) writes one \verb{formatted_<i>} column per
+format; \code{cast_to_wide()}
 spreads these into separate res columns per column group. All count
 statistics are already present on \code{dt} (including the special total and
 missing row tables), so every format can be applied to every row.

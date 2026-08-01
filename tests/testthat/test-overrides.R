@@ -141,13 +141,31 @@ test_that("override does not mutate original spec", {
   expect_equal(spec$cols, original_cols)
 })
 
-test_that("unknown override names are ignored", {
+test_that("unknown override names error (#73)", {
   data <- data.frame(TRT = c("A", "B"), VAL = c("X", "Y"))
   spec <- tplyr_spec(
     cols = "TRT",
     layers = tplyr_layers(group_count("VAL"))
   )
-  # Should not error
-  result <- tplyr_build(spec, data, totally_unknown_param = "ignored")
-  expect_true(is.data.frame(result))
+  expect_error(tplyr_build(spec, data, totally_unknown_param = "ignored"),
+               "Unknown override.*totally_unknown_param")
+  # The valid names are listed so a typo is easy to spot
+  expect_error(tplyr_build(spec, data, totally_unknown_param = "x"),
+               "Valid overrides.*where")
+})
+
+test_that("a typo'd where override errors rather than building unfiltered (#73)", {
+  data <- data.frame(TRT = c("A", "A", "B"), VAL = c("X", "Y", "X"),
+                     SAFFL = c("Y", "N", "Y"))
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("VAL")))
+  # Used to silently build on unfiltered data.
+  expect_error(tplyr_build(spec, data, wher = "SAFFL == 'Y'"), "wher")
+  expect_s3_class(tplyr_build(spec, data, where = "SAFFL == 'Y'"), "data.frame")
+})
+
+test_that("unnamed overrides error (#73)", {
+  spec <- tplyr_spec(cols = "TRT", layers = tplyr_layers(group_count("VAL")))
+  # tplyr_build()'s first three positionals are matched by name, so this is
+  # checked at apply_overrides() where an unnamed ... argument lands.
+  expect_error(apply_overrides(spec, list("SAFFL == 'Y'")), "must be named")
 })

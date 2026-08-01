@@ -81,3 +81,20 @@ test_that("get_data_labels returns NA for unlabeled columns", {
 test_that("get_data_labels errors on non-data.frame", {
   expect_error(get_data_labels(1:5), "data must be a data.frame")
 })
+
+test_that("tplyr2_options errors on unknown option names (#74)", {
+  # IBMrounding vs IBMRounding: a dead option nothing reads, leaving the whole
+  # output package on banker's rounding with no signal.
+  expect_error(tplyr2_options(IBMrounding = TRUE), "Unknown option.*IBMrounding")
+  expect_error(tplyr2_options(precison_cap = c(int = 3)), "Valid options")
+  expect_null(getOption("tplyr2.IBMrounding"))
+
+  # Real names still work
+  old <- tplyr2_options(IBMRounding = TRUE)
+  expect_true(getOption("tplyr2.IBMRounding"))
+  do.call(options, old)
+})
+
+test_that("tplyr2_options reports every unknown name at once (#74)", {
+  expect_error(tplyr2_options(foo = 1, bar = 2), "foo, bar")
+})

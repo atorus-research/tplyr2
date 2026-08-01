@@ -70,6 +70,67 @@ tplyr_read_spec <- function(path) {
   serializable_to_spec(raw)
 }
 
+# ---- Field-type table ----
+
+# Layer settings that carry their own encoding (f_str objects, expressions,
+# functions, data frames, nested config lists). Everything else is a plain
+# atomic vector handled by settings_field_types().
+serialize_special_fields <- c(
+  "format_strings", "stat_columns", "denom_row_format", "denom_where",
+  "custom_summaries", "risk_diff", "assoc_test", "missing_count",
+  "precision_data", "precision_cap"
+)
+
+#' Atomic-vector types of the plain layer settings
+#'
+#' JSON arrays always parse back as lists (\code{simplifyVector = FALSE}), which
+#' erases both the vector type and the distinction between a length-1 vector and
+#' a list. This table is the single source of truth used by
+#' \code{deserialize_settings()} to restore each plain setting to the vector type
+#' the build code expects. \code{test-serialize.R} asserts that every
+#' \code{layer_settings()} formal appears here or in
+#' \code{serialize_special_fields}, so a newly added setting cannot silently
+#' round-trip as a list.
+#'
+#' @return Named list of character vectors, keyed by storage mode
+#' @keywords internal
+settings_field_types <- function() {
+  list(
+    character = c(
+      "denoms_by", "shift_denom", "denom_row_label", "denom_ignore",
+      "distinct_by", "total_row_label", "missing_subjects_label",
+      "keep_levels", "limit_data_by", "precision_by", "precision_on",
+      "order_count_method", "ordering_cols", "result_order_var",
+      "outer_sort_position", "ci_method", "zero_count_display", "name"
+    ),
+    numeric = c("ci_level", "pct_lt", "pct_gt"),
+    logical = c(
+      "denom_row", "total_row", "total_row_count_missings",
+      "missing_subjects", "stats_as_columns"
+    )
+  )
+}
+
+#' Restore the atomic type of the plain settings fields
+#'
+#' @param raw Named list of parsed settings
+#' @return \code{raw} with each plain field coerced to its declared vector type
+#' @keywords internal
+restore_settings_field_types <- function(raw) {
+  types <- settings_field_types()
+  coerce <- list(character = as.character, numeric = as.numeric,
+                 logical = as.logical)
+
+  for (mode in names(types)) {
+    for (f in intersect(types[[mode]], names(raw))) {
+      if (is.null(raw[[f]])) next
+      raw[[f]] <- coerce[[mode]](unlist(raw[[f]], use.names = FALSE))
+    }
+  }
+
+  raw
+}
+
 # ---- Serialization helpers (spec -> plain list) ----
 
 #' Convert spec to a plain list suitable for JSON/YAML
@@ -146,22 +207,22 @@ serialize_settings <- function(settings) {
     out$denom_row_format <- serialize_f_str(settings$denom_row_format)
   }
 
-  # Simple pass-through fields
-  simple_fields <- c("denoms_by", "shift_denom", "denom_row", "denom_row_label",
-                      "denom_ignore", "distinct_by",
-                      "total_row", "total_row_label",
-                      "total_row_count_missings", "missing_subjects",
-                      "missing_subjects_label", "keep_levels",
-                      "limit_data_by", "stats_as_columns",
-                      "precision_by", "precision_on", "precision_cap",
-                      "order_count_method", "ordering_cols",
-                      "result_order_var", "outer_sort_position",
-                      "ci_method", "ci_level",
-                      "pct_lt", "pct_gt", "zero_count_display", "name")
+  # Simple pass-through fields: every layer_settings() parameter that needs no
+  # special encoding. Derived from the formals so a newly added setting cannot
+  # be silently dropped from serialization.
+  simple_fields <- setdiff(names(formals(layer_settings)),
+                           serialize_special_fields)
   for (f in simple_fields) {
     if (!is.null(settings[[f]])) {
       out[[f]] <- settings[[f]]
     }
+  }
+
+  # precision_cap is a *named* numeric vector — both writers drop names on
+  # atomic vectors, and apply_precision_cap() gates on the names, so store it
+  # as a map instead.
+  if (!is.null(settings$precision_cap)) {
+    out$precision_cap <- as.list(settings$precision_cap)
   }
 
   # Expression fields
@@ -234,12 +295,17 @@ serialize_f_str <- function(fmt) {
 }
 
 #' Serialize an expression (or NULL)
+#'
+#' \code{rlang::expr_deparse()} wraps at 60 characters by default, which any
+#' realistic multi-condition filter exceeds. \code{parse_expr()} on read needs a
+#' single string, so the deparsed pieces are always collapsed to one.
+#'
 #' @keywords internal
 serialize_expr <- function(expr) {
   if (is.null(expr)) return(NULL)
   if (identical(expr, TRUE)) return(TRUE)
   if (identical(expr, FALSE)) return(FALSE)
-  list(`_expr` = rlang::expr_deparse(expr))
+  list(`_expr` = str_c(rlang::expr_deparse(expr, width = 500L), collapse = " "))
 }
 
 #' Serialize the by parameter
@@ -315,8 +381,20 @@ serializable_to_spec <- function(raw) {
     })
   }
 
+  # Hand-edited spec files: surface top-level keys that would be dropped.
+  known_top <- c("cols", "where", "pop_data", "total_groups", "custom_groups",
+                 "layers", "settings")
+  unknown_top <- setdiff(names(raw), known_top)
+  if (length(unknown_top) > 0) {
+    warning("Unknown top-level spec key",
+            if (length(unknown_top) > 1) "s" else "", ", ignored: ",
+            str_c(unknown_top, collapse = ", "), call. = FALSE)
+  }
+
   # Reconstruct layers
-  layers <- map(raw$layers, deserialize_layer)
+  layers <- imap(raw$layers, function(lyr, i) {
+    deserialize_layer(lyr, layer_id = str_c("layer ", i))
+  })
 
   structure(
     list(
@@ -333,13 +411,21 @@ serializable_to_spec <- function(raw) {
 }
 
 #' Deserialize a layer from raw list
+#'
+#' @param raw_layer Named list of parsed layer fields
+#' @param layer_id Human-readable layer identifier used in warning messages
 #' @keywords internal
-deserialize_layer <- function(raw_layer) {
+deserialize_layer <- function(raw_layer, layer_id = NULL) {
   target_var <- unlist(raw_layer$target_var)
   by <- deserialize_by(raw_layer$by)
   where_expr <- deserialize_expr(raw_layer$where)
-  settings <- deserialize_settings(raw_layer$settings)
   layer_type <- raw_layer$layer_type
+
+  if (!is.null(layer_type) && !is.null(target_var)) {
+    layer_id <- str_c(layer_id %||% "layer", " (", layer_type, ", ",
+                      str_c(target_var, collapse = "/"), ")")
+  }
+  settings <- deserialize_settings(raw_layer$settings, layer_id = layer_id)
 
   classes <- switch(layer_type,
     "count" = c("tplyr_count_layer", "tplyr_layer"),
@@ -399,7 +485,11 @@ deserialize_expr <- function(raw) {
   if (identical(raw, TRUE)) return(TRUE)
   if (identical(raw, FALSE)) return(FALSE)
   if (is.list(raw) && !is.null(raw[["_expr"]])) {
-    return(rlang::parse_expr(raw[["_expr"]]))
+    # Tolerate spec files written before serialize_expr() collapsed the
+    # deparsed pieces, where `_expr` is a multi-element array.
+    return(rlang::parse_expr(
+      str_c(unlist(raw[["_expr"]], use.names = FALSE), collapse = " ")
+    ))
   }
   raw
 }
@@ -440,9 +530,24 @@ deserialize_by <- function(raw) {
 }
 
 #' Deserialize layer settings
+#'
+#' @param raw Named list of parsed settings
+#' @param layer_id Human-readable layer identifier used in warning messages
 #' @keywords internal
-deserialize_settings <- function(raw) {
+deserialize_settings <- function(raw, layer_id = NULL) {
   if (is.null(raw)) return(layer_settings())
+
+  # Hand-editing spec files is a supported workflow, so a typo'd key must not
+  # vanish silently — warn before the intersect() below drops it.
+  valid_params <- names(formals(layer_settings))
+  unknown <- setdiff(names(raw), c(valid_params, "_class"))
+  if (length(unknown) > 0) {
+    warning("Unknown setting", if (length(unknown) > 1) "s" else "", " in ",
+            layer_id %||% "layer", " spec, ignored: ",
+            str_c(unknown, collapse = ", "), call. = FALSE)
+  }
+
+  raw <- restore_settings_field_types(raw)
 
   # Reconstruct format_strings
   if (!is.null(raw$format_strings)) {
@@ -507,13 +612,21 @@ deserialize_settings <- function(raw) {
     raw$precision_data <- as.data.frame(raw$precision_data, stringsAsFactors = FALSE)
   }
 
+  # Reconstruct precision_cap as a named numeric vector — the names are what
+  # apply_precision_cap() dispatches on.
+  if (!is.null(raw$precision_cap)) {
+    raw$precision_cap <- unlist(raw$precision_cap)
+    storage.mode(raw$precision_cap) <- "double"
+  }
+
   # Remove internal markers
   raw[["_class"]] <- NULL
 
-  # Build via layer_settings() to get proper S3 class
-  valid_params <- names(formals(layer_settings))
+  # Build via layer_settings() to get proper S3 class. quote = TRUE matters:
+  # denom_where is a language object, and an unquoted do.call() would evaluate
+  # it as a call rather than store it.
   args <- raw[intersect(names(raw), valid_params)]
-  do.call(layer_settings, args)
+  do.call(layer_settings, args, quote = TRUE)
 }
 
 #' Deserialize a function

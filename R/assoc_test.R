@@ -215,9 +215,12 @@ print.tplyr_assoc_test <- function(x, ...) {
 #'   arrive as \code{NA}).
 #' @param format An \code{\link{f_str}} object; its variable count determines how
 #'   many values a numeric return must supply.
+#' @param label What produced \code{raw}, used when reporting a shape mismatch.
+#' @param group Optional group identifier used when reporting a shape mismatch.
 #' @return A length-1 character display string.
 #' @keywords internal
-format_assoc_return <- function(raw, format) {
+format_assoc_return <- function(raw, format, label = "assoc_test fn",
+                                group = NULL) {
   # Character escape hatch: a single string is the whole cell, verbatim.
   if (is.character(raw) && length(raw) == 1) {
     return(if (is.na(raw)) "" else raw)
@@ -226,11 +229,33 @@ format_assoc_return <- function(raw, format) {
   # variable). One value + one-variable format is the classic scalar p-value.
   if (is.numeric(raw) || is.logical(raw)) {
     n_vars <- length(format$vars)
-    if (length(raw) != n_vars) return("")   # arity mismatch -> blank
+    if (length(raw) != n_vars) {
+      # A caller bug, not a statistical outcome — blanking it silently reads
+      # as "the test didn't apply here".
+      report_assoc_shape_mismatch(
+        label, group,
+        str_c("returned ", length(raw), " value",
+              if (length(raw) == 1) "" else "s", " but the format declares ",
+              n_vars, " (", str_c(format$vars, collapse = ", "), ")"))
+      return("")
+    }
     if (all(is.na(raw))) return("")         # nothing to show -> blank
     return(do.call(apply_formats, c(list(format), as.list(as.numeric(raw)))))
   }
+
+  if (!is.null(raw) && !all(is.na(raw))) {
+    report_assoc_shape_mismatch(
+      label, group,
+      str_c("returned an unsupported type (", class(raw)[1],
+            "); expected a numeric vector or a length-1 character"))
+  }
   ""
+}
+
+#' Record an assoc_test return-shape mismatch
+#' @keywords internal
+report_assoc_shape_mismatch <- function(label, group, detail) {
+  record_user_fn_error(label, simpleCondition(detail), group)
 }
 
 #' Compute the association-test result per by-group
@@ -265,13 +290,17 @@ compute_assoc_test <- function(source_dt, by_data_vars, config) {
     }
   }
 
-  run_one <- function(sub) {
-    raw <- tryCatch(config$fn(as.data.frame(sub)), error = function(e) NA_real_)
-    format_assoc_return(raw, config$format)
+  run_one <- function(sub, grp = NULL) {
+    raw <- tryCatch(config$fn(as.data.frame(sub)), error = function(e) {
+      record_user_fn_error("assoc_test fn", e, grp)
+      NA_real_
+    })
+    format_assoc_return(raw, config$format, label = "assoc_test fn", group = grp)
   }
 
   if (length(by_data_vars) > 0) {
-    res <- source_dt[, list(.assoc_p = run_one(.SD)), by = by_data_vars]
+    res <- source_dt[, list(.assoc_p = run_one(.SD, format_group_label(.BY))),
+                     by = by_data_vars]
     for (bv in by_data_vars) res[, (bv) := as.character(get(bv))]
   } else {
     res <- data.table::data.table(.assoc_p = run_one(source_dt))
@@ -303,7 +332,7 @@ merge_assoc_column <- function(wide, assoc, by_rl_cols, by_data_vars, config) {
   # the display order here from the ord* columns (#54).
   ord_cols <- sort_by_numeric_suffix(str_subset(names(wide), "^ord\\d+$"))
   disp_rank <- if (length(ord_cols) > 0 && nrow(wide) > 0) {
-    do.call(order, lapply(ord_cols, function(oc) wide[[oc]]))
+    do.call(order, map(ord_cols, function(oc) wide[[oc]]))
   } else {
     seq_len(nrow(wide))
   }
@@ -312,9 +341,9 @@ merge_assoc_column <- function(wide, assoc, by_rl_cols, by_data_vars, config) {
     # Key each wide row by its by-group (trimmed rowlabel values) and match to
     # the computed results; place the value on the first row of each group in
     # display order.
-    wide_key <- do.call(paste, c(lapply(by_rl_cols, function(c) trimws(wide[[c]])),
+    wide_key <- do.call(paste, c(map(by_rl_cols, function(c) trimws(wide[[c]])),
                                  sep = "\r"))
-    assoc_key <- do.call(paste, c(lapply(by_data_vars, function(c) trimws(assoc[[c]])),
+    assoc_key <- do.call(paste, c(map(by_data_vars, function(c) trimws(assoc[[c]])),
                                   sep = "\r"))
     lookup <- setNames(assoc$.assoc_p, assoc_key)
     # First appearance of each by-group key when rows are walked in display order
@@ -367,16 +396,23 @@ resolve_assoc_reference <- function(config, dt, cols) {
 #' @param n_ref,n_cmp Event counts for the reference and comparison arm.
 #' @param N_ref,N_cmp Population denominators for the reference and comparison arm.
 #' @param config A \code{tplyr_assoc_test} object (pairwise mode).
+#' @param group Optional group identifier used when reporting a failure of
+#'   \code{config$fn}.
 #' @return A length-1 character display string.
 #' @keywords internal
-pairwise_cell_disp <- function(n_ref, n_cmp, N_ref, N_cmp, config) {
+pairwise_cell_disp <- function(n_ref, n_cmp, N_ref, N_cmp, config,
+                               group = NULL) {
   if (is.na(n_ref) || is.na(n_cmp) || is.na(N_ref) || is.na(N_cmp) ||
       N_ref == 0 || N_cmp == 0) {
     return("")
   }
   m <- matrix(c(n_ref, n_cmp, N_ref - n_ref, N_cmp - n_cmp), nrow = 2)
-  raw <- tryCatch(config$fn(m), error = function(e) NA_real_)
-  format_assoc_return(raw, config$format)
+  raw <- tryCatch(config$fn(m), error = function(e) {
+    record_user_fn_error("pairwise assoc_test fn", e, group)
+    NA_real_
+  })
+  format_assoc_return(raw, config$format, label = "pairwise assoc_test fn",
+                      group = group)
 }
 
 #' Compute pairwise per-level association-test p-values from a counts table
@@ -417,8 +453,8 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
 
   row_vars <- c(by_data_vars, tv)
 
-  run_one <- function(n_ref, n_cmp, N_ref, N_cmp) {
-    pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config)
+  run_one <- function(n_ref, n_cmp, N_ref, N_cmp, grp = NULL) {
+    pairwise_cell_disp(n_ref, n_cmp, N_ref, N_cmp, config, group = grp)
   }
 
   ref_dt <- counts_long[get(col_var) == reference,
@@ -435,7 +471,8 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
 
     disp_vec <- map_chr(seq_len(nrow(paired)), function(r) {
       run_one(paired$n_ref[r], paired$n_cmp[r],
-              paired$N_ref[r], paired$N_cmp[r])
+              paired$N_ref[r], paired$N_cmp[r],
+              format_group_label(as.list(paired[r, row_vars, with = FALSE])))
     })
 
     cbind(
@@ -445,6 +482,22 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
   })
 
   data.table::rbindlist(results, fill = TRUE)
+}
+
+#' Resolve per-comparison p-value column labels
+#'
+#' Default is "<reference> vs <comparison>"; a single configured label recycles
+#' across comparisons; a vector is used as-is.
+#' @keywords internal
+resolve_pairwise_labels <- function(config, reference) {
+  comparisons <- config$comparisons
+  if (is.null(config$label)) {
+    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
+  } else if (length(config$label) == 1) {
+    rep(config$label, length(comparisons))
+  } else {
+    config$label
+  }
 }
 
 #' Attach pairwise per-level association-test columns to a wide layer result
@@ -466,14 +519,7 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
                                  by_labels, reference) {
   comparisons <- config$comparisons
 
-  # Resolve per-comparison labels
-  labels <- if (is.null(config$label)) {
-    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
-  } else if (length(config$label) == 1) {
-    rep(config$label, length(comparisons))
-  } else {
-    config$label
-  }
+  labels <- resolve_pairwise_labels(config, reference)
 
   if (is.null(assoc_data) || nrow(assoc_data) == 0) {
     # Still emit blank columns for a consistent shape
@@ -487,9 +533,9 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
 
   # The target variable sits in the last rowlabel column; by data vars occupy
   # the rowlabel columns after any by string-labels.
-  all_label_cols <- sort(str_subset(names(wide), "^rowlabel\\d+$"))
-  if (length(all_label_cols) == 0) return(invisible(wide))
-  tv_label_col <- all_label_cols[length(all_label_cols)]
+  join_cols <- resolve_rowlabel_join_cols(wide, by_labels, by_data_vars)
+  if (is.null(join_cols)) return(invisible(wide))
+  tv_label_col <- join_cols$tv_col
 
   iwalk(comparisons, function(cmp, ci_idx) {
     pcol <- str_c("pval", ci_idx)
@@ -502,9 +548,9 @@ merge_pairwise_assoc <- function(wide, assoc_data, config, tv, by_data_vars,
       wide_join_cols <- tv_label_col
       sub_join_cols <- tv
       if (length(by_data_vars) > 0) {
-        bv_wide_cols <- utils::head(all_label_cols, length(by_data_vars))
         bv_sub_cols <- intersect(by_data_vars, names(sub))
-        wide_join_cols <- c(bv_wide_cols[seq_along(bv_sub_cols)], wide_join_cols)
+        bv_wide_cols <- join_cols$by_cols[match(bv_sub_cols, by_data_vars)]
+        wide_join_cols <- c(bv_wide_cols, wide_join_cols)
         sub_join_cols <- c(bv_sub_cols, sub_join_cols)
       }
 
@@ -614,8 +660,10 @@ compute_pairwise_assoc_nested <- function(long, cols, row_label_cols,
     paired <- merge(ref_dt, cmp_dt, by = row_label_cols, all = TRUE)
 
     disp_vec <- map_chr(seq_len(nrow(paired)), function(r) {
-      pairwise_cell_disp(paired$n_ref[r], paired$n_cmp[r],
-                         paired$N_ref[r], paired$N_cmp[r], config)
+      pairwise_cell_disp(
+        paired$n_ref[r], paired$n_cmp[r], paired$N_ref[r], paired$N_cmp[r],
+        config,
+        group = format_group_label(as.list(paired[r, row_label_cols, with = FALSE])))
     })
 
     cbind(
@@ -644,13 +692,7 @@ merge_pairwise_assoc_nested <- function(wide, assoc_data, config, row_label_cols
                                         reference) {
   comparisons <- config$comparisons
 
-  labels <- if (is.null(config$label)) {
-    map_chr(comparisons, function(cmp) str_c(reference, " vs ", cmp))
-  } else if (length(config$label) == 1) {
-    rep(config$label, length(comparisons))
-  } else {
-    config$label
-  }
+  labels <- resolve_pairwise_labels(config, reference)
 
   join_cols <- intersect(row_label_cols, names(wide))
 
