@@ -486,7 +486,7 @@ compute_pairwise_assoc <- function(counts_long, cols, tv, by_data_vars,
 
 #' Resolve per-comparison p-value column labels
 #'
-#' Default is "<reference> vs <comparison>"; a single configured label recycles
+#' Default is `"<reference> vs <comparison>"`; a single configured label recycles
 #' across comparisons; a vector is used as-is.
 #' @keywords internal
 resolve_pairwise_labels <- function(config, reference) {

@@ -17,7 +17,7 @@ Character vector of labels with N suffix
 }
 \description{
 Takes raw dcast column names and a col_n data.table, returns labels
-with "(N=\if{html}{\out{<n>}})" suffix. For shift layers where the label includes both
+with \code{"(N=<n>)"} suffix. For shift layers where the label includes both
 spec-level cols and the shift column variable, only the spec-level portion
 is used for the N lookup.
 }

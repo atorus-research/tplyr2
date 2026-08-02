@@ -2,20 +2,45 @@
 
 ## Submission type
 
-This is a new submission.
+Resubmission of a new submission. The previous submission's incoming pretest
+returned two NOTEs; both are addressed below.
+
+### 1. Invalid URL in README.md
+
+    URL: https://github.com/atorus-research/tplyr2/blob/main/LICENSE.md
+    Status: 404
+
+The README's MIT badge linked to `LICENSE.md`, which did not exist — the
+repository carried only the `LICENSE` stub named in the `License:` field. The
+full MIT text has been added as `LICENSE.md` (and `.Rbuildignore`d, so it is not
+shipped in the tarball), which makes the link resolve.
+
+### 2. HTML validation problems in the manual
+
+    build_col_labels.Rd:20:      <n> is not recognized
+    resolve_pairwise_labels.Rd:10: <reference> / <comparison> not recognized
+
+Three placeholder tokens appeared as bare text in roxygen comments, so roxygen2
+emitted them as raw HTML (`\if{html}{\out{<n>}}`) and the validator saw unknown
+tags. They are now marked up as code, which escapes the angle brackets. The
+generated Rd files contain no `\out{<...>}` passthroughs.
+
+## Remaining NOTE
+
+"New submission" is expected — tplyr2 is not currently on CRAN.
 
 ## Test environments
 
 - local macOS (darwin), R 4.5.x — 0 errors | 0 warnings | 0 notes
-- GitHub Actions:
-  - windows-latest, R release
-  - macOS-latest, R release
-  - ubuntu-22.04, R release and R devel
-  - ubuntu-latest, R release and R devel
+- win-builder, R-devel
+- R-hub: linux (R-devel), windows (R-devel), macos (R-devel), atlas — all
+  Status: OK
+- GitHub Actions: windows-latest, macOS-latest, and ubuntu (22.04 and latest)
+  on both R release and R devel
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes
+0 errors | 0 warnings | 0 notes locally.
 
 ## Notes for the reviewer
 
@@ -24,3 +49,11 @@ maintainer and organisation. `tplyr2` is a ground-up successor with a different
 (spec-based) API rather than a new version of `Tplyr`; the two are intended to
 coexist on CRAN while users migrate. `vignette("migration")` documents the
 mapping between the two APIs.
+
+## Additional change in this resubmission
+
+Two links to a PHUSE white paper hosted on S3 were removed from
+`vignette("tplyr2")`. They were not flagged by the incoming pretest, but they
+return 403 on our own checks and the host appears access-restricted. The
+citations remain as plain text so the references are still discoverable, without
+depending on an unstable URL.
