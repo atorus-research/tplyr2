@@ -35,9 +35,10 @@ The key concepts are:
 This separation of configuration from execution is intentional. A spec
 can be saved to disk, reviewed, reused across studies, or applied to
 different datasets at build time. If you are familiar with the PHUSE
-[Analyses & Displays White
-Paper](https://phuse.s3.eu-central-1.amazonaws.com/Deliverables/Standard+Analyses+and+Code+Sharing/Analyses+%26+Displays+Associated+with+Demographics%2C+Disposition%2C+and+Medications+in+Phase+2-4+Clinical+Trials+and+Integrated+Summary+Documents.pdf),
-the layer model maps naturally to the summary blocks described there.
+white paper *Analyses & Displays Associated with Demographics,
+Disposition, and Medications in Phase 2-4 Clinical Trials and Integrated
+Summary Documents*, the layer model maps naturally to the summary blocks
+described there.
 
 ## The tplyr_spec() Object
 
@@ -626,8 +627,8 @@ other vignettes:
 
 ## References
 
-- [PHUSE Analyses & Displays White Paper – Demographics, Disposition,
-  and
-  Medications](https://phuse.s3.eu-central-1.amazonaws.com/Deliverables/Standard+Analyses+and+Code+Sharing/Analyses+%26+Displays+Associated+with+Demographics%2C+Disposition%2C+and+Medications+in+Phase+2-4+Clinical+Trials+and+Integrated+Summary+Documents.pdf)
+- PHUSE, *Analyses & Displays Associated with Demographics, Disposition,
+  and Medications in Phase 2-4 Clinical Trials and Integrated Summary
+  Documents*. Available from the PHUSE deliverables catalogue.
 - [CDISC Analysis Data Model
   (ADaM)](https://www.cdisc.org/standards/foundational/adam)

@@ -1,9 +1,9 @@
 # Build column labels with header N suffix
 
 Takes raw dcast column names and a col_n data.table, returns labels with
-"(N=)" suffix. For shift layers where the label includes both spec-level
-cols and the shift column variable, only the spec-level portion is used
-for the N lookup.
+`"(N=<n>)"` suffix. For shift layers where the label includes both
+spec-level cols and the shift column variable, only the spec-level
+portion is used for the N lookup.
 
 ## Usage
 

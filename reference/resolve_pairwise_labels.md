@@ -1,7 +1,7 @@
 # Resolve per-comparison p-value column labels
 
-Default is " vs "; a single configured label recycles across
-comparisons; a vector is used as-is.
+Default is `"<reference> vs <comparison>"`; a single configured label
+recycles across comparisons; a vector is used as-is.
 
 ## Usage
 
