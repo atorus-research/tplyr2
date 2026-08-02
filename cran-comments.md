@@ -49,3 +49,11 @@ maintainer and organisation. `tplyr2` is a ground-up successor with a different
 (spec-based) API rather than a new version of `Tplyr`; the two are intended to
 coexist on CRAN while users migrate. `vignette("migration")` documents the
 mapping between the two APIs.
+
+## Additional change in this resubmission
+
+Two links to a PHUSE white paper hosted on S3 were removed from
+`vignette("tplyr2")`. They were not flagged by the incoming pretest, but they
+return 403 on our own checks and the host appears access-restricted. The
+citations remain as plain text so the references are still discoverable, without
+depending on an unstable URL.
