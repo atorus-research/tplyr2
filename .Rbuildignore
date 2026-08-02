@@ -11,3 +11,5 @@
 ^pkgdown$
 ^benchmark_comparison\.R$
 ^cran-comments\.md$
+^CRAN-SUBMISSION$
+^LICENSE\.md$

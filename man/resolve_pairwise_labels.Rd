@@ -7,7 +7,7 @@
 resolve_pairwise_labels(config, reference)
 }
 \description{
-Default is "\if{html}{\out{<reference>}} vs \if{html}{\out{<comparison>}}"; a single configured label recycles
+Default is \code{"<reference> vs <comparison>"}; a single configured label recycles
 across comparisons; a vector is used as-is.
 }
 \keyword{internal}
