@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/atorus-research/tplyr2/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/atorus-research/tplyr2/blob/v0.2.0/DESCRIPTION)
 
 Stackhouse M (2026). *tplyr2: A Grammar of Clinical Summary Tables*. R
 package version 0.2.0, <https://github.com/atorus-research/tplyr2>.

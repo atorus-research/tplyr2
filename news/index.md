@@ -2,6 +2,8 @@
 
 ## tplyr2 0.2.0
 
+CRAN release: 2026-08-08
+
 **First CRAN release.**
 
 tplyr2 builds clinical summary tables from a declarative specification.
